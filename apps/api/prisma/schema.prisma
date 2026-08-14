@@ -1,0 +1,95 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum ConversionStatus {
+  PROCESSING
+  SUCCESS
+  FAILED
+}
+
+// Audit log only — file contents are never persisted, only converted
+// in-memory/temp-disk and streamed back, per the privacy-first architecture.
+model ConversionJob {
+  id               String           @id @default(uuid())
+  originalFilename String
+  sourceFormat     String
+  targetFormat     String
+  status           ConversionStatus @default(PROCESSING)
+  errorMessage     String?          @db.Text
+  durationMs       Int?
+  createdAt        DateTime         @default(now())
+}
+
+enum PasswordOperation {
+  PROTECT
+  UNLOCK
+}
+
+// Audit log only — passwords and file contents are never persisted.
+model PasswordJob {
+  id               String            @id @default(uuid())
+  originalFilename String
+  operation        PasswordOperation
+  status           ConversionStatus  @default(PROCESSING)
+  errorMessage     String?           @db.Text
+  durationMs       Int?
+  createdAt        DateTime          @default(now())
+}
+
+enum AiOperation {
+  SUMMARIZE
+  CHAT
+  ANALYZE_CLAUSES
+  EXTRACT_REFERENCES
+  EXTRACT_INVOICE
+}
+
+// Audit log only — document text and conversation content are never
+// persisted, only sent to the LLM provider for the single request.
+model AiJob {
+  id            String      @id @default(uuid())
+  operation     AiOperation
+  status        ConversionStatus @default(PROCESSING)
+  errorMessage  String?     @db.Text
+  durationMs    Int?
+  createdAt     DateTime    @default(now())
+}
+
+enum Segment {
+  LAWYER
+  ACCOUNTANT
+  RESEARCHER
+}
+
+// Opt-in accounts — only created when a user explicitly signs up to use the
+// library/semantic-search feature. Every other tool in the app stays anonymous.
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  name         String?
+  segment      Segment?
+  createdAt    DateTime  @default(now())
+  documents    LibraryDocument[]
+}
+
+// Opt-in persistent storage — the file and its embedding are kept only
+// because the user explicitly added it to their personal library.
+model LibraryDocument {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  filename     String
+  storagePath  String
+  extractedText String  @db.LongText
+  embedding    Json
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+}

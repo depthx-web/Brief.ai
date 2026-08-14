@@ -1,0 +1,80 @@
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  InternalServerErrorException,
+  Post,
+  Res,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import type { Response } from 'express';
+import { PasswordService } from './password.service';
+
+const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024;
+
+@Controller()
+export class PasswordController {
+  constructor(private readonly passwordService: PasswordService) {}
+
+  // Passwords are sent as multipart form fields (not query params) so they
+  // don't end up in URLs, access logs, or browser history.
+  @Post('protect')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MAX_FILE_SIZE_BYTES } }))
+  async protect(
+    @UploadedFile() file: Express.Multer.File | undefined,
+    @Body('password') password: string | undefined,
+    @Body('ownerPassword') ownerPassword: string | undefined,
+    @Res() res: Response
+  ) {
+    if (!file) throw new BadRequestException('No file uploaded.');
+    if (!password) throw new BadRequestException('A password is required.');
+
+    let outputBuffer: Buffer;
+    try {
+      outputBuffer = await this.passwordService.protect(file, password, ownerPassword ?? '');
+    } catch (err) {
+      throw new InternalServerErrorException(
+        err instanceof Error ? err.message : 'Could not protect this PDF.'
+      );
+    }
+
+    const baseName = file.originalname.replace(/\.[^.]+$/, '');
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${baseName}-protected.pdf"`,
+    });
+    res.send(outputBuffer);
+  }
+
+  @Post('unlock')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MAX_FILE_SIZE_BYTES } }))
+  async unlock(
+    @UploadedFile() file: Express.Multer.File | undefined,
+    @Body('password') password: string | undefined,
+    @Res() res: Response
+  ) {
+    if (!file) throw new BadRequestException('No file uploaded.');
+    if (!password) throw new BadRequestException('A password is required.');
+
+    let outputBuffer: Buffer;
+    try {
+      outputBuffer = await this.passwordService.unlock(file, password);
+    } catch (err) {
+      // Most failures here are a wrong password rather than a server problem.
+      throw new BadRequestException(
+        err instanceof Error
+          ? `Could not remove the password: ${err.message}`
+          : 'Could not remove the password. It may be incorrect.'
+      );
+    }
+
+    const baseName = file.originalname.replace(/\.[^.]+$/, '');
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${baseName}-unlocked.pdf"`,
+    });
+    res.send(outputBuffer);
+  }
+}

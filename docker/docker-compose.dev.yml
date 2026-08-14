@@ -1,0 +1,50 @@
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: briefai
+      MYSQL_USER: briefai
+      MYSQL_PASSWORD: briefai_dev_password
+      MYSQL_ROOT_PASSWORD: root_dev_password
+    ports:
+      - '3306:3306'
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ../apps/api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: mysql://briefai:briefai_dev_password@mysql:3306/briefai
+      PORT: 3001
+      CORS_ORIGIN: http://localhost:3000
+      SOFFICE_BIN: soffice
+      QPDF_BIN: qpdf
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://api.deepseek.com}
+      LLM_MODEL: ${LLM_MODEL:-deepseek-v4-flash}
+      JWT_SECRET: "${JWT_SECRET:?JWT_SECRET must be set - generate one with 'openssl rand -hex 48'}"
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      STORAGE_DIR: /app/storage
+      ADMIN_TOKEN: "${ADMIN_TOKEN:?ADMIN_TOKEN must be set - generate one with 'openssl rand -hex 32'}"
+    ports:
+      - '3001:3001'
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - library_storage:/app/storage
+      - embedding_model_cache:/app/.cache
+    command: sh -c "npx prisma migrate deploy && node dist/main.js"
+
+volumes:
+  mysql_data:
+  library_storage:
+  embedding_model_cache:
