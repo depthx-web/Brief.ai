@@ -1,0 +1,13 @@
+# LiteLLM proxy config. Model routing (task-simple/task-complex) is managed
+# live from the Brief.ai admin panel via LiteLLM's /model/* management API
+# (backed by the litellm-db Postgres service, enabled by STORE_MODEL_IN_DB)
+# rather than defined statically here — the API seeds sensible DeepSeek
+# defaults on boot if nothing exists yet (see LiteLlmAdminService).
+#
+# Keeping model_list empty here is deliberate: a static entry here would
+# create a second backing model under the same alias and LiteLLM would
+# load-balance between it and the admin's DB entry unpredictably.
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  database_url: os.environ/DATABASE_URL

@@ -1,5 +1,10 @@
 import BatchInvoices from '@/components/BatchInvoices';
+import RequirePaidPlan from '@/components/RequirePaidPlan';
 
 export default function BatchInvoicesPage() {
-  return <BatchInvoices />;
+  return (
+    <RequirePaidPlan>
+      <BatchInvoices />
+    </RequirePaidPlan>
+  );
 }

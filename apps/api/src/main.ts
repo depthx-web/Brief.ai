@@ -1,14 +1,24 @@
 import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { json, urlencoded } from 'express';
+import { json, urlencoded, type Request } from 'express';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   // Default body parser is disabled so we can raise the JSON size limit above
   // Express's 100kb default — /ai endpoints send extracted document text.
   const app = await NestFactory.create(AppModule, { bodyParser: false });
-  app.use(json({ limit: '2mb' }));
+  // Stashes the raw request bytes on req.rawBody — needed by the Lemon
+  // Squeezy webhook handler, which verifies an HMAC signature computed over
+  // the exact bytes sent, not the re-serialized JSON.
+  app.use(
+    json({
+      limit: '2mb',
+      verify: (req: Request & { rawBody?: Buffer }, _res, buf) => {
+        req.rawBody = buf;
+      },
+    })
+  );
   app.use(urlencoded({ extended: true, limit: '2mb' }));
   app.enableCors({ origin: process.env.CORS_ORIGIN ?? 'http://localhost:3000' });
 

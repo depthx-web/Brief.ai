@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
-import type { Segment } from '@/lib/authApi';
+import WorkspacePlanCard from './WorkspacePlanCard';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard' },
@@ -12,13 +12,7 @@ const NAV_ITEMS = [
   { href: '/settings', label: 'Settings' },
 ];
 
-const SEGMENT_LABELS: Record<Segment, string> = {
-  LAWYER: 'Legal Workspace',
-  ACCOUNTANT: 'Accounting Workspace',
-  RESEARCHER: 'Research Workspace',
-};
-
-export default function Sidebar() {
+export default function Sidebar({ onOpenSwitchModal }: { onOpenSwitchModal: () => void }) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
 
@@ -28,7 +22,7 @@ export default function Sidebar() {
         brief<span className="text-emerald">.ai</span>
       </Link>
 
-      <nav className="flex flex-1 flex-col gap-1 px-3">
+      <nav className="flex flex-col gap-1 px-3">
         {NAV_ITEMS.map((item) => {
           const active = pathname === item.href;
           return (
@@ -45,15 +39,11 @@ export default function Sidebar() {
         })}
       </nav>
 
+      <WorkspacePlanCard onSwitchClick={onOpenSwitchModal} />
+
+      <div className="flex-1" />
+
       <div className="border-t border-white/10 px-4 py-5">
-        {user?.segment && (
-          <Link
-            href="/settings"
-            className="mb-3 block truncate font-mono text-[11px] uppercase tracking-wide text-emerald hover:text-white"
-          >
-            {SEGMENT_LABELS[user.segment]}
-          </Link>
-        )}
         <p className="truncate text-xs text-[#8FA1BC]">{user?.email}</p>
         <button
           onClick={logout}

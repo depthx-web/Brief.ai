@@ -14,7 +14,7 @@ export class LibraryService {
     private readonly embedding: EmbeddingService
   ) {}
 
-  async addDocument(userId: string, file: Express.Multer.File, extractedText: string) {
+  async addDocument(userId: string, file: Express.Multer.File, extractedText: string, docType?: string) {
     const embeddingVector = await this.embedding.embed(extractedText);
     const storagePath = await this.storage.save(file.buffer, file.originalname);
 
@@ -25,16 +25,17 @@ export class LibraryService {
         storagePath,
         extractedText,
         embedding: embeddingVector,
+        docType,
       },
     });
 
-    return { id: doc.id, filename: doc.filename, createdAt: doc.createdAt };
+    return { id: doc.id, filename: doc.filename, docType: doc.docType, createdAt: doc.createdAt };
   }
 
   async list(userId: string) {
     const docs = await this.prisma.libraryDocument.findMany({
       where: { userId },
-      select: { id: true, filename: true, createdAt: true },
+      select: { id: true, filename: true, docType: true, createdAt: true },
       orderBy: { createdAt: 'desc' },
     });
     return docs;

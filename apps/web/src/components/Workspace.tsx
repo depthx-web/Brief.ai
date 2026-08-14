@@ -6,7 +6,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 import * as Diff from 'diff';
 import { useAuth } from '@/lib/AuthContext';
 import { extractPdfText, type PageText } from '@/lib/extractPdfText';
-import { fetchDocumentFile, deleteDocument, downloadDocument } from '@/lib/libraryApi';
+import { fetchDocumentFile, deleteDocument, downloadDocument, listDocuments } from '@/lib/libraryApi';
 import {
   summarizeDocument,
   analyzeClauses,
@@ -17,6 +17,11 @@ import {
   type InvoiceData,
   type ChatMessage,
 } from '@/lib/aiApi';
+import MiniFileCard from './MiniFileCard';
+
+interface DisplayMessage extends ChatMessage {
+  file?: { title: string; filename: string; content: string };
+}
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
@@ -52,6 +57,7 @@ export default function Workspace() {
   const docId = searchParams.get('doc');
 
   const [filename, setFilename] = useState('');
+  const [docType, setDocType] = useState<string | undefined>(undefined);
   const [pages, setPages] = useState<PageText[] | null>(null);
   const [pageImages, setPageImages] = useState<string[]>([]);
   const [isLoadingDoc, setIsLoadingDoc] = useState(true);
@@ -76,7 +82,7 @@ export default function Workspace() {
   const [showCompare, setShowCompare] = useState(false);
   const compareInputRef = useRef<HTMLInputElement>(null);
 
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<DisplayMessage[]>([]);
   const [question, setQuestion] = useState('');
   const [isAsking, setIsAsking] = useState(false);
 
@@ -91,14 +97,19 @@ export default function Workspace() {
       setIsLoadingDoc(true);
       setLoadError(null);
       try {
-        const file = await fetchDocumentFile(token!, docId!);
+        const [file, docs] = await Promise.all([
+          fetchDocumentFile(token!, docId!),
+          listDocuments(token!).catch(() => []),
+        ]);
         if (cancelled) return;
         setFilename(file.name);
+        const foundDocType = docs.find((d) => d.id === docId)?.docType ?? undefined;
+        setDocType(foundDocType);
         const extracted = await extractPdfText(file);
         if (cancelled) return;
         setPages(extracted);
         renderPageImages(file).then((images) => !cancelled && setPageImages(images));
-        runAnalysis(extracted);
+        runAnalysis(extracted, foundDocType);
       } catch (err) {
         if (!cancelled) {
           setLoadError(err instanceof Error ? err.message : 'Could not load this document.');
@@ -114,18 +125,18 @@ export default function Workspace() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, docId]);
 
-  async function runAnalysis(docPages: PageText[]) {
+  async function runAnalysis(docPages: PageText[], forDocType?: string) {
     setIsAnalyzing(true);
     setAnalysisError(null);
     try {
       if (user?.segment === 'LAWYER') {
-        setClauseAnalysis(await analyzeClauses(docPages, token ?? undefined));
+        setClauseAnalysis(await analyzeClauses(docPages, token ?? undefined, forDocType));
       } else if (user?.segment === 'ACCOUNTANT') {
-        setInvoiceData(await extractInvoiceData(docPages, token ?? undefined));
+        setInvoiceData(await extractInvoiceData(docPages, token ?? undefined, forDocType));
       } else if (user?.segment === 'RESEARCHER') {
-        setReferences(await extractReferences(docPages, 'bibtex', token ?? undefined));
+        setReferences(await extractReferences(docPages, 'bibtex', token ?? undefined, forDocType));
       } else {
-        setSummary(await summarizeDocument(docPages, 'executive', 'medium', token ?? undefined));
+        setSummary(await summarizeDocument(docPages, 'executive', 'medium', token ?? undefined, forDocType));
       }
     } catch (err) {
       setAnalysisError(err instanceof Error ? err.message : 'Could not analyze this document.');
@@ -140,7 +151,7 @@ export default function Workspace() {
     setIsSummarizing(true);
     setAnalysisError(null);
     try {
-      setSummary(await summarizeDocument(pages, 'executive', 'medium', token ?? undefined));
+      setSummary(await summarizeDocument(pages, 'executive', 'medium', token ?? undefined, docType));
     } catch (err) {
       setAnalysisError(err instanceof Error ? err.message : 'Could not summarize this document.');
     } finally {
@@ -165,13 +176,25 @@ export default function Workspace() {
   async function handleSend() {
     const trimmed = question.trim();
     if (!pages || !trimmed) return;
-    const next: ChatMessage[] = [...messages, { role: 'user', content: trimmed }];
+    const next: DisplayMessage[] = [...messages, { role: 'user', content: trimmed }];
     setMessages(next);
     setQuestion('');
     setIsAsking(true);
     try {
-      const answer = await askDocument(pages, messages, trimmed, token ?? undefined);
-      setMessages([...next, { role: 'assistant', content: answer }]);
+      // History sent back to the model is plain {role, content} — the file
+      // envelope is a display-only concern, not something it should see
+      // reflected back at it as prior conversation turns.
+      const history: ChatMessage[] = messages.map((m) => ({ role: m.role, content: m.content }));
+      const result = await askDocument(pages, history, trimmed, token ?? undefined, docType);
+      const reply: DisplayMessage =
+        result.type === 'file'
+          ? {
+              role: 'assistant',
+              content: `Generated: ${result.title}`,
+              file: { title: result.title, filename: result.filename, content: result.content },
+            }
+          : { role: 'assistant', content: result.content };
+      setMessages([...next, reply]);
     } catch (err) {
       setMessages(messages);
       setAnalysisError(err instanceof Error ? err.message : 'Could not get an answer.');
@@ -218,6 +241,11 @@ export default function Workspace() {
             ← Back
           </button>
           <span className="truncate font-mono text-sm text-ink">{filename || 'Loading…'}</span>
+          {docType && (
+            <span className="shrink-0 rounded-full bg-emerald-soft px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-emerald">
+              {docType}
+            </span>
+          )}
         </div>
         <div className="flex shrink-0 gap-4 text-sm">
           <button onClick={handleDownload} className="text-ink-soft hover:text-navy">
@@ -428,15 +456,21 @@ export default function Workspace() {
                   )}
                   {messages.map((m, i) => (
                     <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                      <p
-                        className={`max-w-[85%] whitespace-pre-wrap rounded-lg px-3 py-2 text-sm ${
-                          m.role === 'user'
-                            ? 'bg-navy-light/10 text-ink'
-                            : 'border border-gray-200 bg-white text-ink'
-                        }`}
-                      >
-                        {m.content}
-                      </p>
+                      {m.file ? (
+                        <div className="rounded-lg border border-gray-200 bg-white p-2">
+                          <MiniFileCard title={m.file.title} filename={m.file.filename} content={m.file.content} />
+                        </div>
+                      ) : (
+                        <p
+                          className={`max-w-[85%] whitespace-pre-wrap rounded-lg px-3 py-2 text-sm ${
+                            m.role === 'user'
+                              ? 'bg-navy-light/10 text-ink'
+                              : 'border border-gray-200 bg-white text-ink'
+                          }`}
+                        >
+                          {m.content}
+                        </p>
+                      )}
                     </div>
                   ))}
                   {isAsking && <p className="text-sm text-ink-soft">Thinking…</p>}

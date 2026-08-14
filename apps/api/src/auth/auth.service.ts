@@ -3,14 +3,19 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
+import { EmailCampaignService } from '../mail/email-campaign.service';
 
 export type Segment = 'LAWYER' | 'ACCOUNTANT' | 'RESEARCHER';
+export type Plan = 'FREE' | 'PAID';
+export type BillingCycle = 'WEEKLY' | 'MONTHLY' | 'QUARTERLY' | 'YEARLY';
 
 export interface SafeUser {
   id: string;
   email: string;
   name: string | null;
   segment: Segment | null;
+  plan: Plan;
+  billingCycle: BillingCycle | null;
 }
 
 @Injectable()
@@ -18,7 +23,8 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
-    private readonly storage: StorageService
+    private readonly storage: StorageService,
+    private readonly emailCampaigns: EmailCampaignService
   ) {}
 
   async signup(email: string, password: string, name?: string, segment?: Segment) {
@@ -30,6 +36,9 @@ export class AuthService {
       data: { email, passwordHash, name, segment },
     });
 
+    // Fire-and-forget: a slow/failed welcome email shouldn't fail signup itself.
+    this.emailCampaigns.sendWelcome(user.email, user.name).catch(() => {});
+
     return this.buildAuthResponse(user);
   }
 
@@ -39,13 +48,18 @@ export class AuthService {
 
     const matches = await bcrypt.compare(password, user.passwordHash);
     if (!matches) throw new UnauthorizedException('Invalid email or password.');
+    if (user.status === 'BANNED') throw new UnauthorizedException('This account has been suspended.');
 
     return this.buildAuthResponse(user);
   }
 
+  // Re-checked on every authenticated request (via JwtStrategy), not just at
+  // login — a ban must kill an already-issued token immediately, not merely
+  // block future logins.
   async findById(id: string): Promise<SafeUser | null> {
     const user = await this.prisma.user.findUnique({ where: { id } });
-    return user ? this.toSafeUser(user) : null;
+    if (!user || user.status === 'BANNED') return null;
+    return this.toSafeUser(user);
   }
 
   async updateProfile(id: string, data: { name?: string; segment?: Segment }): Promise<SafeUser> {
@@ -63,7 +77,14 @@ export class AuthService {
     await this.prisma.user.delete({ where: { id } });
   }
 
-  private buildAuthResponse(user: { id: string; email: string; name: string | null; segment: Segment | null }) {
+  private buildAuthResponse(user: {
+    id: string;
+    email: string;
+    name: string | null;
+    segment: Segment | null;
+    plan: Plan;
+    billingCycle: BillingCycle | null;
+  }) {
     const safeUser = this.toSafeUser(user);
     const token = this.jwtService.sign({ sub: user.id, email: user.email });
     return { token, user: safeUser };
@@ -74,7 +95,16 @@ export class AuthService {
     email: string;
     name: string | null;
     segment: Segment | null;
+    plan: Plan;
+    billingCycle: BillingCycle | null;
   }): SafeUser {
-    return { id: user.id, email: user.email, name: user.name, segment: user.segment };
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      segment: user.segment,
+      plan: user.plan,
+      billingCycle: user.billingCycle,
+    };
   }
 }

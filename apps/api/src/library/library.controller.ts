@@ -33,11 +33,12 @@ export class LibraryController {
   async addDocument(
     @UploadedFile() file: Express.Multer.File | undefined,
     @Body('text') text: string | undefined,
+    @Body('docType') docType: string | undefined,
     @CurrentUser() user: SafeUser
   ) {
     if (!file) throw new BadRequestException('No file uploaded.');
     if (!text?.trim()) throw new BadRequestException('No extracted text provided.');
-    return this.libraryService.addDocument(user.id, file, text);
+    return this.libraryService.addDocument(user.id, file, text, docType);
   }
 
   @Get('documents')

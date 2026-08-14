@@ -13,6 +13,8 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { OptionalJwtAuthGuard } from '../auth/optional-jwt-auth.guard';
 import { CurrentUser, OptionalCurrentUser } from '../auth/current-user.decorator';
 import type { SafeUser } from '../auth/auth.service';
+import { FeatureGuard } from '../features/feature.guard';
+import { RequireFeature } from '../features/require-feature.decorator';
 import {
   AiService,
   ChatMessage,
@@ -26,25 +28,30 @@ interface SummarizeBody {
   pages?: PageText[];
   style?: string;
   length?: string;
+  docType?: string;
 }
 
 interface ChatBody {
   pages?: PageText[];
   history?: ChatMessage[];
   question?: string;
+  docType?: string;
 }
 
 interface AnalyzeClausesBody {
   pages?: PageText[];
+  docType?: string;
 }
 
 interface ExtractReferencesBody {
   pages?: PageText[];
   format?: string;
+  docType?: string;
 }
 
 interface ExtractInvoiceBody {
   pages?: PageText[];
+  docType?: string;
 }
 
 // Tighter than the app-wide default (60/min) — every call here costs real
@@ -57,7 +64,8 @@ export class AiController {
   constructor(private readonly aiService: AiService) {}
 
   @Post('summarize')
-  @UseGuards(OptionalJwtAuthGuard)
+  @RequireFeature('SUMMARIZE')
+  @UseGuards(OptionalJwtAuthGuard, FeatureGuard)
   async summarize(@Body() body: SummarizeBody, @OptionalCurrentUser() user: SafeUser | null) {
     if (!body.pages?.length) throw new BadRequestException('No document text provided.');
     const style: SummaryStyle = body.style === 'bullets' ? 'bullets' : 'executive';
@@ -65,7 +73,7 @@ export class AiController {
       body.length === 'short' || body.length === 'long' ? body.length : 'medium';
 
     try {
-      const summary = await this.aiService.summarize(body.pages, style, length, user?.id);
+      const summary = await this.aiService.summarize(body.pages, style, length, user?.id, body.docType);
       return { summary };
     } catch (err) {
       throw new InternalServerErrorException(
@@ -75,14 +83,14 @@ export class AiController {
   }
 
   @Post('chat')
-  @UseGuards(OptionalJwtAuthGuard)
+  @RequireFeature('CHAT')
+  @UseGuards(OptionalJwtAuthGuard, FeatureGuard)
   async chat(@Body() body: ChatBody, @OptionalCurrentUser() user: SafeUser | null) {
     if (!body.pages?.length) throw new BadRequestException('No document text provided.');
     if (!body.question?.trim()) throw new BadRequestException('No question provided.');
 
     try {
-      const answer = await this.aiService.chat(body.pages, body.history ?? [], body.question, user?.id);
-      return { answer };
+      return await this.aiService.chat(body.pages, body.history ?? [], body.question, user?.id, body.docType);
     } catch (err) {
       throw new InternalServerErrorException(
         err instanceof Error ? err.message : 'Could not answer this question.'
@@ -91,12 +99,13 @@ export class AiController {
   }
 
   @Post('analyze-clauses')
-  @UseGuards(OptionalJwtAuthGuard)
+  @RequireFeature('ANALYZE_CLAUSES')
+  @UseGuards(OptionalJwtAuthGuard, FeatureGuard)
   async analyzeClauses(@Body() body: AnalyzeClausesBody, @OptionalCurrentUser() user: SafeUser | null) {
     if (!body.pages?.length) throw new BadRequestException('No document text provided.');
 
     try {
-      const result = await this.aiService.analyzeClauses(body.pages, user?.id);
+      const result = await this.aiService.analyzeClauses(body.pages, user?.id, body.docType);
       return result;
     } catch (err) {
       throw new InternalServerErrorException(
@@ -106,7 +115,8 @@ export class AiController {
   }
 
   @Post('extract-references')
-  @UseGuards(OptionalJwtAuthGuard)
+  @RequireFeature('EXTRACT_REFERENCES')
+  @UseGuards(OptionalJwtAuthGuard, FeatureGuard)
   async extractReferences(
     @Body() body: ExtractReferencesBody,
     @OptionalCurrentUser() user: SafeUser | null
@@ -116,7 +126,7 @@ export class AiController {
       body.format === 'apa' || body.format === 'mla' ? body.format : 'bibtex';
 
     try {
-      const references = await this.aiService.extractReferences(body.pages, format, user?.id);
+      const references = await this.aiService.extractReferences(body.pages, format, user?.id, body.docType);
       return { references };
     } catch (err) {
       throw new InternalServerErrorException(
@@ -126,12 +136,13 @@ export class AiController {
   }
 
   @Post('extract-invoice')
-  @UseGuards(OptionalJwtAuthGuard)
+  @RequireFeature('EXTRACT_INVOICE')
+  @UseGuards(OptionalJwtAuthGuard, FeatureGuard)
   async extractInvoice(@Body() body: ExtractInvoiceBody, @OptionalCurrentUser() user: SafeUser | null) {
     if (!body.pages?.length) throw new BadRequestException('No document text provided.');
 
     try {
-      const result = await this.aiService.extractInvoiceData(body.pages, user?.id);
+      const result = await this.aiService.extractInvoiceData(body.pages, user?.id, body.docType);
       return result;
     } catch (err) {
       throw new InternalServerErrorException(

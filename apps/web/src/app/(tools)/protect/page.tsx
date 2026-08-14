@@ -1,5 +1,10 @@
 import ProtectPdf from '@/components/ProtectPdf';
+import RequirePaidPlan from '@/components/RequirePaidPlan';
 
 export default function ProtectPage() {
-  return <ProtectPdf />;
+  return (
+    <RequirePaidPlan>
+      <ProtectPdf />
+    </RequirePaidPlan>
+  );
 }

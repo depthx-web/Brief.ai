@@ -73,6 +73,23 @@ enum Segment {
   RESEARCHER
 }
 
+enum Plan {
+  FREE
+  PAID
+}
+
+enum BillingCycle {
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+enum UserStatus {
+  ACTIVE
+  BANNED
+}
+
 // Opt-in accounts — only created when a user explicitly signs up to use the
 // library/semantic-search feature. Every other tool in the app stays anonymous.
 model User {
@@ -81,8 +98,45 @@ model User {
   passwordHash String
   name         String?
   segment      Segment?
+  status       UserStatus @default(ACTIVE)
   createdAt    DateTime  @default(now())
   documents    LibraryDocument[]
+
+  // Billing (Lemon Squeezy). plan/billingCycle reflect the last-confirmed
+  // subscription state, synced via the Lemon Squeezy webhook — not the
+  // source of truth for entitlement while a payment is mid-flight.
+  plan                        Plan          @default(FREE)
+  billingCycle                BillingCycle?
+  lemonSqueezyCustomerId       String?
+  lemonSqueezySubscriptionId   String?       @unique
+  subscriptionStatus           String?
+  currentPeriodEnd             DateTime?
+
+  // LiteLLM proxy virtual key — provisioned lazily on first AI call so a
+  // per-account budget can be enforced by the proxy itself, not just by us.
+  liteLlmVirtualKey            String?       @db.Text
+
+  // Win-back campaign bookkeeping: cancelledAt starts the wait period,
+  // winBackEmailSentAt prevents sending it more than once per cancellation.
+  subscriptionCancelledAt      DateTime?
+  winBackEmailSentAt           DateTime?
+}
+
+enum EmailCampaignKey {
+  WELCOME
+  UPGRADE
+  WINBACK
+}
+
+// Admin-editable email automations. body is a template with a small set of
+// {{PLACEHOLDER}} tokens substituted per-send (e.g. {{DISCOUNT_CODE}} for
+// the win-back email) — see EmailCampaignService.
+model EmailCampaign {
+  id      String           @id @default(uuid())
+  key     EmailCampaignKey @unique
+  enabled Boolean          @default(true)
+  subject String
+  body    String           @db.Text
 }
 
 // Opt-in persistent storage — the file and its embedding are kept only
@@ -95,7 +149,65 @@ model LibraryDocument {
   storagePath  String
   extractedText String  @db.LongText
   embedding    Json
+  // Free-text sub-type picked at upload (e.g. "NDA", "Invoice") from the
+  // segment-specific chip list on the dashboard — passed to the AI layer as
+  // extra context so, e.g., an NDA and a court memo get differently-focused
+  // analysis despite both being LAWYER-segment documents.
+  docType      String?
   createdAt    DateTime @default(now())
 
   @@index([userId])
+}
+
+// Admin-editable price per segment x cycle — seeded from the original
+// arithmetic (10%/20% off quarterly/yearly), but each cell is a standalone
+// row an admin can override directly, per the admin panel spec.
+model PlanPrice {
+  id         String       @id @default(uuid())
+  segment    Segment
+  cycle      BillingCycle
+  priceCents Int
+  updatedAt  DateTime     @updatedAt
+
+  @@unique([segment, cycle])
+}
+
+// Per-segment feature entitlement, toggleable live from the admin panel.
+// freeEnabled controls whether FREE-plan users in that segment can use it
+// (checked by FeatureGuard on the AI endpoints); proEnabled is currently
+// always true in practice but kept for a future "some features are Pro-only
+// too" case without a schema change.
+model Feature {
+  id          String  @id @default(uuid())
+  segment     Segment
+  key         String
+  label       String
+  freeEnabled Boolean @default(false)
+  proEnabled  Boolean @default(true)
+  order       Int     @default(0)
+
+  @@unique([segment, key])
+}
+
+enum DiscountType {
+  PERCENT
+  FIXED
+}
+
+// Admin-issued codes, validated and counted at our end. applicableSegments
+// stores the segment list as JSON (e.g. ["LAWYER","RESEARCHER"]) rather than
+// a join table — a code's segment scope is small and never queried on its
+// own. `revoked` is a distinct, immediate off-switch from `expiresAt`/
+// `usageLimit`, which lapse naturally instead of being explicitly pulled.
+model DiscountCode {
+  id                 String       @id @default(uuid())
+  code               String       @unique
+  type               DiscountType
+  value              Int
+  expiresAt          DateTime?
+  usageLimit         Int?
+  usageCount         Int          @default(0)
+  applicableSegments Json
+  revoked            Boolean      @default(false)
+  createdAt          DateTime     @default(now())
 }

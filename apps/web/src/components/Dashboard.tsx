@@ -8,9 +8,42 @@ import { listDocuments, uploadDocument, type LibraryDocumentSummary } from '@/li
 import type { Segment } from '@/lib/authApi';
 
 const UPLOAD_LABEL: Record<Segment, string> = {
-  LAWYER: 'Upload a Contract',
-  ACCOUNTANT: 'Upload an Invoice',
-  RESEARCHER: 'Upload a Research Paper',
+  LAWYER: 'Upload a contract',
+  ACCOUNTANT: 'Upload an invoice',
+  RESEARCHER: 'Upload a paper',
+};
+
+const DROPZONE_LABEL: Record<Segment, string> = {
+  LAWYER: 'Drop your contract here',
+  ACCOUNTANT: 'Drop your invoice or statement',
+  RESEARCHER: 'Drop your research paper',
+};
+
+const FILE_SECTION_TITLE: Record<Segment, string> = {
+  LAWYER: 'Recent contracts',
+  ACCOUNTANT: 'Recent invoices',
+  RESEARCHER: 'Recent papers',
+};
+
+const STATUS_BADGE: Record<Segment, { text: string; className: string }> = {
+  LAWYER: { text: 'Non-standard clause found', className: 'bg-amber-100 text-amber-700' },
+  ACCOUNTANT: { text: 'Data extracted', className: 'bg-emerald-soft text-emerald' },
+  RESEARCHER: { text: 'Ready to chat', className: 'bg-emerald-soft text-emerald' },
+};
+
+// Fed to the AI layer as extra context on upload — an NDA and a court memo
+// both live in the LAWYER segment but need differently-focused analysis.
+const DOC_TYPES: Record<Segment, string[]> = {
+  LAWYER: ['Contract', 'NDA', 'Court memo', 'Official correspondence', 'Incorporation document', 'Official decision'],
+  ACCOUNTANT: ['Invoice', 'Bank statement', 'Receipt', 'Payroll document', 'Tax filing', 'Financial statement'],
+  RESEARCHER: [
+    'Academic paper',
+    "Master's/PhD thesis",
+    'Conference paper',
+    'Preprint',
+    'Literature review source',
+    'Research dataset info',
+  ],
 };
 
 export default function Dashboard() {
@@ -21,6 +54,7 @@ export default function Dashboard() {
   const [isUploading, setIsUploading] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedDocType, setSelectedDocType] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -30,6 +64,10 @@ export default function Dashboard() {
       .catch(() => {})
       .finally(() => setIsLoadingRecent(false));
   }, [token]);
+
+  useEffect(() => {
+    setSelectedDocType(null);
+  }, [user?.segment]);
 
   async function handleFile(file: File) {
     if (!token) return;
@@ -46,7 +84,7 @@ export default function Dashboard() {
         setError('No extractable text found — scanned documents need OCR first.');
         return;
       }
-      const doc = await uploadDocument(token, file, fullText);
+      const doc = await uploadDocument(token, file, fullText, selectedDocType ?? undefined);
       router.push(`/workspace?doc=${doc.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not upload this document.');
@@ -56,6 +94,10 @@ export default function Dashboard() {
   }
 
   const uploadLabel = user?.segment ? UPLOAD_LABEL[user.segment] : 'Upload a File';
+  const dropzoneLabel = user?.segment ? DROPZONE_LABEL[user.segment] : 'Drag your file here, or click to choose';
+  const fileSectionTitle = user?.segment ? FILE_SECTION_TITLE[user.segment] : 'Recent Files';
+  const statusBadge = user?.segment ? STATUS_BADGE[user.segment] : null;
+  const docTypes = user?.segment ? DOC_TYPES[user.segment] : [];
 
   return (
     <div className="mx-auto max-w-5xl px-8 py-10">
@@ -64,9 +106,10 @@ export default function Dashboard() {
           Welcome{user?.name ? `, ${user.name}` : ''}
         </h1>
         <button
+          key={user?.segment}
           onClick={() => inputRef.current?.click()}
           disabled={isUploading}
-          className="rounded-md bg-emerald px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
+          className="fade-in-200 rounded-md bg-emerald px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
         >
           {isUploading ? 'Uploading…' : uploadLabel}
         </button>
@@ -110,8 +153,8 @@ export default function Dashboard() {
           />
           <path d="M12 12v6M9.5 14.5 12 12l2.5 2.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        <p className="text-sm text-ink-soft">
-          {isUploading ? 'Reading document…' : 'Drag your file here, or click to choose'}
+        <p key={user?.segment} className="fade-in-200 text-sm text-ink-soft">
+          {isUploading ? 'Reading document…' : dropzoneLabel}
         </p>
         <input
           ref={inputRef}
@@ -122,11 +165,33 @@ export default function Dashboard() {
         />
       </div>
 
+      {docTypes.length > 0 && (
+        <div key={user?.segment} className="fade-in-200 mt-4 flex flex-wrap gap-2">
+          {docTypes.map((type) => {
+            const selected = selectedDocType === type;
+            return (
+              <button
+                key={type}
+                type="button"
+                onClick={() => setSelectedDocType(selected ? null : type)}
+                className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                  selected
+                    ? 'border-emerald bg-emerald-soft text-emerald'
+                    : 'border-gray-200 bg-white text-ink-soft hover:border-gray-300'
+                }`}
+              >
+                {type}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {error && <p className="mt-4 text-sm text-redline">{error}</p>}
 
       <div className="mt-12">
-        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-ink-soft">
-          Recent Files
+        <h2 key={user?.segment} className="fade-in-200 mb-4 text-sm font-semibold uppercase tracking-wide text-ink-soft">
+          {fileSectionTitle}
         </h2>
         {isLoadingRecent ? (
           <p className="text-sm text-ink-soft">Loading…</p>
@@ -146,13 +211,18 @@ export default function Dashboard() {
                 className="rounded-lg border border-gray-200 bg-white p-4 text-left transition-colors hover:border-emerald"
               >
                 <p className="truncate font-mono text-sm text-ink">{doc.filename}</p>
-                <div className="mt-2 flex items-center justify-between">
+                <div className="mt-2 flex items-center justify-between gap-2">
                   <span className="text-xs text-ink-soft">
                     {new Date(doc.createdAt).toLocaleDateString()}
                   </span>
-                  <span className="rounded-full bg-emerald-soft px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-emerald">
-                    Ready
-                  </span>
+                  {statusBadge && (
+                    <span
+                      key={user?.segment}
+                      className={`fade-in-200 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${statusBadge.className}`}
+                    >
+                      {statusBadge.text}
+                    </span>
+                  )}
                 </div>
               </button>
             ))}

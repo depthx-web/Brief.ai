@@ -6,11 +6,14 @@ import {
   Query,
   Res,
   UploadedFile,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
+import { OptionalJwtAuthGuard } from '../auth/optional-jwt-auth.guard';
+import { RequirePaidPlanGuard } from '../billing/require-paid-plan.guard';
 import { ALLOWED_TARGET_FORMATS, ConversionService, TargetFormat } from './conversion.service';
 
 const MIME_TYPES: Record<TargetFormat, string> = {
@@ -32,6 +35,7 @@ export class ConversionController {
   constructor(private readonly conversionService: ConversionService) {}
 
   @Post()
+  @UseGuards(OptionalJwtAuthGuard, RequirePaidPlanGuard)
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MAX_FILE_SIZE_BYTES } }))
   async convert(
     @UploadedFile() file: Express.Multer.File | undefined,

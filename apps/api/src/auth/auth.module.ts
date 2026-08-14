@@ -6,6 +6,7 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { StorageService } from '../storage/storage.service';
       secret: process.env.JWT_SECRET ?? 'dev-only-insecure-secret',
       signOptions: { expiresIn: process.env.JWT_EXPIRES_IN ?? '7d' },
     }),
+    MailModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, PrismaService, StorageService],

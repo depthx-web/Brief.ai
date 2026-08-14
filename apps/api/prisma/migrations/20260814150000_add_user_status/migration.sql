@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE `User`
+  ADD COLUMN `status` ENUM('ACTIVE', 'BANNED') NOT NULL DEFAULT 'ACTIVE';
