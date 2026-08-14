@@ -95,8 +95,13 @@ export class AiService {
     });
   }
 
-  async summarize(pages: PageText[], style: SummaryStyle, length: SummaryLength): Promise<string> {
-    return this.run('SUMMARIZE', async () => {
+  async summarize(
+    pages: PageText[],
+    style: SummaryStyle,
+    length: SummaryLength,
+    userId?: string
+  ): Promise<string> {
+    return this.run('SUMMARIZE', userId, async () => {
       const { text, truncated } = buildDocumentText(pages);
       const lengthGuidance: Record<SummaryLength, string> = {
         short: 'about 3-4 sentences',
@@ -132,8 +137,13 @@ export class AiService {
     });
   }
 
-  async chat(pages: PageText[], history: ChatMessage[], question: string): Promise<string> {
-    return this.run('CHAT', async () => {
+  async chat(
+    pages: PageText[],
+    history: ChatMessage[],
+    question: string,
+    userId?: string
+  ): Promise<string> {
+    return this.run('CHAT', userId, async () => {
       const { text, truncated } = buildDocumentText(pages);
 
       const completion = await this.client.chat.completions.create({
@@ -157,8 +167,8 @@ export class AiService {
     });
   }
 
-  async analyzeClauses(pages: PageText[]): Promise<ClauseAnalysis> {
-    return this.run('ANALYZE_CLAUSES', async () => {
+  async analyzeClauses(pages: PageText[], userId?: string): Promise<ClauseAnalysis> {
+    return this.run('ANALYZE_CLAUSES', userId, async () => {
       const { text, truncated } = buildDocumentText(pages);
 
       const completion = await this.client.chat.completions.create({
@@ -187,8 +197,12 @@ export class AiService {
     });
   }
 
-  async extractReferences(pages: PageText[], format: ReferenceFormat): Promise<string> {
-    return this.run('EXTRACT_REFERENCES', async () => {
+  async extractReferences(
+    pages: PageText[],
+    format: ReferenceFormat,
+    userId?: string
+  ): Promise<string> {
+    return this.run('EXTRACT_REFERENCES', userId, async () => {
       const { text, truncated } = buildDocumentText(pages);
       const formatGuidance: Record<ReferenceFormat, string> = {
         bibtex: 'BibTeX entries (one @-block per reference)',
@@ -217,8 +231,8 @@ export class AiService {
     });
   }
 
-  async extractInvoiceData(pages: PageText[]): Promise<InvoiceData> {
-    return this.run('EXTRACT_INVOICE', async () => {
+  async extractInvoiceData(pages: PageText[], userId?: string): Promise<InvoiceData> {
+    return this.run('EXTRACT_INVOICE', userId, async () => {
       const { text, truncated } = buildDocumentText(pages);
 
       const completion = await this.client.chat.completions.create({
@@ -246,9 +260,25 @@ export class AiService {
     });
   }
 
-  private async run<T>(operation: AiOperation, task: () => Promise<T>): Promise<T> {
+  // Returns the caller's recent AI activity plus a rolling-30-day count —
+  // reads as an audit log for lawyers, usage tracking for researchers.
+  async getActivity(userId: string) {
+    const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const [jobs, monthlyCount] = await Promise.all([
+      this.prisma.aiJob.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+        select: { id: true, operation: true, status: true, createdAt: true },
+      }),
+      this.prisma.aiJob.count({ where: { userId, createdAt: { gte: since } } }),
+    ]);
+    return { jobs, monthlyCount };
+  }
+
+  private async run<T>(operation: AiOperation, userId: string | undefined, task: () => Promise<T>): Promise<T> {
     const startedAt = Date.now();
-    const job = await this.prisma.aiJob.create({ data: { operation, status: 'PROCESSING' } });
+    const job = await this.prisma.aiJob.create({ data: { operation, userId, status: 'PROCESSING' } });
     try {
       const result = await task();
       await this.prisma.aiJob.update({

@@ -66,6 +66,11 @@ export default function Workspace() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
 
+  // Available regardless of segment — the segment-specific analysis above
+  // doesn't replace the general "just summarize this" capability.
+  const [showQuickSummary, setShowQuickSummary] = useState(false);
+  const [isSummarizing, setIsSummarizing] = useState(false);
+
   const [diffParts, setDiffParts] = useState<Diff.Change[] | null>(null);
   const [isComparing, setIsComparing] = useState(false);
   const [showCompare, setShowCompare] = useState(false);
@@ -114,18 +119,32 @@ export default function Workspace() {
     setAnalysisError(null);
     try {
       if (user?.segment === 'LAWYER') {
-        setClauseAnalysis(await analyzeClauses(docPages));
+        setClauseAnalysis(await analyzeClauses(docPages, token ?? undefined));
       } else if (user?.segment === 'ACCOUNTANT') {
-        setInvoiceData(await extractInvoiceData(docPages));
+        setInvoiceData(await extractInvoiceData(docPages, token ?? undefined));
       } else if (user?.segment === 'RESEARCHER') {
-        setReferences(await extractReferences(docPages, 'bibtex'));
+        setReferences(await extractReferences(docPages, 'bibtex', token ?? undefined));
       } else {
-        setSummary(await summarizeDocument(docPages, 'executive', 'medium'));
+        setSummary(await summarizeDocument(docPages, 'executive', 'medium', token ?? undefined));
       }
     } catch (err) {
       setAnalysisError(err instanceof Error ? err.message : 'Could not analyze this document.');
     } finally {
       setIsAnalyzing(false);
+    }
+  }
+
+  async function handleQuickSummary() {
+    if (!pages) return;
+    setShowQuickSummary(true);
+    setIsSummarizing(true);
+    setAnalysisError(null);
+    try {
+      setSummary(await summarizeDocument(pages, 'executive', 'medium', token ?? undefined));
+    } catch (err) {
+      setAnalysisError(err instanceof Error ? err.message : 'Could not summarize this document.');
+    } finally {
+      setIsSummarizing(false);
     }
   }
 
@@ -151,7 +170,7 @@ export default function Workspace() {
     setQuestion('');
     setIsAsking(true);
     try {
-      const answer = await askDocument(pages, messages, trimmed);
+      const answer = await askDocument(pages, messages, trimmed, token ?? undefined);
       setMessages([...next, { role: 'assistant', content: answer }]);
     } catch (err) {
       setMessages(messages);
@@ -250,6 +269,21 @@ export default function Workspace() {
 
             {tab === 'analysis' && (
               <>
+                {user?.segment && (
+                  <div className="mb-5 border-b border-gray-100 pb-5">
+                    <button
+                      onClick={() => (showQuickSummary ? setShowQuickSummary(false) : handleQuickSummary())}
+                      className="text-sm font-medium text-navy hover:text-emerald"
+                    >
+                      {showQuickSummary ? 'Hide quick summary' : 'Get quick summary →'}
+                    </button>
+                    {showQuickSummary && (
+                      <p className="mt-3 whitespace-pre-wrap text-sm text-ink-soft">
+                        {isSummarizing ? 'Summarizing…' : summary}
+                      </p>
+                    )}
+                  </div>
+                )}
                 {isAnalyzing ? (
                   <div className="space-y-3">
                     <p className="font-mono text-xs text-ink-soft">Brief.ai is analyzing the document…</p>

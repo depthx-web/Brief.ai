@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import type { Segment } from '@/lib/authApi';
+import { fetchMyActivity, type AiActivity } from '@/lib/aiApi';
 
 const SEGMENTS: { value: Segment; label: string }[] = [
   { value: 'LAWYER', label: 'Lawyer' },
@@ -11,8 +12,16 @@ const SEGMENTS: { value: Segment; label: string }[] = [
   { value: 'RESEARCHER', label: 'Researcher' },
 ];
 
+const OPERATION_LABELS: Record<string, string> = {
+  SUMMARIZE: 'Summarize',
+  CHAT: 'Ask a question',
+  ANALYZE_CLAUSES: 'Contract analysis',
+  EXTRACT_REFERENCES: 'Reference extraction',
+  EXTRACT_INVOICE: 'Invoice extraction',
+};
+
 export default function Settings() {
-  const { user, updateProfile, deleteAccount } = useAuth();
+  const { user, token, updateProfile, deleteAccount } = useAuth();
   const router = useRouter();
   const [name, setName] = useState(user?.name ?? '');
   const [segment, setSegment] = useState<Segment | null>(user?.segment ?? null);
@@ -20,6 +29,23 @@ export default function Settings() {
   const [saved, setSaved] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activity, setActivity] = useState<AiActivity | null>(null);
+  const [activityError, setActivityError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+    fetchMyActivity(token)
+      .then((result) => {
+        if (!cancelled) setActivity(result);
+      })
+      .catch((err) => {
+        if (!cancelled) setActivityError(err instanceof Error ? err.message : 'Could not load activity.');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
 
   if (!user) return null;
 
@@ -119,6 +145,50 @@ export default function Settings() {
             View plans
           </a>
         </div>
+      </section>
+
+      <section className="mt-14">
+        <h2 className="font-serif text-lg font-semibold text-navy">Activity</h2>
+        <p className="mt-1 text-sm text-ink-soft">
+          {user.segment === 'LAWYER'
+            ? 'An audit log of AI operations run on your documents.'
+            : 'Your recent AI usage, including this month’s total.'}
+        </p>
+
+        {activityError && <p className="mt-4 text-sm text-redline">{activityError}</p>}
+
+        {activity && (
+          <>
+            <p className="mt-4 text-sm font-medium text-ink">
+              {activity.monthlyCount} AI {activity.monthlyCount === 1 ? 'operation' : 'operations'} in the last 30 days
+            </p>
+            {activity.jobs.length === 0 ? (
+              <p className="mt-3 text-sm text-ink-soft">No AI activity yet.</p>
+            ) : (
+              <ul className="mt-3 divide-y divide-gray-200 rounded-lg border border-gray-200 bg-white">
+                {activity.jobs.map((job) => (
+                  <li key={job.id} className="flex items-center justify-between px-4 py-3 text-sm">
+                    <span className="text-ink">{OPERATION_LABELS[job.operation] ?? job.operation}</span>
+                    <span className="flex items-center gap-3">
+                      <span
+                        className={
+                          job.status === 'FAILED'
+                            ? 'text-redline'
+                            : job.status === 'SUCCESS'
+                              ? 'text-emerald'
+                              : 'text-ink-soft'
+                        }
+                      >
+                        {job.status === 'SUCCESS' ? 'Success' : job.status === 'FAILED' ? 'Failed' : 'Processing'}
+                      </span>
+                      <span className="text-ink-soft">{new Date(job.createdAt).toLocaleString()}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        )}
       </section>
 
       <section className="mt-14 border-t border-gray-200 pt-8">

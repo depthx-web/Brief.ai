@@ -52,13 +52,19 @@ enum AiOperation {
 
 // Audit log only — document text and conversation content are never
 // persisted, only sent to the LLM provider for the single request.
+// userId is optional: AI tools work anonymously too, and are only tagged to
+// an account when the caller happens to be logged in (used for the lawyer
+// audit log / researcher usage-tracking view in Settings).
 model AiJob {
   id            String      @id @default(uuid())
+  userId        String?
   operation     AiOperation
   status        ConversionStatus @default(PROCESSING)
   errorMessage  String?     @db.Text
   durationMs    Int?
   createdAt     DateTime    @default(now())
+
+  @@index([userId])
 }
 
 enum Segment {

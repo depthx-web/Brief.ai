@@ -72,6 +72,15 @@ export default function Dashboard() {
         </button>
       </div>
 
+      {user?.segment === 'ACCOUNTANT' && (
+        <a
+          href="/batch-invoices"
+          className="mt-3 inline-block text-sm font-medium text-navy hover:text-emerald"
+        >
+          Processing several invoices at once? Use Batch Invoice Export →
+        </a>
+      )}
+
       <div
         onClick={() => inputRef.current?.click()}
         onDragOver={(e) => {

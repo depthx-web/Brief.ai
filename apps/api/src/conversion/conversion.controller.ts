@@ -9,6 +9,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { ALLOWED_TARGET_FORMATS, ConversionService, TargetFormat } from './conversion.service';
 
@@ -25,6 +26,7 @@ function isTargetFormat(value: string): value is TargetFormat {
   return (ALLOWED_TARGET_FORMATS as readonly string[]).includes(value);
 }
 
+@ApiTags('convert')
 @Controller('convert')
 export class ConversionController {
   constructor(private readonly conversionService: ConversionService) {}

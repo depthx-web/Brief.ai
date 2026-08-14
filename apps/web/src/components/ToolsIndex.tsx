@@ -33,6 +33,16 @@ const TOOL_GROUPS = [
       { href: '/remove-password', name: 'Remove Password', description: 'Remove password protection given the current password.' },
     ],
   },
+  {
+    title: 'Accounting',
+    tools: [
+      {
+        href: '/batch-invoices',
+        name: 'Batch Invoice Export',
+        description: 'Extract data from many invoices at once and export to CSV.',
+      },
+    ],
+  },
 ];
 
 export default function ToolsIndex() {

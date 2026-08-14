@@ -12,6 +12,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
@@ -20,6 +21,8 @@ import { LibraryService } from './library.service';
 
 const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024;
 
+@ApiTags('library')
+@ApiBearerAuth()
 @Controller('library')
 @UseGuards(JwtAuthGuard)
 export class LibraryController {

@@ -9,11 +9,13 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { PasswordService } from './password.service';
 
 const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024;
 
+@ApiTags('password')
 @Controller()
 export class PasswordController {
   constructor(private readonly passwordService: PasswordService) {}
