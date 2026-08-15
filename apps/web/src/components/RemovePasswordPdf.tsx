@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { unlockPdf, downloadBlob } from '@/lib/convertApi';
+import { usePendingToolFile } from '@/lib/usePendingToolFile';
 
 export default function RemovePasswordPdf() {
   const [file, setFile] = useState<File | null>(null);
@@ -9,6 +10,8 @@ export default function RemovePasswordPdf() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  usePendingToolFile(handleFileSelect);
 
   function handleFileSelect(selected: File) {
     setError(null);

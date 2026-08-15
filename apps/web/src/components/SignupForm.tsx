@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import type { Segment } from '@/lib/authApi';
+import GoogleSignInButton from './GoogleSignInButton';
 
 const SEGMENTS: { value: Segment; label: string; description: string }[] = [
   { value: 'LAWYER', label: 'Lawyer', description: 'Contracts, redlines, clause review' },
@@ -125,7 +126,16 @@ export default function SignupForm() {
         <h1 className="font-serif text-2xl font-semibold text-navy">Create your account</h1>
         <p className="mt-2 text-sm text-ink-soft">Free to start — no credit card required.</p>
 
-        <form onSubmit={handleStep1Submit} className="mt-6 space-y-4">
+        <div className="mt-6">
+          <GoogleSignInButton label="Continue with Google" />
+        </div>
+        <div className="my-5 flex items-center gap-3 text-xs text-ink-soft">
+          <span className="h-px flex-1 bg-gray-200" />
+          or
+          <span className="h-px flex-1 bg-gray-200" />
+        </div>
+
+        <form onSubmit={handleStep1Submit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-ink">Email</label>
             <input

@@ -88,6 +88,34 @@ export async function updateProfile(
   return handleResponse<AuthUser>(response);
 }
 
+export async function changePassword(token: string, currentPassword: string, newPassword: string): Promise<void> {
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}/auth/me/password`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+  } catch {
+    throw new Error('Could not reach the server.');
+  }
+  await handleResponse<{ success: boolean }>(response);
+}
+
+export async function changeEmail(token: string, newEmail: string, currentPassword: string): Promise<AuthUser> {
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}/auth/me/email`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ newEmail, currentPassword }),
+    });
+  } catch {
+    throw new Error('Could not reach the server.');
+  }
+  return handleResponse<AuthUser>(response);
+}
+
 export async function deleteAccount(token: string): Promise<void> {
   let response: Response;
   try {

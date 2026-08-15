@@ -35,6 +35,13 @@ export class EmailCampaignService {
     });
   }
 
+  async sendSecurityAlert(email: string, name: string | null, changeType: 'password' | 'email'): Promise<void> {
+    await this.sendIfEnabled('SECURITY', email, {
+      NAME: name || 'there',
+      CHANGE_TYPE: changeType,
+    });
+  }
+
   async sendWinBack(email: string, name: string | null, discountCode: string): Promise<void> {
     await this.sendIfEnabled('WINBACK', email, {
       NAME: name || 'there',

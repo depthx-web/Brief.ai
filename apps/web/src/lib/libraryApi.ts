@@ -4,12 +4,31 @@ export interface LibraryDocumentSummary {
   id: string;
   filename: string;
   docType: string | null;
+  projectId: string | null;
   createdAt: string;
 }
 
 export interface LibrarySearchResult extends LibraryDocumentSummary {
   snippet: string;
   score: number;
+}
+
+export interface ProjectSummary {
+  id: string;
+  name: string;
+  category: string | null;
+  createdAt: string;
+  expiresAt: string;
+  documentCount: number;
+}
+
+export interface ProjectDetail {
+  id: string;
+  name: string;
+  category: string | null;
+  createdAt: string;
+  expiresAt: string;
+  documents: LibraryDocumentSummary[];
 }
 
 async function handleResponse<T>(response: Response): Promise<T> {
@@ -34,12 +53,14 @@ export async function uploadDocument(
   token: string,
   file: File,
   text: string,
-  docType?: string
+  docType?: string,
+  projectId?: string
 ): Promise<LibraryDocumentSummary> {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('text', text);
   if (docType) formData.append('docType', docType);
+  if (projectId) formData.append('projectId', projectId);
 
   let response: Response;
   try {
@@ -57,6 +78,15 @@ export async function uploadDocument(
 export async function listDocuments(token: string): Promise<LibraryDocumentSummary[]> {
   const response = await fetch(`${API_URL}/library/documents`, { headers: authHeaders(token) });
   return handleResponse<LibraryDocumentSummary[]>(response);
+}
+
+export async function renameDocument(token: string, id: string, filename: string): Promise<LibraryDocumentSummary> {
+  const response = await fetch(`${API_URL}/library/documents/${id}`, {
+    method: 'PATCH',
+    headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ filename }),
+  });
+  return handleResponse<LibraryDocumentSummary>(response);
 }
 
 export async function deleteDocument(token: string, id: string): Promise<void> {
@@ -87,6 +117,47 @@ export async function downloadDocument(token: string, id: string, filename: stri
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+export async function createProject(
+  token: string,
+  name: string,
+  category?: string,
+  retentionDays?: number
+): Promise<ProjectSummary> {
+  const response = await fetch(`${API_URL}/library/projects`, {
+    method: 'POST',
+    headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, category, retentionDays }),
+  });
+  return handleResponse<ProjectSummary>(response);
+}
+
+export async function listProjects(token: string): Promise<ProjectSummary[]> {
+  const response = await fetch(`${API_URL}/library/projects`, { headers: authHeaders(token) });
+  return handleResponse<ProjectSummary[]>(response);
+}
+
+export async function getProject(token: string, id: string): Promise<ProjectDetail> {
+  const response = await fetch(`${API_URL}/library/projects/${id}`, { headers: authHeaders(token) });
+  return handleResponse<ProjectDetail>(response);
+}
+
+export async function extendProjectRetention(token: string, id: string, days: 7 | 30): Promise<ProjectSummary> {
+  const response = await fetch(`${API_URL}/library/projects/${id}/retention`, {
+    method: 'PATCH',
+    headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ days }),
+  });
+  return handleResponse<ProjectSummary>(response);
+}
+
+export async function deleteProject(token: string, id: string): Promise<void> {
+  const response = await fetch(`${API_URL}/library/projects/${id}`, {
+    method: 'DELETE',
+    headers: authHeaders(token),
+  });
+  await handleResponse<{ success: boolean }>(response);
 }
 
 export async function searchLibrary(token: string, query: string): Promise<LibrarySearchResult[]> {

@@ -1,9 +1,18 @@
-import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
+import { randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import { EmailCampaignService } from '../mail/email-campaign.service';
+
+const API_PUBLIC_URL = process.env.API_PUBLIC_URL ?? 'http://localhost:3001';
+
+interface GoogleIdTokenPayload {
+  email?: string;
+  email_verified?: boolean;
+  name?: string;
+}
 
 export type Segment = 'LAWYER' | 'ACCOUNTANT' | 'RESEARCHER';
 export type Plan = 'FREE' | 'PAID';
@@ -65,6 +74,79 @@ export class AuthService {
   async updateProfile(id: string, data: { name?: string; segment?: Segment }): Promise<SafeUser> {
     const user = await this.prisma.user.update({ where: { id }, data });
     return this.toSafeUser(user);
+  }
+
+  async changePassword(id: string, currentPassword: string, newPassword: string): Promise<void> {
+    const user = await this.prisma.user.findUniqueOrThrow({ where: { id } });
+    const matches = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!matches) throw new BadRequestException('Current password is incorrect.');
+    if (newPassword.length < 8) throw new BadRequestException('New password must be at least 8 characters.');
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await this.prisma.user.update({ where: { id }, data: { passwordHash } });
+
+    // Fire-and-forget: a slow/failed alert shouldn't fail the password change itself.
+    this.emailCampaigns.sendSecurityAlert(user.email, user.name, 'password').catch(() => {});
+  }
+
+  async changeEmail(id: string, newEmail: string, currentPassword: string): Promise<SafeUser> {
+    const user = await this.prisma.user.findUniqueOrThrow({ where: { id } });
+    const matches = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!matches) throw new BadRequestException('Current password is incorrect.');
+
+    const existing = await this.prisma.user.findUnique({ where: { email: newEmail } });
+    if (existing && existing.id !== id) throw new ConflictException('An account with this email already exists.');
+
+    const oldEmail = user.email;
+    const updated = await this.prisma.user.update({ where: { id }, data: { email: newEmail } });
+
+    // Notify the OLD address — if this change wasn't authorized, that's the inbox that needs to know.
+    this.emailCampaigns.sendSecurityAlert(oldEmail, user.name, 'email').catch(() => {});
+
+    return this.toSafeUser(updated);
+  }
+
+  // Manual code exchange rather than a passport-google-oauth20 strategy —
+  // avoids an extra dependency for what's a single server-to-server POST.
+  // The id_token is trusted without JWKS verification because it comes
+  // straight from Google's token endpoint over HTTPS, not from the client.
+  async completeGoogleLogin(code: string) {
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+    if (!clientId || !clientSecret) throw new BadRequestException('Google sign-in is not configured.');
+
+    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        code,
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uri: `${API_PUBLIC_URL}/auth/google/callback`,
+        grant_type: 'authorization_code',
+      }),
+    });
+    if (!tokenResponse.ok) throw new UnauthorizedException('Could not complete Google sign-in.');
+    const { id_token } = (await tokenResponse.json()) as { id_token?: string };
+    if (!id_token) throw new UnauthorizedException('Could not complete Google sign-in.');
+
+    const payloadJson = Buffer.from(id_token.split('.')[1], 'base64url').toString('utf8');
+    const payload = JSON.parse(payloadJson) as GoogleIdTokenPayload;
+    if (!payload.email || !payload.email_verified) {
+      throw new UnauthorizedException('Google account has no verified email.');
+    }
+
+    let user = await this.prisma.user.findUnique({ where: { email: payload.email } });
+    if (!user) {
+      const passwordHash = await bcrypt.hash(randomBytes(32).toString('hex'), 10);
+      user = await this.prisma.user.create({
+        data: { email: payload.email, passwordHash, name: payload.name },
+      });
+      this.emailCampaigns.sendWelcome(user.email, user.name).catch(() => {});
+    }
+    if (user.status === 'BANNED') throw new UnauthorizedException('This account has been suspended.');
+
+    return this.buildAuthResponse(user);
   }
 
   async deleteAccount(id: string): Promise<void> {

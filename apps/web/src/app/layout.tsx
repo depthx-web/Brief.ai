@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter, Newsreader, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/lib/AuthContext';
+import { Toaster } from '@/lib/toast';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const newsreader = Newsreader({
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${inter.variable} ${newsreader.variable} ${plexMono.variable}`}>
       <body className="font-sans min-h-screen bg-surface text-ink">
         <AuthProvider>{children}</AuthProvider>
+        <Toaster />
       </body>
     </html>
   );

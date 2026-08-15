@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import { PDFDocument, StandardFonts } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { createWorker } from 'tesseract.js';
+import { usePendingToolFile } from '@/lib/usePendingToolFile';
 
 // Served as a static asset (see scripts/copy-pdf-worker.mjs) rather than bundled,
 // since Next's production minifier chokes on the worker's ESM syntax.
@@ -29,6 +30,8 @@ export default function OcrPdf() {
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  usePendingToolFile(handleFileSelect);
 
   async function handleFileSelect(selected: File) {
     setError(null);

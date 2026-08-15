@@ -101,6 +101,7 @@ model User {
   status       UserStatus @default(ACTIVE)
   createdAt    DateTime  @default(now())
   documents    LibraryDocument[]
+  projects     Project[]
 
   // Billing (Lemon Squeezy). plan/billingCycle reflect the last-confirmed
   // subscription state, synced via the Lemon Squeezy webhook — not the
@@ -126,6 +127,7 @@ enum EmailCampaignKey {
   WELCOME
   UPGRADE
   WINBACK
+  SECURITY
 }
 
 // Admin-editable email automations. body is a template with a small set of
@@ -137,6 +139,26 @@ model EmailCampaign {
   enabled Boolean          @default(true)
   subject String
   body    String           @db.Text
+}
+
+// A bundle of files uploaded together on the Library page (Batch 3, Section
+// 2). Every project carries its own retention clock — expiresAt starts at
+// 24h and is pushed out by extendRetention (7 or 30 days) — and is swept by
+// ProjectRetentionService once it lapses, cascading out its documents.
+model Project {
+  id        String            @id @default(uuid())
+  userId    String
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  // One of the segment's docType chips (e.g. "Contract", "Invoice") at
+  // creation time — drives the card's top-strip accent color on the grid.
+  category  String?
+  createdAt DateTime          @default(now())
+  expiresAt DateTime
+  documents LibraryDocument[]
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 // Opt-in persistent storage — the file and its embedding are kept only
@@ -156,7 +178,14 @@ model LibraryDocument {
   docType      String?
   createdAt    DateTime @default(now())
 
+  // Nullable: documents uploaded before Batch 3 (or via the Dashboard's
+  // quick-upload, which bypasses the project flow) have no project and are
+  // shown as "Unsorted" on the Library page instead of a retention card.
+  projectId    String?
+  project      Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
   @@index([userId])
+  @@index([projectId])
 }
 
 // Admin-editable price per segment x cycle — seeded from the original

@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import { PDFDocument } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
+import { usePendingToolFile } from '@/lib/usePendingToolFile';
 
 // Served as a static asset (see scripts/copy-pdf-worker.mjs) rather than bundled,
 // since Next's production minifier chokes on the worker's ESM syntax.
@@ -28,6 +29,8 @@ export default function CompressPdf() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ originalSize: number; newSize: number } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  usePendingToolFile(handleFileSelect);
 
   async function handleFileSelect(selected: File) {
     setError(null);

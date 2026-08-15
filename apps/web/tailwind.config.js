@@ -22,12 +22,21 @@ export default {
           soft: '#4B5768', // secondary/descriptive text
         },
         redline: '#C24444', // warnings, strikethrough, errors only
-        surface: '#F4F6F8', // general page background
+        surface: '#F1F3F6', // general page background
       },
       fontFamily: {
         sans: ['var(--font-inter)', 'sans-serif'],
         serif: ['var(--font-newsreader)', 'serif'],
         mono: ['var(--font-plex-mono)', 'monospace'],
+      },
+      boxShadow: {
+        // Unified elevation system — every floating element introduced in
+        // Batch 3 (dropdowns, drawers, modals, toasts) references one of
+        // these instead of a one-off shadow value.
+        'level-1': '0 1px 3px rgba(15,35,64,0.06)', // fixed on-page cards
+        'level-2': '0 4px 12px rgba(15,35,64,0.12)', // dropdown menus, toasts
+        'level-3': '0 8px 24px rgba(15,35,64,0.18)', // side drawers
+        'level-4': '0 20px 50px rgba(15,35,64,0.28)', // modals
       },
     },
   },

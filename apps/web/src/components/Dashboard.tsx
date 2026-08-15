@@ -6,6 +6,10 @@ import { useAuth } from '@/lib/AuthContext';
 import { extractPdfText } from '@/lib/extractPdfText';
 import { listDocuments, uploadDocument, type LibraryDocumentSummary } from '@/lib/libraryApi';
 import type { Segment } from '@/lib/authApi';
+import { showLoading, resolveLoading, failLoading } from '@/lib/toast';
+import { DOC_TYPES } from '@/lib/docTypes';
+import FileOptionsMenu from './FileOptionsMenu';
+import SwitchWorkspaceModal from './SwitchWorkspaceModal';
 
 const UPLOAD_LABEL: Record<Segment, string> = {
   LAWYER: 'Upload a contract',
@@ -31,21 +35,6 @@ const STATUS_BADGE: Record<Segment, { text: string; className: string }> = {
   RESEARCHER: { text: 'Ready to chat', className: 'bg-emerald-soft text-emerald' },
 };
 
-// Fed to the AI layer as extra context on upload — an NDA and a court memo
-// both live in the LAWYER segment but need differently-focused analysis.
-const DOC_TYPES: Record<Segment, string[]> = {
-  LAWYER: ['Contract', 'NDA', 'Court memo', 'Official correspondence', 'Incorporation document', 'Official decision'],
-  ACCOUNTANT: ['Invoice', 'Bank statement', 'Receipt', 'Payroll document', 'Tax filing', 'Financial statement'],
-  RESEARCHER: [
-    'Academic paper',
-    "Master's/PhD thesis",
-    'Conference paper',
-    'Preprint',
-    'Literature review source',
-    'Research dataset info',
-  ],
-};
-
 export default function Dashboard() {
   const { user, token } = useAuth();
   const router = useRouter();
@@ -55,6 +44,7 @@ export default function Dashboard() {
   const [isDragOver, setIsDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedDocType, setSelectedDocType] = useState<string | null>(null);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -77,17 +67,23 @@ export default function Dashboard() {
       return;
     }
     setIsUploading(true);
+    const toastId = showLoading(`Uploading ${file.name}…`);
     try {
       const pages = await extractPdfText(file);
       const fullText = pages.map((p) => p.text).join('\n\n');
       if (!fullText.trim()) {
-        setError('No extractable text found — scanned documents need OCR first.');
+        const message = 'No extractable text found — scanned documents need OCR first.';
+        setError(message);
+        failLoading(toastId, message);
         return;
       }
       const doc = await uploadDocument(token, file, fullText, selectedDocType ?? undefined);
+      resolveLoading(toastId, 'Uploaded successfully');
       router.push(`/workspace?doc=${doc.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not upload this document.');
+      const message = err instanceof Error ? err.message : 'Could not upload this document.';
+      setError(message);
+      failLoading(toastId, message, { onRetry: () => handleFile(file) });
     } finally {
       setIsUploading(false);
     }
@@ -205,12 +201,25 @@ export default function Dashboard() {
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {recent.map((doc) => (
-              <button
+              <div
                 key={doc.id}
+                role="button"
+                tabIndex={0}
                 onClick={() => router.push(`/workspace?doc=${doc.id}`)}
-                className="rounded-lg border border-gray-200 bg-white p-4 text-left transition-colors hover:border-emerald"
+                onKeyDown={(e) => e.key === 'Enter' && router.push(`/workspace?doc=${doc.id}`)}
+                className="shadow-level-1 cursor-pointer rounded-lg border border-gray-200 bg-white p-4 text-left transition-colors hover:border-emerald"
               >
-                <p className="truncate font-mono text-sm text-ink">{doc.filename}</p>
+                <div className="flex items-start justify-between gap-2">
+                  <p className="truncate font-mono text-sm text-ink">{doc.filename}</p>
+                  <FileOptionsMenu
+                    doc={doc}
+                    onRenamed={(updated) =>
+                      setRecent((prev) => prev.map((d) => (d.id === updated.id ? updated : d)))
+                    }
+                    onDeleted={(id) => setRecent((prev) => prev.filter((d) => d.id !== id))}
+                    onUpgradeNeeded={() => setUpgradeModalOpen(true)}
+                  />
+                </div>
                 <div className="mt-2 flex items-center justify-between gap-2">
                   <span className="text-xs text-ink-soft">
                     {new Date(doc.createdAt).toLocaleDateString()}
@@ -224,11 +233,17 @@ export default function Dashboard() {
                     </span>
                   )}
                 </div>
-              </button>
+              </div>
             ))}
           </div>
         )}
       </div>
+
+      <SwitchWorkspaceModal
+        open={upgradeModalOpen}
+        initialStep="cycle"
+        onClose={() => setUpgradeModalOpen(false)}
+      />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import { PDFDocument } from 'pdf-lib';
 import JSZip from 'jszip';
 import { parsePageRanges, everyPageIndividually, type PageRange } from '@/lib/pageRanges';
+import { usePendingToolFile } from '@/lib/usePendingToolFile';
 
 function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
@@ -22,6 +23,8 @@ export default function SplitPdf() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  usePendingToolFile(handleFileSelect);
 
   async function handleFileSelect(selected: File) {
     setError(null);

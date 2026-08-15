@@ -67,7 +67,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
   return (
     <div className="flex min-h-screen">
-      <aside className="flex h-screen w-[260px] shrink-0 flex-col bg-navy text-white">
+      <aside className="fixed inset-y-0 left-0 z-10 flex h-screen w-[260px] shrink-0 flex-col overflow-y-auto bg-navy text-white">
         <div className="flex items-center gap-2 px-6 py-6">
           <Link href="/admin" className="font-serif text-xl font-semibold">
             brief<span className="text-emerald">.ai</span>
@@ -101,8 +101,8 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         </div>
       </aside>
 
-      <div className="flex-1 bg-surface">
-        <div className="border-b border-gray-200 bg-white px-8 py-3">
+      <div className="bg-dot-pattern ml-[260px] h-screen flex-1 overflow-y-auto bg-surface">
+        <div className="sticky top-0 z-[5] border-b border-gray-200 bg-white px-8 py-3">
           <form onSubmit={handleSearch} className="max-w-md">
             <input
               type="search"

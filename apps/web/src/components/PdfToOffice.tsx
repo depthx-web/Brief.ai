@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { convertFile, downloadBlob } from '@/lib/convertApi';
+import { usePendingToolFile } from '@/lib/usePendingToolFile';
 
 type Format = 'docx' | 'xlsx' | 'pptx';
 
@@ -17,6 +18,8 @@ export default function PdfToOffice() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  usePendingToolFile(handleFileSelect);
 
   function handleFileSelect(selected: File) {
     setError(null);

@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 body {
-  background-color: #f4f6f8;
+  background-color: #f1f3f6;
   color: #101826;
 }
 
@@ -21,4 +21,96 @@ body {
 
 .fade-in-200 {
   animation: fade-in-200 200ms ease-out;
+}
+
+/* Very low-opacity dot grid — gives inner pages light depth instead of a
+   flat gray fill, without competing with foreground content. Same motif as
+   the marketing Hero's background texture, extended app-wide. */
+.bg-dot-pattern {
+  background-image: radial-gradient(rgba(16, 24, 38, 0.05) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
+
+/* Level 4 modal backdrop — dims the page behind a modal. */
+.overlay-dim {
+  background: rgba(15, 35, 64, 0.32);
+}
+
+@keyframes dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-dropdown-in {
+  animation: dropdown-in 150ms ease-out;
+}
+
+@keyframes drawer-in {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.animate-drawer-in {
+  animation: drawer-in 200ms ease-out;
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+.animate-modal-in {
+  animation: modal-in 180ms ease-out;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-toast-in {
+  animation: toast-in 250ms ease-out;
+}
+
+@keyframes toast-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+.animate-toast-out {
+  animation: toast-out 200ms ease-in forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-in-200,
+  .animate-dropdown-in,
+  .animate-drawer-in,
+  .animate-modal-in,
+  .animate-toast-in,
+  .animate-toast-out {
+    animation: none;
+  }
 }

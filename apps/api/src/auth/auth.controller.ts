@@ -1,9 +1,25 @@
-import { BadRequestException, Body, Controller, Delete, Get, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Patch,
+  Post,
+  Query,
+  Res,
+  ServiceUnavailableException,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import type { Response } from 'express';
 import { AuthService, Segment } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { CurrentUser } from './current-user.decorator';
 import type { SafeUser } from './auth.service';
+
+const APP_URL = process.env.APP_URL ?? 'http://localhost:3000';
+const API_PUBLIC_URL = process.env.API_PUBLIC_URL ?? 'http://localhost:3001';
 
 const VALID_SEGMENTS: Segment[] = ['LAWYER', 'ACCOUNTANT', 'RESEARCHER'];
 
@@ -22,6 +38,16 @@ interface LoginBody {
 interface UpdateProfileBody {
   name?: string;
   segment?: string;
+}
+
+interface ChangePasswordBody {
+  currentPassword?: string;
+  newPassword?: string;
+}
+
+interface ChangeEmailBody {
+  newEmail?: string;
+  currentPassword?: string;
 }
 
 @ApiTags('auth')
@@ -54,6 +80,32 @@ export class AuthController {
     return this.authService.login(body.email.trim().toLowerCase(), body.password);
   }
 
+  @Get('google')
+  googleStart(@Res() res: Response) {
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    if (!clientId) throw new ServiceUnavailableException('Google sign-in is not configured yet.');
+
+    const url = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+    url.searchParams.set('client_id', clientId);
+    url.searchParams.set('redirect_uri', `${API_PUBLIC_URL}/auth/google/callback`);
+    url.searchParams.set('response_type', 'code');
+    url.searchParams.set('scope', 'openid email profile');
+    url.searchParams.set('access_type', 'online');
+    url.searchParams.set('prompt', 'select_account');
+    res.redirect(url.toString());
+  }
+
+  @Get('google/callback')
+  async googleCallback(@Query('code') code: string | undefined, @Res() res: Response) {
+    if (!code) return res.redirect(`${APP_URL}/login?error=google_failed`);
+    try {
+      const { token } = await this.authService.completeGoogleLogin(code);
+      res.redirect(`${APP_URL}/google/complete?token=${encodeURIComponent(token)}`);
+    } catch {
+      res.redirect(`${APP_URL}/login?error=google_failed`);
+    }
+  }
+
   @Get('me')
   @UseGuards(JwtAuthGuard)
   me(@CurrentUser() user: SafeUser) {
@@ -71,6 +123,25 @@ export class AuthController {
       name: body.name?.trim() || undefined,
       segment,
     });
+  }
+
+  @Patch('me/password')
+  @UseGuards(JwtAuthGuard)
+  async changePassword(@CurrentUser() user: SafeUser, @Body() body: ChangePasswordBody) {
+    if (!body.currentPassword || !body.newPassword) {
+      throw new BadRequestException('Current and new password are required.');
+    }
+    await this.authService.changePassword(user.id, body.currentPassword, body.newPassword);
+    return { success: true };
+  }
+
+  @Patch('me/email')
+  @UseGuards(JwtAuthGuard)
+  async changeEmail(@CurrentUser() user: SafeUser, @Body() body: ChangeEmailBody) {
+    if (!body.newEmail?.trim() || !body.currentPassword) {
+      throw new BadRequestException('New email and current password are required.');
+    }
+    return this.authService.changeEmail(user.id, body.newEmail.trim().toLowerCase(), body.currentPassword);
   }
 
   @Delete('me')

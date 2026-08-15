@@ -257,7 +257,7 @@ export async function updateAdminRoutingRule(
   await adminFetch(token, `/admin/ai-providers/routing/${alias}`, { method: 'PATCH', body: { model } });
 }
 
-export type AdminEmailCampaignKey = 'WELCOME' | 'UPGRADE' | 'WINBACK';
+export type AdminEmailCampaignKey = 'WELCOME' | 'UPGRADE' | 'WINBACK' | 'SECURITY';
 
 export interface AdminEmailCampaign {
   id: string;

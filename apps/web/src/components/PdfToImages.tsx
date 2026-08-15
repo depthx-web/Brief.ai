@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import JSZip from 'jszip';
+import { usePendingToolFile } from '@/lib/usePendingToolFile';
 
 // Served as a static asset (see scripts/copy-pdf-worker.mjs) rather than bundled,
 // since Next's production minifier chokes on the worker's ESM syntax.
@@ -25,6 +26,8 @@ export default function PdfToImages() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  usePendingToolFile(handleFileSelect);
 
   async function handleFileSelect(selected: File) {
     setError(null);

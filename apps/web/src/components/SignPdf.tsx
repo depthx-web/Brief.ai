@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import type { MouseEvent as ReactMouseEvent, PointerEvent as ReactPointerEvent } from 'react';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
+import { usePendingToolFile } from '@/lib/usePendingToolFile';
 
 // Served as a static asset (see scripts/copy-pdf-worker.mjs) rather than bundled,
 // since Next's production minifier chokes on the worker's ESM syntax.
@@ -36,6 +37,8 @@ export default function SignPdf() {
   const signatureFileInputRef = useRef<HTMLInputElement>(null);
   const drawCanvasRef = useRef<HTMLCanvasElement>(null);
   const lastPointRef = useRef<{ x: number; y: number } | null>(null);
+
+  usePendingToolFile(handleFileSelect);
 
   async function renderPagePreview(pdfFile: File, pageNum: number) {
     const bytes = new Uint8Array(await pdfFile.arrayBuffer());

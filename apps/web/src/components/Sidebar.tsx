@@ -17,7 +17,7 @@ export default function Sidebar({ onOpenSwitchModal }: { onOpenSwitchModal: () =
   const { user, logout } = useAuth();
 
   return (
-    <aside className="flex h-screen w-60 shrink-0 flex-col bg-navy text-white">
+    <aside className="fixed inset-y-0 left-0 z-10 flex h-screen w-60 shrink-0 flex-col overflow-y-auto bg-navy text-white">
       <Link href="/" className="px-6 py-6 font-serif text-xl font-semibold">
         brief<span className="text-emerald">.ai</span>
       </Link>

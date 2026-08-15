@@ -5,6 +5,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Res,
   UploadedFile,
@@ -34,11 +35,49 @@ export class LibraryController {
     @UploadedFile() file: Express.Multer.File | undefined,
     @Body('text') text: string | undefined,
     @Body('docType') docType: string | undefined,
+    @Body('projectId') projectId: string | undefined,
     @CurrentUser() user: SafeUser
   ) {
     if (!file) throw new BadRequestException('No file uploaded.');
     if (!text?.trim()) throw new BadRequestException('No extracted text provided.');
-    return this.libraryService.addDocument(user.id, file, text, docType);
+    return this.libraryService.addDocument(user.id, file, text, docType, projectId);
+  }
+
+  @Post('projects')
+  async createProject(
+    @Body('name') name: string | undefined,
+    @Body('category') category: string | undefined,
+    @Body('retentionDays') retentionDays: number | undefined,
+    @CurrentUser() user: SafeUser
+  ) {
+    if (!name?.trim()) throw new BadRequestException('A project name is required.');
+    return this.libraryService.createProject(user.id, name.trim(), category, retentionDays);
+  }
+
+  @Get('projects')
+  async listProjects(@CurrentUser() user: SafeUser) {
+    return this.libraryService.listProjects(user.id);
+  }
+
+  @Get('projects/:id')
+  async getProject(@Param('id') id: string, @CurrentUser() user: SafeUser) {
+    return this.libraryService.getProject(user.id, id);
+  }
+
+  @Patch('projects/:id/retention')
+  async extendRetention(
+    @Param('id') id: string,
+    @Body('days') days: number | undefined,
+    @CurrentUser() user: SafeUser
+  ) {
+    if (!days) throw new BadRequestException('A retention length (7 or 30 days) is required.');
+    return this.libraryService.extendProjectRetention(user.id, id, days);
+  }
+
+  @Delete('projects/:id')
+  async removeProject(@Param('id') id: string, @CurrentUser() user: SafeUser) {
+    await this.libraryService.removeProject(user.id, id);
+    return { success: true };
   }
 
   @Get('documents')
@@ -54,6 +93,16 @@ export class LibraryController {
       'Content-Disposition': `attachment; filename="${filename}"`,
     });
     res.send(buffer);
+  }
+
+  @Patch('documents/:id')
+  async rename(
+    @Param('id') id: string,
+    @Body('filename') filename: string | undefined,
+    @CurrentUser() user: SafeUser
+  ) {
+    if (!filename?.trim()) throw new BadRequestException('A file name is required.');
+    return this.libraryService.rename(user.id, id, filename.trim());
   }
 
   @Delete('documents/:id')

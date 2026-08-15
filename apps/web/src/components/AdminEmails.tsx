@@ -21,6 +21,11 @@ const CAMPAIGN_META: Record<AdminEmailCampaignKey, { icon: string; title: string
     title: 'Win-back',
     description: 'Sent automatically 14 days after a subscription cancels, with an auto-generated discount code.',
   },
+  SECURITY: {
+    icon: '🛡️',
+    title: 'Security change notification',
+    description: 'Sent automatically whenever a password or email address is changed.',
+  },
 };
 
 function EditorModal({
@@ -54,8 +59,8 @@ function EditorModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(15,35,64,0.6)] p-4">
-      <div className="flex max-h-[85vh] w-full max-w-4xl flex-col rounded-[14px] bg-white p-8 shadow-2xl">
+    <div className="overlay-dim fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="animate-modal-in flex max-h-[85vh] w-full max-w-4xl flex-col rounded-[14px] bg-white p-8 shadow-level-4">
         <h2 className="font-serif text-xl font-semibold text-navy">
           Edit {CAMPAIGN_META[campaign.key].title}
         </h2>
@@ -70,7 +75,7 @@ function EditorModal({
             />
             <label className="mt-4 text-sm font-medium text-ink">
               Body (HTML — {'{{NAME}}'}, {'{{DASHBOARD_URL}}'}, {'{{PLAN_CYCLE}}'}, {'{{DISCOUNT_CODE}}'},{' '}
-              {'{{PRICING_URL}}'} available depending on the email)
+              {'{{PRICING_URL}}'}, {'{{CHANGE_TYPE}}'} available depending on the email)
             </label>
             <textarea
               value={body}

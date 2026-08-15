@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import type { Segment } from '@/lib/authApi';
 import { fetchPlans, startCheckout, formatCents, type BillingCycle, type SegmentPricing } from '@/lib/billingApi';
+import { showError, showSuccess } from '@/lib/toast';
 
 const SEGMENTS: { value: Segment; label: string; description: string }[] = [
   { value: 'LAWYER', label: 'Lawyer', description: 'Contracts, redlines, clause review' },
@@ -91,22 +92,27 @@ export default function SwitchWorkspaceModal({ open, initialStep, onClose }: Pro
         } catch (err) {
           // Billing not configured yet — the workspace switch above still
           // applies, so tell the user plainly rather than blocking it.
-          setError(err instanceof Error ? err.message : 'Could not start checkout.');
+          const message = err instanceof Error ? err.message : 'Could not start checkout.';
+          setError(message);
+          showError(message);
           return;
         }
       }
 
+      showSuccess('Workspace updated');
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not switch workspace.');
+      const message = err instanceof Error ? err.message : 'Could not switch workspace.';
+      setError(message);
+      showError(message);
     } finally {
       setIsSubmitting(false);
     }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(15,35,64,0.6)] p-4">
-      <div className="w-full max-w-[640px] rounded-[14px] bg-white p-8 shadow-2xl">
+    <div className="overlay-dim fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="animate-modal-in w-full max-w-[640px] rounded-[14px] bg-white p-8 shadow-level-4">
         <h2 className="font-serif text-xl font-semibold text-navy">Switch your workspace or plan</h2>
 
         <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">

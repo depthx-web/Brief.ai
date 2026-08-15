@@ -6,6 +6,8 @@ import {
   login as apiLogin,
   signup as apiSignup,
   updateProfile as apiUpdateProfile,
+  changePassword as apiChangePassword,
+  changeEmail as apiChangeEmail,
   deleteAccount as apiDeleteAccount,
   type AuthUser,
   type Segment,
@@ -18,9 +20,12 @@ interface AuthContextValue {
   token: string | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithToken: (newToken: string) => Promise<void>;
   signup: (email: string, password: string, name?: string, segment?: Segment) => Promise<void>;
   logout: () => void;
   updateProfile: (data: { name?: string; segment?: Segment }) => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  changeEmail: (newEmail: string, currentPassword: string) => Promise<void>;
   deleteAccount: () => Promise<void>;
 }
 
@@ -55,6 +60,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(newUser);
   }
 
+  async function loginWithToken(newToken: string) {
+    const authedUser = await fetchMe(newToken);
+    localStorage.setItem(TOKEN_KEY, newToken);
+    setToken(newToken);
+    setUser(authedUser);
+  }
+
   async function signup(email: string, password: string, name?: string, segment?: Segment) {
     const { token: newToken, user: newUser } = await apiSignup(email, password, name, segment);
     localStorage.setItem(TOKEN_KEY, newToken);
@@ -73,6 +85,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(await apiUpdateProfile(token, data));
   }
 
+  async function changePassword(currentPassword: string, newPassword: string) {
+    if (!token) return;
+    await apiChangePassword(token, currentPassword, newPassword);
+  }
+
+  async function changeEmail(newEmail: string, currentPassword: string) {
+    if (!token) return;
+    setUser(await apiChangeEmail(token, newEmail, currentPassword));
+  }
+
   async function deleteAccount() {
     if (!token) return;
     await apiDeleteAccount(token);
@@ -81,7 +103,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, isLoading, login, signup, logout, updateProfile, deleteAccount }}
+      value={{
+        user,
+        token,
+        isLoading,
+        login,
+        loginWithToken,
+        signup,
+        logout,
+        updateProfile,
+        changePassword,
+        changeEmail,
+        deleteAccount,
+      }}
     >
       {children}
     </AuthContext.Provider>
