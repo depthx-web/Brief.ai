@@ -64,3 +64,5 @@ lerna-debug.log*
 # Test coverage
 *.lcov
 coverage/
+.vercel
+.env*
