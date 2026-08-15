@@ -5,6 +5,7 @@ import { PDFDocument, degrees } from 'pdf-lib';
 import { loadPdfForPreview, renderAllThumbnails, renderPageDataUrl } from '@/lib/pdfThumbnails';
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
 import PageThumbnailStrip from './PageThumbnailStrip';
+import GuestEncouragementBar from './GuestEncouragementBar';
 
 interface PageItem {
   id: string;
@@ -21,6 +22,7 @@ export default function RotatePdf() {
   const [isLoadingThumbs, setIsLoadingThumbs] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [completed, setCompleted] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   usePendingToolFile(handleFileSelect);
@@ -102,6 +104,7 @@ export default function RotatePdf() {
       a.download = file.name.replace(/\.pdf$/i, '') + '-rotated.pdf';
       a.click();
       URL.revokeObjectURL(url);
+      setCompleted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not rotate this PDF.');
     } finally {
@@ -193,6 +196,8 @@ export default function RotatePdf() {
       >
         {isProcessing ? 'Rotating…' : 'Rotate & Download'}
       </button>
+
+      {completed && <GuestEncouragementBar />}
     </div>
   );
 }

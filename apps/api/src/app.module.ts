@@ -12,6 +12,7 @@ import { LibraryModule } from './library/library.module';
 import { AdminModule } from './admin/admin.module';
 import { BillingModule } from './billing/billing.module';
 import { WinBackModule } from './mail/winback.module';
+import { SignaturesModule } from './signatures/signatures.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { WinBackModule } from './mail/winback.module';
     AdminModule,
     BillingModule,
     WinBackModule,
+    SignaturesModule,
   ],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

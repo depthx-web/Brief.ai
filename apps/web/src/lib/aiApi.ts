@@ -136,6 +136,137 @@ export async function extractInvoiceData(pages: PageText[], token?: string, docT
   return postJson<InvoiceData>('/ai/extract-invoice', { pages, docType }, token);
 }
 
+export interface DuplicatePayment {
+  description: string;
+  amount: string;
+  occurrences: number;
+}
+
+export interface DuplicatePaymentReport {
+  duplicates: DuplicatePayment[];
+}
+
+export async function detectDuplicatePayments(pages: PageText[], token?: string): Promise<DuplicatePaymentReport> {
+  return postJson<DuplicatePaymentReport>('/ai/detect-duplicate-payments', { pages }, token);
+}
+
+export interface CompareFlag {
+  excerpt: string;
+  riskLevel: 'low' | 'medium' | 'high';
+  explanation: string;
+}
+
+export interface CompareResult {
+  flags: CompareFlag[];
+}
+
+export async function compareContracts(
+  pagesA: PageText[],
+  pagesB: PageText[],
+  token?: string,
+  docType?: string
+): Promise<CompareResult> {
+  return postJson<CompareResult>('/ai/compare-contracts', { pagesA, pagesB, docType }, token);
+}
+
+export async function comparePapers(pagesA: PageText[], pagesB: PageText[], token?: string): Promise<CompareResult> {
+  return postJson<CompareResult>('/ai/compare-papers', { pagesA, pagesB }, token);
+}
+
+export async function summarizePlain(pages: PageText[], token?: string, docType?: string): Promise<string> {
+  const { summary } = await postJson<{ summary: string }>('/ai/summarize-plain', { pages, docType }, token);
+  return summary;
+}
+
+export interface NdaCriterion {
+  name: string;
+  status: 'ok' | 'missing' | 'concern';
+  detail: string;
+}
+
+export interface NdaAudit {
+  criteria: NdaCriterion[];
+}
+
+export async function auditNda(pages: PageText[], token?: string): Promise<NdaAudit> {
+  return postJson<NdaAudit>('/ai/audit-nda', { pages }, token);
+}
+
+export interface SensitiveDataItem {
+  excerpt: string;
+  type: string;
+}
+
+export interface SensitiveDataReport {
+  items: SensitiveDataItem[];
+}
+
+export async function detectSensitiveData(pages: PageText[], token?: string): Promise<SensitiveDataReport> {
+  return postJson<SensitiveDataReport>('/ai/detect-sensitive-data', { pages }, token);
+}
+
+export interface FinancialRatio {
+  name: string;
+  value: string;
+  explanation: string;
+}
+
+export interface FinancialRatioReport {
+  ratios: FinancialRatio[];
+}
+
+export async function analyzeFinancialRatios(pages: PageText[], token?: string): Promise<FinancialRatioReport> {
+  return postJson<FinancialRatioReport>('/ai/analyze-financial-ratios', { pages }, token);
+}
+
+export interface ReconciliationDiscrepancy {
+  description: string;
+  amount: string;
+  side: 'bank' | 'records';
+}
+
+export interface ReconciliationReport {
+  matchedCount: number;
+  discrepancies: ReconciliationDiscrepancy[];
+}
+
+export async function reconcileBank(
+  pagesBank: PageText[],
+  pagesRecords: PageText[],
+  token?: string
+): Promise<ReconciliationReport> {
+  return postJson<ReconciliationReport>('/ai/reconcile-bank', { pagesBank, pagesRecords }, token);
+}
+
+export interface DeductibleExpenseItem {
+  description: string;
+  amount: string;
+  reason: string;
+}
+
+export interface DeductibleExpenseReport {
+  items: DeductibleExpenseItem[];
+}
+
+export async function flagDeductibleExpenses(pages: PageText[], token?: string): Promise<DeductibleExpenseReport> {
+  return postJson<DeductibleExpenseReport>('/ai/flag-deductible-expenses', { pages }, token);
+}
+
+export interface MethodologyExtract {
+  sample: string;
+  tools: string;
+  statisticalAnalysis: string;
+}
+
+export async function extractMethodology(pages: PageText[], token?: string): Promise<MethodologyExtract> {
+  return postJson<MethodologyExtract>('/ai/extract-methodology', { pages }, token);
+}
+
+export async function generateOutline(pages: PageText[], token?: string): Promise<string> {
+  const { outline } = await postJson<{ outline: string }>('/ai/generate-outline', { pages }, token);
+  return outline;
+}
+
 export type AiActivityStatus = 'PROCESSING' | 'SUCCESS' | 'FAILED';
 
 export interface AiActivityJob {

@@ -5,6 +5,7 @@ import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { loadPdfForPreview, renderAllThumbnails, renderPageDataUrl } from '@/lib/pdfThumbnails';
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
 import PageThumbnailStrip from './PageThumbnailStrip';
+import GuestEncouragementBar from './GuestEncouragementBar';
 
 type Position = 'bottom-center' | 'bottom-right' | 'top-right';
 
@@ -30,6 +31,7 @@ export default function PageNumbersPdf() {
   const [isLoadingThumbs, setIsLoadingThumbs] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [completed, setCompleted] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   usePendingToolFile(handleFileSelect);
@@ -117,6 +119,7 @@ export default function PageNumbersPdf() {
       a.download = file.name.replace(/\.pdf$/i, '') + '-numbered.pdf';
       a.click();
       URL.revokeObjectURL(url);
+      setCompleted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not number this PDF.');
     } finally {
@@ -207,6 +210,8 @@ export default function PageNumbersPdf() {
       >
         {isProcessing ? 'Numbering…' : 'Add Numbers & Download'}
       </button>
+
+      {completed && <GuestEncouragementBar />}
     </div>
   );
 }

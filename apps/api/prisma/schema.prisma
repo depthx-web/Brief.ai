@@ -48,6 +48,20 @@ enum AiOperation {
   ANALYZE_CLAUSES
   EXTRACT_REFERENCES
   EXTRACT_INVOICE
+  // Batch 4 — Lawyer
+  COMPARE_CONTRACTS
+  SUMMARIZE_PLAIN
+  AUDIT_NDA
+  DETECT_SENSITIVE_DATA
+  // Batch 4 — Accountant
+  ANALYZE_FINANCIAL_RATIOS
+  RECONCILE_BANK
+  FLAG_DEDUCTIBLE_EXPENSES
+  DETECT_DUPLICATE_PAYMENTS
+  // Batch 4 — Researcher
+  COMPARE_PAPERS
+  EXTRACT_METHODOLOGY
+  GENERATE_OUTLINE
 }
 
 // Audit log only — document text and conversation content are never
@@ -102,6 +116,7 @@ model User {
   createdAt    DateTime  @default(now())
   documents    LibraryDocument[]
   projects     Project[]
+  signatures   SavedSignature[]
 
   // Billing (Lemon Squeezy). plan/billingCycle reflect the last-confirmed
   // subscription state, synced via the Lemon Squeezy webhook — not the
@@ -159,6 +174,20 @@ model Project {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+// Small enough (a canvas drawing or a compact uploaded image) to store as a
+// data URL directly rather than round-tripping through StorageService —
+// avoids a file-storage dependency for what's rarely more than a few KB.
+model SavedSignature {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  imageData String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 // Opt-in persistent storage — the file and its embedding are kept only

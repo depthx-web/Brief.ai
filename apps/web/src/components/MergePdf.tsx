@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { PDFDocument } from 'pdf-lib';
+import GuestEncouragementBar from './GuestEncouragementBar';
 
 interface PdfItem {
   id: string;
@@ -18,6 +19,7 @@ export default function MergePdf() {
   const [isDragOver, setIsDragOver] = useState(false);
   const [isMerging, setIsMerging] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [completed, setCompleted] = useState(false);
   const dragIndex = useRef<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -81,6 +83,7 @@ export default function MergePdf() {
       a.download = 'merged.pdf';
       a.click();
       URL.revokeObjectURL(url);
+      setCompleted(true);
     } catch (err) {
       setError(
         err instanceof Error
@@ -160,6 +163,8 @@ export default function MergePdf() {
       >
         {isMerging ? 'Merging…' : `Merge ${items.length || ''} PDFs & Download`}
       </button>
+
+      {completed && <GuestEncouragementBar />}
     </div>
   );
 }

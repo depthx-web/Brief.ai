@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { PDFDocument } from 'pdf-lib';
+import GuestEncouragementBar from './GuestEncouragementBar';
 
 interface ImageItem {
   id: string;
@@ -24,6 +25,7 @@ export default function ImagesToPdf() {
   const [items, setItems] = useState<ImageItem[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [completed, setCompleted] = useState(false);
   const dragIndex = useRef<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -80,6 +82,7 @@ export default function ImagesToPdf() {
       a.download = 'images.pdf';
       a.click();
       URL.revokeObjectURL(url);
+      setCompleted(true);
     } catch (err) {
       setError(
         err instanceof Error ? `Could not convert: ${err.message}` : 'Could not convert these images.'
@@ -147,6 +150,8 @@ export default function ImagesToPdf() {
       >
         {isProcessing ? 'Converting…' : `Convert ${items.length || ''} Images & Download`}
       </button>
+
+      {completed && <GuestEncouragementBar />}
     </div>
   );
 }

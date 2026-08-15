@@ -5,6 +5,7 @@ import { PDFDocument } from 'pdf-lib';
 import { loadPdfForPreview, renderAllThumbnails, renderPageDataUrl } from '@/lib/pdfThumbnails';
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
 import PageThumbnailStrip, { type ThumbnailPage } from './PageThumbnailStrip';
+import GuestEncouragementBar from './GuestEncouragementBar';
 
 interface PageItem {
   id: string;
@@ -21,6 +22,7 @@ export default function OrganizePdf() {
   const [isLoadingThumbs, setIsLoadingThumbs] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [completed, setCompleted] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   usePendingToolFile(handleFileSelect);
@@ -101,6 +103,7 @@ export default function OrganizePdf() {
       a.download = file.name.replace(/\.pdf$/i, '') + '-organized.pdf';
       a.click();
       URL.revokeObjectURL(url);
+      setCompleted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save this PDF.');
     } finally {
@@ -175,6 +178,8 @@ export default function OrganizePdf() {
       >
         {isProcessing ? 'Saving…' : `Save ${keptCount || ''} Pages & Download`}
       </button>
+
+      {completed && <GuestEncouragementBar />}
     </div>
   );
 }

@@ -15,14 +15,7 @@ import { CurrentUser, OptionalCurrentUser } from '../auth/current-user.decorator
 import type { SafeUser } from '../auth/auth.service';
 import { FeatureGuard } from '../features/feature.guard';
 import { RequireFeature } from '../features/require-feature.decorator';
-import {
-  AiService,
-  ChatMessage,
-  PageText,
-  ReferenceFormat,
-  SummaryLength,
-  SummaryStyle,
-} from './ai.service';
+import { AiService, ChatMessage, PageText, ReferenceFormat, SummaryLength, SummaryStyle } from './ai.service';
 
 interface SummarizeBody {
   pages?: PageText[];
@@ -52,6 +45,22 @@ interface ExtractReferencesBody {
 interface ExtractInvoiceBody {
   pages?: PageText[];
   docType?: string;
+}
+
+interface CompareBody {
+  pagesA?: PageText[];
+  pagesB?: PageText[];
+  docType?: string;
+}
+
+interface SinglePagesBody {
+  pages?: PageText[];
+  docType?: string;
+}
+
+interface ReconcileBankBody {
+  pagesBank?: PageText[];
+  pagesRecords?: PageText[];
 }
 
 // Tighter than the app-wide default (60/min) — every call here costs real
@@ -148,6 +157,142 @@ export class AiController {
       throw new InternalServerErrorException(
         err instanceof Error ? err.message : 'Could not extract invoice data.'
       );
+    }
+  }
+
+  @Post('compare-contracts')
+  @RequireFeature('COMPARE_CONTRACTS')
+  @UseGuards(OptionalJwtAuthGuard, FeatureGuard)
+  async compareContracts(@Body() body: CompareBody, @OptionalCurrentUser() user: SafeUser | null) {
+    if (!body.pagesA?.length || !body.pagesB?.length) throw new BadRequestException('Two documents are required.');
+    try {
+      return await this.aiService.compareContracts(body.pagesA, body.pagesB, user?.id, body.docType);
+    } catch (err) {
+      throw new InternalServerErrorException(err instanceof Error ? err.message : 'Could not compare these contracts.');
+    }
+  }
+
+  @Post('summarize-plain')
+  @RequireFeature('SUMMARIZE_PLAIN')
+  @UseGuards(OptionalJwtAuthGuard, FeatureGuard)
+  async summarizePlain(@Body() body: SinglePagesBody, @OptionalCurrentUser() user: SafeUser | null) {
+    if (!body.pages?.length) throw new BadRequestException('No document text provided.');
+    try {
+      const summary = await this.aiService.summarizePlain(body.pages, user?.id, body.docType);
+      return { summary };
+    } catch (err) {
+      throw new InternalServerErrorException(err instanceof Error ? err.message : 'Could not summarize this document.');
+    }
+  }
+
+  @Post('audit-nda')
+  @RequireFeature('AUDIT_NDA')
+  @UseGuards(OptionalJwtAuthGuard, FeatureGuard)
+  async auditNda(@Body() body: SinglePagesBody, @OptionalCurrentUser() user: SafeUser | null) {
+    if (!body.pages?.length) throw new BadRequestException('No document text provided.');
+    try {
+      return await this.aiService.auditNda(body.pages, user?.id);
+    } catch (err) {
+      throw new InternalServerErrorException(err instanceof Error ? err.message : 'Could not audit this NDA.');
+    }
+  }
+
+  @Post('detect-sensitive-data')
+  @RequireFeature('DETECT_SENSITIVE_DATA')
+  @UseGuards(OptionalJwtAuthGuard, FeatureGuard)
+  async detectSensitiveData(@Body() body: SinglePagesBody, @OptionalCurrentUser() user: SafeUser | null) {
+    if (!body.pages?.length) throw new BadRequestException('No document text provided.');
+    try {
+      return await this.aiService.detectSensitiveData(body.pages, user?.id);
+    } catch (err) {
+      throw new InternalServerErrorException(err instanceof Error ? err.message : 'Could not scan this document.');
+    }
+  }
+
+  @Post('analyze-financial-ratios')
+  @RequireFeature('ANALYZE_FINANCIAL_RATIOS')
+  @UseGuards(OptionalJwtAuthGuard, FeatureGuard)
+  async analyzeFinancialRatios(@Body() body: SinglePagesBody, @OptionalCurrentUser() user: SafeUser | null) {
+    if (!body.pages?.length) throw new BadRequestException('No document text provided.');
+    try {
+      return await this.aiService.analyzeFinancialRatios(body.pages, user?.id);
+    } catch (err) {
+      throw new InternalServerErrorException(err instanceof Error ? err.message : 'Could not analyze this statement.');
+    }
+  }
+
+  @Post('reconcile-bank')
+  @RequireFeature('RECONCILE_BANK')
+  @UseGuards(OptionalJwtAuthGuard, FeatureGuard)
+  async reconcileBank(@Body() body: ReconcileBankBody, @OptionalCurrentUser() user: SafeUser | null) {
+    if (!body.pagesBank?.length || !body.pagesRecords?.length) {
+      throw new BadRequestException('Both a bank statement and recorded invoices are required.');
+    }
+    try {
+      return await this.aiService.reconcileBank(body.pagesBank, body.pagesRecords, user?.id);
+    } catch (err) {
+      throw new InternalServerErrorException(err instanceof Error ? err.message : 'Could not reconcile these records.');
+    }
+  }
+
+  @Post('flag-deductible-expenses')
+  @RequireFeature('FLAG_DEDUCTIBLE_EXPENSES')
+  @UseGuards(OptionalJwtAuthGuard, FeatureGuard)
+  async flagDeductibleExpenses(@Body() body: SinglePagesBody, @OptionalCurrentUser() user: SafeUser | null) {
+    if (!body.pages?.length) throw new BadRequestException('No document text provided.');
+    try {
+      return await this.aiService.flagDeductibleExpenses(body.pages, user?.id);
+    } catch (err) {
+      throw new InternalServerErrorException(err instanceof Error ? err.message : 'Could not flag expenses.');
+    }
+  }
+
+  @Post('detect-duplicate-payments')
+  @RequireFeature('DETECT_DUPLICATE_PAYMENTS')
+  @UseGuards(OptionalJwtAuthGuard, FeatureGuard)
+  async detectDuplicatePayments(@Body() body: SinglePagesBody, @OptionalCurrentUser() user: SafeUser | null) {
+    if (!body.pages?.length) throw new BadRequestException('No document text provided.');
+    try {
+      return await this.aiService.detectDuplicatePayments(body.pages, user?.id);
+    } catch (err) {
+      throw new InternalServerErrorException(err instanceof Error ? err.message : 'Could not scan for duplicates.');
+    }
+  }
+
+  @Post('compare-papers')
+  @RequireFeature('COMPARE_PAPERS')
+  @UseGuards(OptionalJwtAuthGuard, FeatureGuard)
+  async comparePapers(@Body() body: CompareBody, @OptionalCurrentUser() user: SafeUser | null) {
+    if (!body.pagesA?.length || !body.pagesB?.length) throw new BadRequestException('Two papers are required.');
+    try {
+      return await this.aiService.comparePapers(body.pagesA, body.pagesB, user?.id);
+    } catch (err) {
+      throw new InternalServerErrorException(err instanceof Error ? err.message : 'Could not compare these papers.');
+    }
+  }
+
+  @Post('extract-methodology')
+  @RequireFeature('EXTRACT_METHODOLOGY')
+  @UseGuards(OptionalJwtAuthGuard, FeatureGuard)
+  async extractMethodology(@Body() body: SinglePagesBody, @OptionalCurrentUser() user: SafeUser | null) {
+    if (!body.pages?.length) throw new BadRequestException('No document text provided.');
+    try {
+      return await this.aiService.extractMethodology(body.pages, user?.id);
+    } catch (err) {
+      throw new InternalServerErrorException(err instanceof Error ? err.message : 'Could not extract methodology.');
+    }
+  }
+
+  @Post('generate-outline')
+  @RequireFeature('GENERATE_OUTLINE')
+  @UseGuards(OptionalJwtAuthGuard, FeatureGuard)
+  async generateOutline(@Body() body: SinglePagesBody, @OptionalCurrentUser() user: SafeUser | null) {
+    if (!body.pages?.length) throw new BadRequestException('No document text provided.');
+    try {
+      const outline = await this.aiService.generateOutline(body.pages, user?.id);
+      return { outline };
+    } catch (err) {
+      throw new InternalServerErrorException(err instanceof Error ? err.message : 'Could not generate an outline.');
     }
   }
 

@@ -5,6 +5,7 @@ import { PDFDocument } from 'pdf-lib';
 import JSZip from 'jszip';
 import { parsePageRanges, everyPageIndividually, type PageRange } from '@/lib/pageRanges';
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
+import GuestEncouragementBar from './GuestEncouragementBar';
 
 function downloadBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
@@ -22,6 +23,7 @@ export default function SplitPdf() {
   const [rangesInput, setRangesInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [completed, setCompleted] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   usePendingToolFile(handleFileSelect);
@@ -79,6 +81,7 @@ export default function SplitPdf() {
         const zipBlob = await zip.generateAsync({ type: 'blob' });
         downloadBlob(zipBlob, `${baseName}-split.zip`);
       }
+      setCompleted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not split this PDF.');
     } finally {
@@ -147,6 +150,8 @@ export default function SplitPdf() {
       >
         {isProcessing ? 'Splitting…' : 'Split & Download'}
       </button>
+
+      {completed && <GuestEncouragementBar />}
     </div>
   );
 }

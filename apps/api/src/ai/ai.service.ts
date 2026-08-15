@@ -48,6 +48,82 @@ export interface ClauseAnalysis {
   };
 }
 
+export interface CompareFlag {
+  excerpt: string;
+  riskLevel: 'low' | 'medium' | 'high';
+  explanation: string;
+}
+
+export interface CompareResult {
+  flags: CompareFlag[];
+}
+
+export interface NdaCriterion {
+  name: string;
+  status: 'ok' | 'missing' | 'concern';
+  detail: string;
+}
+
+export interface NdaAudit {
+  criteria: NdaCriterion[];
+}
+
+export interface SensitiveDataItem {
+  excerpt: string;
+  type: string;
+}
+
+export interface SensitiveDataReport {
+  items: SensitiveDataItem[];
+}
+
+export interface FinancialRatio {
+  name: string;
+  value: string;
+  explanation: string;
+}
+
+export interface FinancialRatioReport {
+  ratios: FinancialRatio[];
+}
+
+export interface ReconciliationDiscrepancy {
+  description: string;
+  amount: string;
+  side: 'bank' | 'records';
+}
+
+export interface ReconciliationReport {
+  matchedCount: number;
+  discrepancies: ReconciliationDiscrepancy[];
+}
+
+export interface DeductibleExpenseItem {
+  description: string;
+  amount: string;
+  reason: string;
+}
+
+export interface DeductibleExpenseReport {
+  items: DeductibleExpenseItem[];
+}
+
+export interface DuplicatePayment {
+  description: string;
+  amount: string;
+  occurrences: number;
+}
+
+export interface DuplicatePaymentReport {
+  duplicates: DuplicatePayment[];
+}
+
+export interface MethodologyExtract {
+  sample: string;
+  tools: string;
+  statisticalAnalysis: string;
+}
+
 export interface InvoiceLineItem {
   description: string;
   quantity: string;
@@ -79,7 +155,14 @@ const DIRECT_MODEL = process.env.LLM_MODEL ?? 'deepseek-v4-flash';
 // Per the AI routing spec: simple tasks (extraction, classification, short
 // summaries) get the cheap/fast model; complex tasks (contract clause
 // analysis, precise financial audit) get the stronger one.
-const COMPLEX_OPERATIONS: AiOperation[] = ['ANALYZE_CLAUSES', 'CHAT'];
+const COMPLEX_OPERATIONS: AiOperation[] = [
+  'ANALYZE_CLAUSES',
+  'CHAT',
+  'COMPARE_CONTRACTS',
+  'COMPARE_PAPERS',
+  'RECONCILE_BANK',
+  'ANALYZE_FINANCIAL_RATIOS',
+];
 
 // Turns the dashboard's segment-specific document-type chip (e.g. "NDA" vs
 // "Court memo") into extra system-prompt context, so two documents in the
@@ -345,6 +428,342 @@ export class AiService {
         await this.requestOptions(userId)
       );
       return parseJsonResponse<InvoiceData>(completion.choices[0]?.message?.content ?? '');
+    });
+  }
+
+  // Flags only the AI-judgment layer of a compare — the actual word-level
+  // diff (additions/deletions/reworded counts, highlighted text) is computed
+  // client-side with the `diff` package, which needs no model call at all.
+  // This just annotates a handful of the most consequential changes with a
+  // risk level, matched back to diff chunks by substring on the frontend.
+  async compareContracts(pagesA: PageText[], pagesB: PageText[], userId?: string, docType?: string): Promise<CompareResult> {
+    return this.run('COMPARE_CONTRACTS', userId, async () => {
+      const a = buildDocumentText(pagesA);
+      const b = buildDocumentText(pagesB);
+      const completion = await this.client.chat.completions.create(
+        {
+          model: await this.modelFor('COMPARE_CONTRACTS'),
+          temperature: 0.2,
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You compare two versions of the same contract. Respond with ONLY a valid JSON object ' +
+                '(no markdown fences, no commentary) matching exactly this shape: {"flags":[{"excerpt":' +
+                'string,"riskLevel":"low"|"medium"|"high","explanation":string}]}. excerpt must be copied ' +
+                'verbatim (a short phrase, not a full sentence) from whichever version it appears in, so it ' +
+                'can be matched back to the text. Only include changes that meaningfully affect obligations, ' +
+                'risk, dates, or amounts — not wording-only edits. List at most 8 flags.' +
+                docTypeContext(docType),
+            },
+            {
+              role: 'user',
+              content: `VERSION A (old):\n${a.text}\n\nVERSION B (new):\n${b.text}`,
+            },
+          ],
+        },
+        await this.requestOptions(userId)
+      );
+      return parseJsonResponse<CompareResult>(completion.choices[0]?.message?.content ?? '');
+    });
+  }
+
+  async summarizePlain(pages: PageText[], userId?: string, docType?: string): Promise<string> {
+    return this.run('SUMMARIZE_PLAIN', userId, async () => {
+      const { text, truncated } = buildDocumentText(pages);
+      const completion = await this.client.chat.completions.create(
+        {
+          model: await this.modelFor('SUMMARIZE_PLAIN'),
+          temperature: 0.3,
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You explain a legal document in plain language for a client with no legal background. ' +
+                'Avoid legal jargon; where a legal term is unavoidable, briefly explain it in parentheses. ' +
+                'Write 3-5 short paragraphs covering what the document means for them in practice.' +
+                docTypeContext(docType),
+            },
+            {
+              role: 'user',
+              content: (truncated ? '(Document truncated to first portion.)\n\n' : '') + text,
+            },
+          ],
+        },
+        await this.requestOptions(userId)
+      );
+      return completion.choices[0]?.message?.content ?? '';
+    });
+  }
+
+  async auditNda(pages: PageText[], userId?: string): Promise<NdaAudit> {
+    return this.run('AUDIT_NDA', userId, async () => {
+      const { text, truncated } = buildDocumentText(pages);
+      const completion = await this.client.chat.completions.create(
+        {
+          model: await this.modelFor('AUDIT_NDA'),
+          temperature: 0.1,
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You audit an NDA against three standard criteria: "Confidentiality duration", ' +
+                '"Exceptions to confidentiality", and "Scope of protection". Respond with ONLY a valid ' +
+                'JSON object (no markdown fences, no commentary) matching exactly this shape: {"criteria":' +
+                '[{"name":string,"status":"ok"|"missing"|"concern","detail":string}]} — exactly one entry ' +
+                'per criterion, in that order. status is "missing" if the NDA does not address it at all, ' +
+                '"concern" if addressed but unusually one-sided or vague, "ok" otherwise.',
+            },
+            {
+              role: 'user',
+              content: (truncated ? '(Document truncated to first portion.)\n\n' : '') + text,
+            },
+          ],
+        },
+        await this.requestOptions(userId)
+      );
+      return parseJsonResponse<NdaAudit>(completion.choices[0]?.message?.content ?? '');
+    });
+  }
+
+  async detectSensitiveData(pages: PageText[], userId?: string): Promise<SensitiveDataReport> {
+    return this.run('DETECT_SENSITIVE_DATA', userId, async () => {
+      const { text, truncated } = buildDocumentText(pages);
+      const completion = await this.client.chat.completions.create(
+        {
+          model: await this.modelFor('DETECT_SENSITIVE_DATA'),
+          temperature: 0.1,
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You scan a document for personally identifiable or financial data that should typically be ' +
+                'redacted before external sharing — national ID numbers, passport numbers, bank account or ' +
+                'card numbers, and similar identifiers. Respond with ONLY a valid JSON object (no markdown ' +
+                'fences, no commentary) matching exactly this shape: {"items":[{"excerpt":string,"type":' +
+                'string}]}. excerpt must be copied verbatim from the document (redact none of it yourself — ' +
+                'this is only a detection pass). type is a short label like "National ID", "Bank account ' +
+                'number", or "Card number". Return an empty array if nothing is found.',
+            },
+            {
+              role: 'user',
+              content: (truncated ? '(Document truncated to first portion.)\n\n' : '') + text,
+            },
+          ],
+        },
+        await this.requestOptions(userId)
+      );
+      return parseJsonResponse<SensitiveDataReport>(completion.choices[0]?.message?.content ?? '');
+    });
+  }
+
+  async analyzeFinancialRatios(pages: PageText[], userId?: string): Promise<FinancialRatioReport> {
+    return this.run('ANALYZE_FINANCIAL_RATIOS', userId, async () => {
+      const { text, truncated } = buildDocumentText(pages);
+      const completion = await this.client.chat.completions.create(
+        {
+          model: await this.modelFor('ANALYZE_FINANCIAL_RATIOS'),
+          temperature: 0.1,
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You extract core financial ratios from a financial statement — at minimum current ratio ' +
+                '(liquidity) and net profit margin (profitability) where the underlying figures are present, ' +
+                'plus any other clearly computable ratio. Respond with ONLY a valid JSON object (no markdown ' +
+                'fences, no commentary) matching exactly this shape: {"ratios":[{"name":string,"value":' +
+                'string,"explanation":string}]}. explanation should be one plain-language sentence on what ' +
+                'the ratio means for this business. Omit a ratio entirely if the source figures are not in ' +
+                'the document — do not estimate or invent numbers.',
+            },
+            {
+              role: 'user',
+              content: (truncated ? '(Document truncated to first portion.)\n\n' : '') + text,
+            },
+          ],
+        },
+        await this.requestOptions(userId)
+      );
+      return parseJsonResponse<FinancialRatioReport>(completion.choices[0]?.message?.content ?? '');
+    });
+  }
+
+  async reconcileBank(pagesBank: PageText[], pagesRecords: PageText[], userId?: string): Promise<ReconciliationReport> {
+    return this.run('RECONCILE_BANK', userId, async () => {
+      const bank = buildDocumentText(pagesBank);
+      const records = buildDocumentText(pagesRecords);
+      const completion = await this.client.chat.completions.create(
+        {
+          model: await this.modelFor('RECONCILE_BANK'),
+          temperature: 0.1,
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You reconcile a bank transaction list against a set of recorded invoices/payments. Match ' +
+                'transactions by amount and approximate date/description. Respond with ONLY a valid JSON ' +
+                'object (no markdown fences, no commentary) matching exactly this shape: {"matchedCount":' +
+                'number,"discrepancies":[{"description":string,"amount":string,"side":"bank"|"records"}]}. ' +
+                'side "bank" means the transaction appears on the bank statement with no matching invoice; ' +
+                '"records" means the reverse — an invoice with no matching bank transaction.',
+            },
+            {
+              role: 'user',
+              content: `BANK TRANSACTIONS:\n${bank.text}\n\nRECORDED INVOICES/PAYMENTS:\n${records.text}`,
+            },
+          ],
+        },
+        await this.requestOptions(userId)
+      );
+      return parseJsonResponse<ReconciliationReport>(completion.choices[0]?.message?.content ?? '');
+    });
+  }
+
+  async flagDeductibleExpenses(pages: PageText[], userId?: string): Promise<DeductibleExpenseReport> {
+    return this.run('FLAG_DEDUCTIBLE_EXPENSES', userId, async () => {
+      const { text, truncated } = buildDocumentText(pages);
+      const completion = await this.client.chat.completions.create(
+        {
+          model: await this.modelFor('FLAG_DEDUCTIBLE_EXPENSES'),
+          temperature: 0.1,
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You review expense line items and flag ones that commonly qualify as tax-deductible ' +
+                'business expenses, based on their category (e.g. office supplies, professional services, ' +
+                'business travel, software subscriptions). Respond with ONLY a valid JSON object (no ' +
+                'markdown fences, no commentary) matching exactly this shape: {"items":[{"description":' +
+                'string,"amount":string,"reason":string}]}. This is a suggestion only, not tax advice — ' +
+                'reason should stay factual about the category, not make a legal determination.',
+            },
+            {
+              role: 'user',
+              content: (truncated ? '(Document truncated to first portion.)\n\n' : '') + text,
+            },
+          ],
+        },
+        await this.requestOptions(userId)
+      );
+      return parseJsonResponse<DeductibleExpenseReport>(completion.choices[0]?.message?.content ?? '');
+    });
+  }
+
+  async detectDuplicatePayments(pages: PageText[], userId?: string): Promise<DuplicatePaymentReport> {
+    return this.run('DETECT_DUPLICATE_PAYMENTS', userId, async () => {
+      const { text, truncated } = buildDocumentText(pages);
+      const completion = await this.client.chat.completions.create(
+        {
+          model: await this.modelFor('DETECT_DUPLICATE_PAYMENTS'),
+          temperature: 0.1,
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You scan a batch of invoices or payment records for likely duplicate payments — the same ' +
+                'vendor, amount, and approximate date appearing more than once. Respond with ONLY a valid ' +
+                'JSON object (no markdown fences, no commentary) matching exactly this shape: {"duplicates":' +
+                '[{"description":string,"amount":string,"occurrences":number}]}. Only include genuine ' +
+                'probable duplicates, not merely similar recurring charges (e.g. monthly subscriptions are ' +
+                'not duplicates). Return an empty array if none are found.',
+            },
+            {
+              role: 'user',
+              content: (truncated ? '(Document truncated to first portion.)\n\n' : '') + text,
+            },
+          ],
+        },
+        await this.requestOptions(userId)
+      );
+      return parseJsonResponse<DuplicatePaymentReport>(completion.choices[0]?.message?.content ?? '');
+    });
+  }
+
+  async comparePapers(pagesA: PageText[], pagesB: PageText[], userId?: string): Promise<CompareResult> {
+    return this.run('COMPARE_PAPERS', userId, async () => {
+      const a = buildDocumentText(pagesA);
+      const b = buildDocumentText(pagesB);
+      const completion = await this.client.chat.completions.create(
+        {
+          model: await this.modelFor('COMPARE_PAPERS'),
+          temperature: 0.2,
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You compare two academic papers\' methodologies and results. Respond with ONLY a valid ' +
+                'JSON object (no markdown fences, no commentary) matching exactly this shape: {"flags":' +
+                '[{"excerpt":string,"riskLevel":"low"|"medium"|"high","explanation":string}]}. excerpt must ' +
+                'be copied verbatim (a short phrase) from whichever paper it appears in. Use riskLevel to ' +
+                'mean "significance of the difference" here (high = a difference that materially affects ' +
+                'how the findings should be interpreted). List at most 8 flags.',
+            },
+            {
+              role: 'user',
+              content: `PAPER A:\n${a.text}\n\nPAPER B:\n${b.text}`,
+            },
+          ],
+        },
+        await this.requestOptions(userId)
+      );
+      return parseJsonResponse<CompareResult>(completion.choices[0]?.message?.content ?? '');
+    });
+  }
+
+  async extractMethodology(pages: PageText[], userId?: string): Promise<MethodologyExtract> {
+    return this.run('EXTRACT_METHODOLOGY', userId, async () => {
+      const { text, truncated } = buildDocumentText(pages);
+      const completion = await this.client.chat.completions.create(
+        {
+          model: await this.modelFor('EXTRACT_METHODOLOGY'),
+          temperature: 0.1,
+          messages: [
+            {
+              role: 'system',
+              content:
+                "You summarize an academic paper's methodology section into a structured table. Respond " +
+                'with ONLY a valid JSON object (no markdown fences, no commentary) matching exactly this ' +
+                'shape: {"sample":string,"tools":string,"statisticalAnalysis":string}. Each field is a ' +
+                'short plain-language summary (1-2 sentences); use "Not specified" if the paper does not ' +
+                'cover that aspect.',
+            },
+            {
+              role: 'user',
+              content: (truncated ? '(Document truncated to first portion.)\n\n' : '') + text,
+            },
+          ],
+        },
+        await this.requestOptions(userId)
+      );
+      return parseJsonResponse<MethodologyExtract>(completion.choices[0]?.message?.content ?? '');
+    });
+  }
+
+  async generateOutline(pages: PageText[], userId?: string): Promise<string> {
+    return this.run('GENERATE_OUTLINE', userId, async () => {
+      const { text, truncated } = buildDocumentText(pages);
+      const completion = await this.client.chat.completions.create(
+        {
+          model: await this.modelFor('GENERATE_OUTLINE'),
+          temperature: 0.3,
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You turn an academic paper into a presentation outline. Respond with plain text only — no ' +
+                'markdown, no JSON. Structure it as a series of slide headings, each followed by 2-4 short ' +
+                'talking points as a plain list, covering: motivation, methodology, key results, and ' +
+                'conclusion at minimum.',
+            },
+            {
+              role: 'user',
+              content: (truncated ? '(Document truncated to first portion.)\n\n' : '') + text,
+            },
+          ],
+        },
+        await this.requestOptions(userId)
+      );
+      return completion.choices[0]?.message?.content ?? '';
     });
   }
 

@@ -10,11 +10,16 @@ import { showError } from '@/lib/toast';
 
 interface Props {
   open: boolean;
-  href: string | null;
+  href?: string | null;
   onClose: () => void;
+  // Two-slot pickers (Contract Compare, Multi-Paper Compare) stay on the
+  // page and want the File directly; every single-destination tool instead
+  // hands the file off via pendingToolFile + a route push. Exactly one of
+  // href/onPick should be set.
+  onPick?: (file: File) => void;
 }
 
-export default function ToolSourceModal({ open, href, onClose }: Props) {
+export default function ToolSourceModal({ open, href, onClose, onPick }: Props) {
   const { token } = useAuth();
   const router = useRouter();
   const [step, setStep] = useState<'choose' | 'library'>('choose');
@@ -33,6 +38,11 @@ export default function ToolSourceModal({ open, href, onClose }: Props) {
   }, [open, token]);
 
   function handleFileChosen(file: File) {
+    if (onPick) {
+      onClose();
+      onPick(file);
+      return;
+    }
     if (!href) return;
     setPendingToolFile(file);
     onClose();
@@ -52,7 +62,7 @@ export default function ToolSourceModal({ open, href, onClose }: Props) {
   }
 
   async function handlePickDoc(doc: LibraryDocumentSummary) {
-    if (!token || !href) return;
+    if (!token || !(href || onPick)) return;
     setLoadingDocId(doc.id);
     try {
       const file = await fetchDocumentFile(token, doc.id, doc.filename);

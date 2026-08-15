@@ -22,12 +22,26 @@ export default function MarketingNav() {
           Pricing
         </Link>
       </div>
-      <Link
-        href={user ? '/dashboard' : '/signup'}
-        className="rounded-md bg-emerald px-5 py-2.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(30,157,117,0.35)]"
-      >
-        {user ? 'Go to Dashboard' : 'Start Free'}
-      </Link>
+      {user ? (
+        <Link
+          href="/dashboard"
+          className="rounded-md bg-emerald px-5 py-2.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(30,157,117,0.35)]"
+        >
+          Go to Dashboard
+        </Link>
+      ) : (
+        <div className="flex items-center gap-3">
+          <Link href="/login" className="text-sm font-medium text-[#C9D4E3] transition-colors hover:text-white">
+            Log in
+          </Link>
+          <Link
+            href="/signup"
+            className="rounded-md bg-emerald px-5 py-2.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:shadow-[0_6px_16px_rgba(30,157,117,0.35)]"
+          >
+            Sign up
+          </Link>
+        </div>
+      )}
     </nav>
   );
 }

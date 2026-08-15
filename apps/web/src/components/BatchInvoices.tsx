@@ -4,6 +4,8 @@ import { useRef, useState } from 'react';
 import { extractPdfTextWithOcrFallback } from '@/lib/extractPdfText';
 import { extractInvoiceData, type InvoiceData } from '@/lib/aiApi';
 import { downloadCsv } from '@/lib/csv';
+import { exportToQuickBooks, exportToXero } from '@/lib/invoiceExport';
+import { showLoading, resolveLoading } from '@/lib/toast';
 
 interface InvoiceRow {
   id: string;
@@ -85,19 +87,34 @@ export default function BatchInvoices() {
     setRows((prev) => prev.filter((r) => r.id !== id));
   }
 
+  function doneRows() {
+    return rows.filter((r) => r.status === 'done' && r.data) as { filename: string; data: InvoiceData }[];
+  }
+
   function handleExportCsv() {
-    const done = rows.filter((r) => r.status === 'done' && r.data);
+    const done = doneRows();
     if (done.length === 0) return;
+    const toastId = showLoading('Preparing generic export…');
     const header = ['Filename', 'Vendor', 'Invoice Number', 'Date', 'Category', 'Total'];
-    const dataRows = done.map((r) => [
-      r.filename,
-      r.data!.vendor,
-      r.data!.invoiceNumber,
-      r.data!.date,
-      r.data!.category,
-      r.data!.total,
-    ]);
+    const dataRows = done.map((r) => [r.filename, r.data.vendor, r.data.invoiceNumber, r.data.date, r.data.category, r.data.total]);
     downloadCsv([header, ...dataRows], 'invoices.csv');
+    resolveLoading(toastId, 'invoices.csv downloaded');
+  }
+
+  function handleExportQuickBooks() {
+    const done = doneRows();
+    if (done.length === 0) return;
+    const toastId = showLoading('Preparing QuickBooks export…');
+    const filename = exportToQuickBooks(done);
+    resolveLoading(toastId, `${filename} downloaded`);
+  }
+
+  function handleExportXero() {
+    const done = doneRows();
+    if (done.length === 0) return;
+    const toastId = showLoading('Preparing Xero export…');
+    const filename = exportToXero(done);
+    resolveLoading(toastId, `${filename} downloaded`);
   }
 
   const doneCount = rows.filter((r) => r.status === 'done').length;
@@ -224,13 +241,31 @@ export default function BatchInvoices() {
         </div>
       )}
 
-      <button
-        onClick={handleExportCsv}
-        disabled={doneCount === 0 || isProcessing}
-        className="mt-6 w-full rounded-lg bg-emerald px-6 py-3 font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
-      >
-        Export {doneCount || ''} Invoices to CSV
-      </button>
+      <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <button
+          onClick={handleExportQuickBooks}
+          disabled={doneCount === 0 || isProcessing}
+          className="flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm font-semibold transition-colors hover:border-gray-300 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <span className="rounded bg-[#2CA01C] px-1.5 py-0.5 font-mono text-[10px] font-bold text-white">QB</span>
+          Export to QuickBooks
+        </button>
+        <button
+          onClick={handleExportXero}
+          disabled={doneCount === 0 || isProcessing}
+          className="flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm font-semibold transition-colors hover:border-gray-300 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <span className="rounded bg-[#13B5EA] px-1.5 py-0.5 font-mono text-[10px] font-bold text-white">Xero</span>
+          Export to Xero
+        </button>
+        <button
+          onClick={handleExportCsv}
+          disabled={doneCount === 0 || isProcessing}
+          className="flex items-center justify-center gap-2 rounded-lg bg-emerald px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
+        >
+          Download generic CSV
+        </button>
+      </div>
     </div>
   );
 }

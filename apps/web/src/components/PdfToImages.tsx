@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import JSZip from 'jszip';
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
+import GuestEncouragementBar from './GuestEncouragementBar';
 
 // Served as a static asset (see scripts/copy-pdf-worker.mjs) rather than bundled,
 // since Next's production minifier chokes on the worker's ESM syntax.
@@ -25,6 +26,7 @@ export default function PdfToImages() {
   const [format, setFormat] = useState<Format>('png');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [completed, setCompleted] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   usePendingToolFile(handleFileSelect);
@@ -80,6 +82,7 @@ export default function PdfToImages() {
         const zipBlob = await zip.generateAsync({ type: 'blob' });
         downloadBlob(zipBlob, `${baseName}-images.zip`);
       }
+      setCompleted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not convert this PDF.');
     } finally {
@@ -130,6 +133,8 @@ export default function PdfToImages() {
       >
         {isProcessing ? 'Converting…' : 'Convert & Download'}
       </button>
+
+      {completed && <GuestEncouragementBar />}
     </div>
   );
 }

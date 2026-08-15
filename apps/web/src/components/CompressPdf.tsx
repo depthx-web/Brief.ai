@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import { PDFDocument } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
+import GuestEncouragementBar from './GuestEncouragementBar';
 
 // Served as a static asset (see scripts/copy-pdf-worker.mjs) rather than bundled,
 // since Next's production minifier chokes on the worker's ESM syntax.
@@ -161,6 +162,8 @@ export default function CompressPdf() {
       >
         {isProcessing ? 'Compressing…' : 'Compress & Download'}
       </button>
+
+      {result && <GuestEncouragementBar />}
     </div>
   );
 }
