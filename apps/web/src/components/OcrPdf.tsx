@@ -5,6 +5,7 @@ import { PDFDocument, StandardFonts } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { createWorker } from 'tesseract.js';
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
+import GuestEncouragementBar from './GuestEncouragementBar';
 
 // Served as a static asset (see scripts/copy-pdf-worker.mjs) rather than bundled,
 // since Next's production minifier chokes on the worker's ESM syntax.
@@ -29,6 +30,7 @@ export default function OcrPdf() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [hasResult, setHasResult] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   usePendingToolFile(handleFileSelect);
@@ -37,6 +39,7 @@ export default function OcrPdf() {
     setError(null);
     setFile(null);
     setPageCount(null);
+    setHasResult(false);
     if (selected.type !== 'application/pdf' && !selected.name.toLowerCase().endsWith('.pdf')) {
       setError('Please select a PDF file.');
       return;
@@ -133,6 +136,7 @@ export default function OcrPdf() {
       a.click();
       URL.revokeObjectURL(url);
       setStatus(null);
+      setHasResult(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not run OCR on this PDF.');
     } finally {
@@ -200,6 +204,8 @@ export default function OcrPdf() {
       >
         {isProcessing ? 'Running OCR…' : 'Run OCR & Download'}
       </button>
+
+      {hasResult && <GuestEncouragementBar />}
     </div>
   );
 }

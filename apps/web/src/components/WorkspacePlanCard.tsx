@@ -1,7 +1,10 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/lib/AuthContext';
 import type { Segment } from '@/lib/authApi';
+import { getCreditBalance } from '@/lib/creditsApi';
 
 const WORKSPACE_ICON: Record<Segment, string> = {
   LAWYER: '⚖️',
@@ -23,7 +26,16 @@ const CYCLE_LABEL: Record<string, string> = {
 };
 
 export default function WorkspacePlanCard({ onSwitchClick }: { onSwitchClick: () => void }) {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
+  const [creditBalance, setCreditBalance] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!token) return;
+    getCreditBalance(token)
+      .then(setCreditBalance)
+      .catch(() => {});
+  }, [token]);
+
   if (!user?.segment) return null;
 
   const isPaid = user.plan === 'PAID';
@@ -42,6 +54,11 @@ export default function WorkspacePlanCard({ onSwitchClick }: { onSwitchClick: ()
       >
         {isPaid ? `${CYCLE_LABEL[user.billingCycle ?? 'MONTHLY']} · Active` : 'Free plan'}
       </p>
+      {creditBalance !== null && creditBalance > 0 && (
+        <Link href="/wallet" className="mt-1 block font-mono text-[10px] text-[#8FA1BC] hover:text-white">
+          {creditBalance} credit{creditBalance === 1 ? '' : 's'} remaining →
+        </Link>
+      )}
       <button
         onClick={onSwitchClick}
         className="mt-2 block text-left text-xs font-medium text-emerald hover:text-white"

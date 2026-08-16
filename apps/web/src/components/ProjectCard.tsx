@@ -1,20 +1,18 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { CATEGORY_ACCENT } from '@/lib/docTypes';
 import { formatCountdown } from '@/lib/retentionCountdown';
-import { getProject, type LibraryDocumentSummary, type ProjectSummary } from '@/lib/libraryApi';
-import { showError } from '@/lib/toast';
+import type { ProjectSummary } from '@/lib/libraryApi';
 import ProjectOptionsMenu from './ProjectOptionsMenu';
-import FileOptionsMenu from './FileOptionsMenu';
 
 const BADGE_CLASS = {
   plenty: 'bg-gray-100 text-ink-soft',
   soon: 'bg-amber-100 text-amber-700',
   critical: 'bg-red-50 text-redline',
   expired: 'bg-gray-100 text-ink-soft/60',
+  none: 'bg-gray-100 text-ink-soft/60',
 } as const;
 
 interface Props {
@@ -24,32 +22,26 @@ interface Props {
   onUpgradeNeeded: () => void;
 }
 
+// Clicking the card body opens the project's detail page (Part 8) — the
+// "⋯" trigger inside ProjectOptionsMenu is the only way to reach the quick
+// actions menu now, instead of the two interactions being merged.
 export default function ProjectCard({ project, onExtended, onDeleted, onUpgradeNeeded }: Props) {
-  const { token, user } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
-  const [expanded, setExpanded] = useState(false);
-  const [files, setFiles] = useState<LibraryDocumentSummary[] | null>(null);
 
   const accent = user?.segment ? CATEGORY_ACCENT[user.segment] : '#0F2340';
-  const countdown = formatCountdown(project.expiresAt);
-
-  async function toggleExpand() {
-    const next = !expanded;
-    setExpanded(next);
-    if (next && !files && token) {
-      try {
-        const detail = await getProject(token, project.id);
-        setFiles(detail.documents);
-      } catch (err) {
-        showError(err instanceof Error ? err.message : 'Could not load this project.');
-      }
-    }
-  }
+  const countdown = formatCountdown(project.nearestExpiresAt);
 
   return (
     <div className="shadow-level-1 overflow-hidden rounded-[10px] border border-gray-200 bg-white transition-shadow hover:shadow-level-2">
       <div style={{ backgroundColor: accent }} className="h-1" aria-hidden />
-      <div className="cursor-pointer p-4" onClick={toggleExpand}>
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => router.push(`/library/${project.id}`)}
+        onKeyDown={(e) => e.key === 'Enter' && router.push(`/library/${project.id}`)}
+        className="w-full cursor-pointer p-4 text-left"
+      >
         <div className="flex items-start justify-between gap-2">
           <span aria-hidden className="text-base leading-none text-ink-soft">
             📎
@@ -73,38 +65,6 @@ export default function ProjectCard({ project, onExtended, onDeleted, onUpgradeN
           {project.documentCount} file{project.documentCount === 1 ? '' : 's'}
         </p>
       </div>
-
-      {expanded && (
-        <div className="fade-in-200 border-t border-gray-100 px-4 py-3">
-          {!files ? (
-            <p className="text-xs text-ink-soft">Loading…</p>
-          ) : files.length === 0 ? (
-            <p className="text-xs text-ink-soft">No files in this project.</p>
-          ) : (
-            <ul className="space-y-1.5">
-              {files.map((f) => (
-                <li
-                  key={f.id}
-                  className="flex items-center justify-between gap-2 rounded-md px-1.5 py-1 hover:bg-gray-50"
-                >
-                  <button
-                    onClick={() => router.push(`/workspace?doc=${f.id}`)}
-                    className="truncate text-left font-mono text-xs text-ink hover:text-emerald"
-                  >
-                    {f.filename}
-                  </button>
-                  <FileOptionsMenu
-                    doc={f}
-                    onRenamed={(updated) => setFiles((prev) => prev?.map((d) => (d.id === updated.id ? updated : d)) ?? null)}
-                    onDeleted={(id) => setFiles((prev) => prev?.filter((d) => d.id !== id) ?? null)}
-                    onUpgradeNeeded={onUpgradeNeeded}
-                  />
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
     </div>
   );
 }

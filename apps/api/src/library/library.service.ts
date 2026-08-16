@@ -22,12 +22,16 @@ export class LibraryService {
     file: Express.Multer.File,
     extractedText: string,
     docType?: string,
-    projectId?: string
+    projectId?: string,
+    retentionDays = 1
   ) {
     if (projectId) await this.findOwnedProject(userId, projectId);
 
     const embeddingVector = await this.embedding.embed(extractedText);
     const storagePath = await this.storage.save(file.buffer, file.originalname);
+    // Retention is per-file (Batch 5 fix): a document only carries an expiry
+    // when it belongs to a project — Unsorted uploads never auto-delete.
+    const expiresAt = projectId ? new Date(Date.now() + retentionDays * DEFAULT_RETENTION_MS) : null;
 
     const doc = await this.prisma.libraryDocument.create({
       data: {
@@ -38,6 +42,7 @@ export class LibraryService {
         embedding: embeddingVector,
         docType,
         projectId,
+        expiresAt,
       },
     });
 
@@ -46,6 +51,7 @@ export class LibraryService {
       filename: doc.filename,
       docType: doc.docType,
       projectId: doc.projectId,
+      expiresAt: doc.expiresAt,
       createdAt: doc.createdAt,
     };
   }
@@ -53,26 +59,30 @@ export class LibraryService {
   async list(userId: string) {
     const docs = await this.prisma.libraryDocument.findMany({
       where: { userId },
-      select: { id: true, filename: true, docType: true, projectId: true, createdAt: true },
+      select: { id: true, filename: true, docType: true, projectId: true, expiresAt: true, createdAt: true },
       orderBy: { createdAt: 'desc' },
     });
     return docs;
   }
 
-  // --- Projects (Batch 3, Section 2) ---------------------------------
+  // --- Projects (Batch 3, Section 2; per-file retention fix in Batch 5) ----
 
-  async createProject(userId: string, name: string, category: string | undefined, retentionDays = 1) {
-    const expiresAt = new Date(Date.now() + retentionDays * DEFAULT_RETENTION_MS);
-    const project = await this.prisma.project.create({
-      data: { userId, name, category, expiresAt },
-    });
-    return project;
+  async createProject(userId: string, name: string, category: string | undefined) {
+    return this.prisma.project.create({ data: { userId, name, category } });
+  }
+
+  async renameProject(userId: string, projectId: string, name: string) {
+    await this.findOwnedProject(userId, projectId);
+    return this.prisma.project.update({ where: { id: projectId }, data: { name } });
   }
 
   async listProjects(userId: string) {
     const projects = await this.prisma.project.findMany({
       where: { userId },
-      include: { _count: { select: { documents: true } } },
+      include: {
+        _count: { select: { documents: true } },
+        documents: { select: { expiresAt: true }, orderBy: { expiresAt: 'asc' }, take: 1 },
+      },
       orderBy: { createdAt: 'desc' },
     });
     return projects.map((p) => ({
@@ -80,7 +90,9 @@ export class LibraryService {
       name: p.name,
       category: p.category,
       createdAt: p.createdAt,
-      expiresAt: p.expiresAt,
+      // The file closest to expiry drives the card's countdown badge — a
+      // project with no files yet (or none carrying an expiry) shows none.
+      nearestExpiresAt: p.documents[0]?.expiresAt ?? null,
       documentCount: p._count.documents,
     }));
   }
@@ -89,21 +101,22 @@ export class LibraryService {
     const project = await this.findOwnedProject(userId, projectId);
     const documents = await this.prisma.libraryDocument.findMany({
       where: { projectId },
-      select: { id: true, filename: true, docType: true, projectId: true, createdAt: true },
+      select: { id: true, filename: true, docType: true, projectId: true, expiresAt: true, createdAt: true },
       orderBy: { createdAt: 'desc' },
     });
     return { ...project, documents };
   }
 
+  // Bulk-extends every file currently in the project — the quick "Extend
+  // retention" action from the project card's options menu.
   async extendProjectRetention(userId: string, projectId: string, days: number) {
     if (!EXTEND_RETENTION_DAYS.includes(days as (typeof EXTEND_RETENTION_DAYS)[number])) {
       throw new BadRequestException('Retention can only be extended to 7 or 30 days.');
     }
     await this.findOwnedProject(userId, projectId);
-    return this.prisma.project.update({
-      where: { id: projectId },
-      data: { expiresAt: new Date(Date.now() + days * DEFAULT_RETENTION_MS) },
-    });
+    const expiresAt = new Date(Date.now() + days * DEFAULT_RETENTION_MS);
+    await this.prisma.libraryDocument.updateMany({ where: { projectId }, data: { expiresAt } });
+    return { expiresAt };
   }
 
   async removeProject(userId: string, projectId: string) {
@@ -136,7 +149,14 @@ export class LibraryService {
       where: { id: doc.id },
       data: { filename },
     });
-    return { id: updated.id, filename: updated.filename, docType: updated.docType, createdAt: updated.createdAt };
+    return {
+      id: updated.id,
+      filename: updated.filename,
+      docType: updated.docType,
+      projectId: updated.projectId,
+      expiresAt: updated.expiresAt,
+      createdAt: updated.createdAt,
+    };
   }
 
   async remove(userId: string, documentId: string) {

@@ -1,20 +1,19 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { convertFile, downloadBlob } from '@/lib/convertApi';
+import { convertPdfToOffice, downloadBlob, type OfficeFamily } from '@/lib/convertApi';
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
 
-type Format = 'docx' | 'xlsx' | 'pptx';
+const FAMILY_LABEL: Record<OfficeFamily, string> = { word: 'Word', excel: 'Excel', powerpoint: 'PowerPoint' };
+const FAMILY_EXTENSION: Record<OfficeFamily, string> = { word: '.docx', excel: '.xlsx', powerpoint: '.pptx' };
 
-const FORMAT_LABELS: Record<Format, string> = {
-  docx: 'Word (.docx)',
-  xlsx: 'Excel (.xlsx)',
-  pptx: 'PowerPoint (.pptx)',
-};
+interface Props {
+  family: OfficeFamily;
+}
 
-export default function PdfToOffice() {
+export default function PdfToOfficeTool({ family }: Props) {
+  const label = FAMILY_LABEL[family];
   const [file, setFile] = useState<File | null>(null);
-  const [format, setFormat] = useState<Format>('docx');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -35,7 +34,7 @@ export default function PdfToOffice() {
     setError(null);
     setIsProcessing(true);
     try {
-      const { blob, filename } = await convertFile(file, format);
+      const { blob, filename } = await convertPdfToOffice(file, family);
       downloadBlob(blob, filename);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not convert this file.');
@@ -46,13 +45,13 @@ export default function PdfToOffice() {
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-16">
-      <h1 className="font-serif text-2xl font-semibold text-navy">PDF to Office</h1>
-      <p className="mt-2 text-gray-600">Convert a PDF to an editable Word, Excel, or PowerPoint file.</p>
+      <h1 className="font-serif text-2xl font-semibold text-navy">PDF to {label}</h1>
+      <p className="mt-2 text-gray-600">Convert a PDF to an editable {label} file ({FAMILY_EXTENSION[family]}).</p>
       <p className="mt-1 text-xs text-gray-400">
-        Unlike the other tools, this one sends your file to our conversion server (using a real
-        office engine for accurate formatting). The file is deleted immediately after conversion.
-        Note: how well this preserves layout depends on the PDF — scanned/complex documents convert
-        less cleanly than text-based ones.
+        This tool sends your file to our conversion server (using a real office engine for accurate
+        formatting). The file is deleted immediately after conversion. How well this preserves
+        layout depends on the PDF — scanned/complex documents convert less cleanly than text-based
+        ones.
       </p>
 
       <div
@@ -70,17 +69,6 @@ export default function PdfToOffice() {
       </div>
 
       {error && <p className="mt-4 text-sm text-red-600">{error}</p>}
-
-      {file && (
-        <div className="mt-6 flex gap-4 rounded-lg border border-gray-200 bg-white p-4 text-sm">
-          {(Object.keys(FORMAT_LABELS) as Format[]).map((key) => (
-            <label key={key} className="flex items-center gap-2">
-              <input type="radio" checked={format === key} onChange={() => setFormat(key)} />
-              {FORMAT_LABELS[key]}
-            </label>
-          ))}
-        </div>
-      )}
 
       <button
         onClick={handleConvert}

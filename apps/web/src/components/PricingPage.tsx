@@ -1,46 +1,37 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
-import { fetchPlans, startCheckout, formatCents, type BillingCycle, type SegmentPricing } from '@/lib/billingApi';
+import {
+  fetchPlans,
+  startCheckout,
+  fetchPublicFeatures,
+  formatCents,
+  type BillingCycle,
+  type SegmentPricing,
+  type PublicFeature,
+} from '@/lib/billingApi';
+import {
+  creditsEnabled,
+  listCreditPacks,
+  startCreditCheckout,
+  formatCents as formatCreditCents,
+  type CreditPack,
+} from '@/lib/creditsApi';
+import { showError } from '@/lib/toast';
 
 type Segment = 'LAWYER' | 'ACCOUNTANT' | 'RESEARCHER';
+type TabValue = Segment | 'CREDITS';
 
-const PLAN_COPY: Record<Segment, { tab: string; name: string; features: string[] }> = {
-  LAWYER: {
-    tab: 'Legal',
-    name: 'For Lawyers & Firms',
-    features: [
-      'Unlimited contract redlines',
-      'Clause risk detection with explanations',
-      'Automatic entity extraction to CSV',
-      'Semantic search across your contract library',
-      'Compliance-ready processing log',
-    ],
-  },
-  ACCOUNTANT: {
-    tab: 'Accounting',
-    name: 'For Accountants & Small Business',
-    features: [
-      'Batch invoice data extraction',
-      'Automatic expense categorization',
-      'QuickBooks / Xero-ready CSV export',
-      'Editable review before export',
-      'Volume pricing for high-invoice months',
-    ],
-  },
-  RESEARCHER: {
-    tab: 'Research',
-    name: 'For Researchers & Grad Students',
-    features: [
-      'Chat with any paper, with page citations',
-      'BibTeX / APA / MLA reference export',
-      'Searchable personal research library',
-      'Free tier available with monthly limits',
-    ],
-  },
+const PLAN_COPY: Record<Segment, { tab: string; name: string }> = {
+  LAWYER: { tab: 'Legal', name: 'For Lawyers & Firms' },
+  ACCOUNTANT: { tab: 'Accounting', name: 'For Accountants & Small Business' },
+  RESEARCHER: { tab: 'Research', name: 'For Researchers & Grad Students' },
 };
+
+const CORE_TOOLS_LINE = 'Merge, split, compress, rotate & other core PDF tools — free, unlimited, forever';
 
 const CYCLES: { value: BillingCycle; label: string }[] = [
   { value: 'WEEKLY', label: 'Weekly' },
@@ -56,7 +47,9 @@ const CYCLE_PERIOD: Record<BillingCycle, string> = {
   YEARLY: '/year',
 };
 
-const FAQS = [
+const DEFAULT_HEADING = 'A plan for every profession';
+
+const DEFAULT_FAQS = [
   {
     q: 'Is my document content used to train any AI model?',
     a: 'No. Your files and extracted text are sent only to process your request, never used for training.',
@@ -71,19 +64,51 @@ const FAQS = [
   },
   {
     q: 'What needs a paid plan?',
-    a: 'AI features, OCR, and anything that needs our servers (Office↔PDF conversion, password protect/remove) are part of a paid workspace plan.',
+    a: 'AI features and anything that needs our servers (Office↔PDF conversion, password protect/remove) are part of a paid workspace plan. OCR runs locally in your browser and stays free.',
   },
 ];
 
-export default function PricingPage() {
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+
+interface CmsSections {
+  intro?: { heading: string };
+  faq?: { items: { q: string; a: string }[] };
+}
+
+async function fetchCmsSections(preview: boolean): Promise<CmsSections> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
+    const res = await fetch(`${API_URL}/cms/pages/pricing${preview ? '?preview=1' : ''}`, {
+      signal: controller.signal,
+      cache: preview ? 'no-store' : 'no-cache',
+    });
+    clearTimeout(timeout);
+    if (!res.ok) return {};
+    const data = await res.json();
+    return (data.sections ?? {}) as CmsSections;
+  } catch {
+    return {};
+  }
+}
+
+function PricingPageInner() {
   const { user, token } = useAuth();
-  const [segment, setSegment] = useState<Segment>('LAWYER');
+  const searchParams = useSearchParams();
+  const preview = searchParams.get('cmsPreview') === '1';
+  const [tab, setTab] = useState<TabValue>('LAWYER');
   const [cycle, setCycle] = useState<BillingCycle>('MONTHLY');
   const [pricing, setPricing] = useState<SegmentPricing[] | null>(null);
   const [billingConfigured, setBillingConfigured] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
+  const [showCreditsTab, setShowCreditsTab] = useState(false);
+  const [packs, setPacks] = useState<CreditPack[] | null>(null);
+  const [buyingPackId, setBuyingPackId] = useState<string | null>(null);
+  const [features, setFeatures] = useState<PublicFeature[]>([]);
+  const [cms, setCms] = useState<CmsSections>({});
 
   useEffect(() => {
     fetchPlans()
@@ -92,11 +117,30 @@ export default function PricingPage() {
         setBillingConfigured(res.configured);
       })
       .catch(() => {});
-  }, []);
+    creditsEnabled()
+      .then(setShowCreditsTab)
+      .catch(() => setShowCreditsTab(false));
+    listCreditPacks()
+      .then(setPacks)
+      .catch(() => setPacks([]));
+    fetchPublicFeatures()
+      .then(setFeatures)
+      .catch(() => setFeatures([]));
+    fetchCmsSections(preview).then(setCms);
+  }, [preview]);
 
-  const current = PLAN_COPY[segment];
+  const heading = cms.intro?.heading ?? DEFAULT_HEADING;
+  const faqs = cms.faq?.items ?? DEFAULT_FAQS;
+
+  const segment = tab === 'CREDITS' ? null : tab;
+  const current = segment ? PLAN_COPY[segment] : null;
   const cyclesForSegment = pricing?.find((p) => p.segment === segment)?.cycles;
   const selectedPrice = cyclesForSegment?.find((c) => c.cycle === cycle);
+  // Free card lists exactly what's toggled on for this segment; the paid
+  // card lists everything, since a PAID user always unlocks every feature
+  // regardless of the (currently unused) proEnabled flag.
+  const segmentFeatures = segment ? features.filter((f) => f.segment === segment).sort((a, b) => a.order - b.order) : [];
+  const freeFeatures = segmentFeatures.filter((f) => f.freeEnabled);
 
   async function handleSubscribe() {
     if (!token) return;
@@ -112,20 +156,31 @@ export default function PricingPage() {
     }
   }
 
+  async function handleBuyCredits(packId: string) {
+    if (!token) return;
+    setBuyingPackId(packId);
+    try {
+      const url = await startCreditCheckout(token, packId);
+      window.location.href = url;
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Could not start checkout.');
+    } finally {
+      setBuyingPackId(null);
+    }
+  }
+
   return (
     <div className="bg-surface px-6 py-20 sm:px-12">
-      <div className="mx-auto max-w-2xl text-center">
-        <h1 className="font-serif text-3xl font-medium text-navy sm:text-4xl">
-          A plan for every profession
-        </h1>
+      <div className={`mx-auto text-center ${tab === 'CREDITS' ? 'max-w-2xl' : 'max-w-3xl'}`}>
+        <h1 className="font-serif text-3xl font-medium text-navy sm:text-4xl">{heading}</h1>
 
         <div className="relative mt-10 flex justify-center gap-1">
           {(Object.keys(PLAN_COPY) as Segment[]).map((key) => (
             <button
               key={key}
-              onClick={() => setSegment(key)}
+              onClick={() => setTab(key)}
               className={`rounded-t-lg px-5 pb-3 pt-2.5 font-mono text-xs uppercase tracking-wide transition-all ${
-                segment === key
+                tab === key
                   ? 'bg-paper font-semibold text-navy shadow-[0_-2px_8px_rgba(0,0,0,0.06)]'
                   : 'bg-[#E9E2CE] text-[#6B6250] opacity-70 hover:opacity-90'
               }`}
@@ -133,77 +188,195 @@ export default function PricingPage() {
               {PLAN_COPY[key].tab}
             </button>
           ))}
-        </div>
-
-        <div className="rounded-b-xl rounded-tr-xl border border-paper-line bg-white p-10 text-left shadow-sm">
-          <h2 className="font-serif text-xl font-semibold text-navy">{current.name}</h2>
-
-          <div className="mt-6 grid grid-cols-4 gap-2">
-            {CYCLES.map((c) => {
-              const active = cycle === c.value;
-              return (
-                <button
-                  key={c.value}
-                  onClick={() => setCycle(c.value)}
-                  className={`relative rounded-md border px-2 py-2.5 text-center text-xs font-medium transition-colors ${
-                    active ? 'border-emerald bg-emerald text-white' : 'border-gray-200 text-ink-soft hover:border-gray-300'
-                  }`}
-                >
-                  {(c.value === 'QUARTERLY' || c.value === 'YEARLY') && (
-                    <span className="absolute -top-2 right-1 rounded bg-amber-400 px-1 py-0.5 font-mono text-[9px] font-semibold text-navy">
-                      Save {c.value === 'QUARTERLY' ? '10%' : '20%'}
-                    </span>
-                  )}
-                  {c.label}
-                </button>
-              );
-            })}
-          </div>
-
-          <p className="mt-6">
-            <span className="font-serif text-4xl font-medium text-navy">
-              {selectedPrice ? formatCents(selectedPrice.priceCents) : '—'}
-            </span>
-            <span className="ml-1 text-sm text-ink-soft">{CYCLE_PERIOD[cycle]}</span>
-          </p>
-
-          <ul className="mt-6 space-y-2.5 text-sm text-ink-soft">
-            {current.features.map((f) => (
-              <li key={f} className="flex items-center gap-2">
-                <span className="text-[8px] text-emerald">●</span>
-                {f}
-              </li>
-            ))}
-          </ul>
-
-          {user ? (
-            <>
-              <button
-                onClick={handleSubscribe}
-                disabled={isCheckingOut}
-                className="mt-8 block w-full rounded-lg bg-emerald px-6 py-3 text-center font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
-              >
-                {isCheckingOut ? 'Starting checkout…' : 'Subscribe'}
-              </button>
-              {checkoutError && <p className="mt-3 text-center text-xs text-redline">{checkoutError}</p>}
-            </>
-          ) : (
-            <Link
-              href="/signup"
-              className="mt-8 block w-full rounded-lg bg-emerald px-6 py-3 text-center font-medium text-white transition-colors hover:bg-emerald-dark"
+          {showCreditsTab && (
+            <button
+              onClick={() => setTab('CREDITS')}
+              className={`rounded-t-lg px-5 pb-3 pt-2.5 font-mono text-xs uppercase tracking-wide transition-all ${
+                tab === 'CREDITS'
+                  ? 'bg-paper font-semibold text-navy shadow-[0_-2px_8px_rgba(0,0,0,0.06)]'
+                  : 'bg-[#E9E2CE] text-[#6B6250] opacity-70 hover:opacity-90'
+              }`}
             >
-              Start Free
-            </Link>
-          )}
-          {!billingConfigured && (
-            <p className="mt-3 text-center text-xs text-ink-soft">
-              Billing isn&apos;t live yet — every tool is free to use while we finish it.
-            </p>
+              Pay as you go
+            </button>
           )}
         </div>
+
+        {tab === 'CREDITS' ? (
+          <div className="rounded-b-xl rounded-tr-xl border border-paper-line bg-white p-10 text-left shadow-sm">
+            <h2 className="font-serif text-xl font-semibold text-navy">Pay as you go</h2>
+            <p className="mt-1 text-sm text-ink-soft">
+              1 credit = 1 AI analysis, chat session, or comparison. No subscription required.
+            </p>
+
+            {!packs ? (
+              <p className="mt-8 text-sm text-ink-soft">Loading…</p>
+            ) : (
+              <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {packs.map((pack) => (
+                  <div
+                    key={pack.id}
+                    className={`relative rounded-xl border p-6 ${
+                      pack.isBestValue ? 'border-emerald' : 'border-gray-200'
+                    }`}
+                  >
+                    {pack.isBestValue && (
+                      <span className="absolute -top-3 right-4 rounded-full bg-emerald-soft px-2.5 py-1 font-mono text-[10px] font-semibold text-emerald">
+                        Best value
+                      </span>
+                    )}
+                    <p className="font-serif text-lg text-navy">{pack.size} credits</p>
+                    <p className="mt-2 font-serif text-3xl font-medium text-navy">
+                      {formatCreditCents(pack.priceCents)}
+                    </p>
+                    <p className="mt-1 font-mono text-xs text-ink-soft">
+                      ~{formatCreditCents(Math.round(pack.priceCents / pack.size))}/credit
+                    </p>
+                    {user ? (
+                      <button
+                        onClick={() => handleBuyCredits(pack.id)}
+                        disabled={buyingPackId !== null}
+                        className="mt-5 block w-full rounded-lg bg-emerald px-6 py-2.5 text-center text-sm font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
+                      >
+                        {buyingPackId === pack.id ? 'Starting checkout…' : 'Buy credits'}
+                      </button>
+                    ) : (
+                      <Link
+                        href="/signup"
+                        className="mt-5 block w-full rounded-lg bg-emerald px-6 py-2.5 text-center text-sm font-medium text-white transition-colors hover:bg-emerald-dark"
+                      >
+                        Sign up to buy
+                      </Link>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <p className="mt-6 text-[13px] text-ink-soft">
+              Credits never expire. Best for occasional use — for regular monthly use, a
+              subscription plan costs less per document.
+            </p>
+            {!billingConfigured && (
+              <p className="mt-3 text-center text-xs text-ink-soft">
+                Billing isn&apos;t live yet — every tool is free to use while we finish it.
+              </p>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            {/* Free plan — sits alongside the paid plan, not hidden behind a separate tab.
+                Its feature list is exactly the segment's freeEnabled features, live from
+                the admin panel's "Features per plan" toggles. */}
+            <div className="rounded-b-xl rounded-tr-xl border border-paper-line bg-white p-10 text-left shadow-sm sm:rounded-tl-xl">
+              <h2 className="font-serif text-xl font-semibold text-navy">Free</h2>
+              <p className="mt-6">
+                <span className="font-serif text-4xl font-medium text-navy">$0</span>
+                <span className="ml-1 text-sm text-ink-soft">forever</span>
+              </p>
+
+              <ul className="mt-6 space-y-2.5 text-sm text-ink-soft">
+                <li className="flex items-center gap-2">
+                  <span className="text-[8px] text-emerald">●</span>
+                  {CORE_TOOLS_LINE}
+                </li>
+                {freeFeatures.map((f) => (
+                  <li key={f.key} className="flex items-center gap-2">
+                    <span className="text-[8px] text-emerald">●</span>
+                    {f.label}
+                  </li>
+                ))}
+              </ul>
+
+              {user ? (
+                <p className="mt-8 rounded-lg border border-gray-200 px-6 py-3 text-center text-sm text-ink-soft">
+                  {user.plan === 'FREE' ? 'Your current plan' : 'Included with every plan'}
+                </p>
+              ) : (
+                <Link
+                  href="/signup"
+                  className="mt-8 block w-full rounded-lg border border-navy px-6 py-3 text-center font-medium text-navy transition-colors hover:bg-navy hover:text-white"
+                >
+                  Start Free
+                </Link>
+              )}
+            </div>
+
+            <div className="rounded-xl border border-paper-line bg-white p-10 text-left shadow-sm">
+              <h2 className="font-serif text-xl font-semibold text-navy">{current?.name}</h2>
+
+              <div className="mt-6 grid grid-cols-4 gap-2">
+                {CYCLES.map((c) => {
+                  const active = cycle === c.value;
+                  return (
+                    <button
+                      key={c.value}
+                      onClick={() => setCycle(c.value)}
+                      className={`relative rounded-md border px-2 py-2.5 text-center text-xs font-medium transition-colors ${
+                        active ? 'border-emerald bg-emerald text-white' : 'border-gray-200 text-ink-soft hover:border-gray-300'
+                      }`}
+                    >
+                      {(c.value === 'QUARTERLY' || c.value === 'YEARLY') && (
+                        <span className="absolute -top-2 right-1 rounded bg-amber-400 px-1 py-0.5 font-mono text-[9px] font-semibold text-navy">
+                          Save {c.value === 'QUARTERLY' ? '10%' : '20%'}
+                        </span>
+                      )}
+                      {c.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <p className="mt-6">
+                <span className="font-serif text-4xl font-medium text-navy">
+                  {selectedPrice ? formatCents(selectedPrice.priceCents) : '—'}
+                </span>
+                <span className="ml-1 text-sm text-ink-soft">{CYCLE_PERIOD[cycle]}</span>
+              </p>
+
+              <ul className="mt-6 space-y-2.5 text-sm text-ink-soft">
+                <li className="flex items-center gap-2">
+                  <span className="text-[8px] text-emerald">●</span>
+                  Everything in Free, plus:
+                </li>
+                {segmentFeatures.map((f) => (
+                  <li key={f.key} className="flex items-center gap-2">
+                    <span className="text-[8px] text-emerald">●</span>
+                    {f.label}
+                  </li>
+                ))}
+              </ul>
+
+              {user ? (
+                <>
+                  <button
+                    onClick={handleSubscribe}
+                    disabled={isCheckingOut}
+                    className="mt-8 block w-full rounded-lg bg-emerald px-6 py-3 text-center font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
+                  >
+                    {isCheckingOut ? 'Starting checkout…' : 'Subscribe'}
+                  </button>
+                  {checkoutError && <p className="mt-3 text-center text-xs text-redline">{checkoutError}</p>}
+                </>
+              ) : (
+                <Link
+                  href="/signup"
+                  className="mt-8 block w-full rounded-lg bg-emerald px-6 py-3 text-center font-medium text-white transition-colors hover:bg-emerald-dark"
+                >
+                  Sign Up
+                </Link>
+              )}
+              {!billingConfigured && (
+                <p className="mt-3 text-center text-xs text-ink-soft">
+                  Billing isn&apos;t live yet — every tool is free to use while we finish it.
+                </p>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="mt-16 text-left">
-          {FAQS.map((item, i) => (
+          {faqs.map((item, i) => (
             <div key={item.q} className="border-t border-gray-200 py-4">
               <button
                 onClick={() => setOpenFaq(openFaq === i ? null : i)}
@@ -218,5 +391,13 @@ export default function PricingPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PricingPage() {
+  return (
+    <Suspense fallback={null}>
+      <PricingPageInner />
+    </Suspense>
   );
 }

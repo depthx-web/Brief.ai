@@ -7,6 +7,7 @@ import { JwtStrategy } from './jwt.strategy';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import { MailModule } from '../mail/mail.module';
+import { AffiliateModule } from '../affiliate/affiliate.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { MailModule } from '../mail/mail.module';
       signOptions: { expiresIn: process.env.JWT_EXPIRES_IN ?? '7d' },
     }),
     MailModule,
+    AffiliateModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, PrismaService, StorageService],

@@ -3,7 +3,7 @@ import RequirePaidPlan from '@/components/RequirePaidPlan';
 
 export default function RemovePasswordPage() {
   return (
-    <RequirePaidPlan>
+    <RequirePaidPlan featureKey="REMOVE_PASSWORD">
       <RemovePasswordPdf />
     </RequirePaidPlan>
   );

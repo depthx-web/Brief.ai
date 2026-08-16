@@ -12,6 +12,7 @@ import {
   type AuthUser,
   type Segment,
 } from './authApi';
+import { getStoredReferralCode } from '@/components/ReferralCapture';
 
 const TOKEN_KEY = 'brief-ai-token';
 
@@ -68,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signup(email: string, password: string, name?: string, segment?: Segment) {
-    const { token: newToken, user: newUser } = await apiSignup(email, password, name, segment);
+    const { token: newToken, user: newUser } = await apiSignup(email, password, name, segment, getStoredReferralCode());
     localStorage.setItem(TOKEN_KEY, newToken);
     setToken(newToken);
     setUser(newUser);

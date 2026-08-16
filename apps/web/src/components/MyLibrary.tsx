@@ -76,7 +76,7 @@ export default function MyLibrary() {
       files.length > 1 ? 0 : undefined
     );
     try {
-      const project = await createProject(token, details.name, details.category, details.retentionDays);
+      const project = await createProject(token, details.name, details.category);
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         if (files.length > 1) {
@@ -85,7 +85,7 @@ export default function MyLibrary() {
         const pages = await extractPdfText(file);
         const fullText = pages.map((p) => p.text).join('\n\n');
         if (!fullText.trim()) continue;
-        await uploadDocument(token, file, fullText, details.category, project.id);
+        await uploadDocument(token, file, fullText, details.category, project.id, details.retentionDays);
       }
       resolveLoading(toastId, `${details.name} uploaded`);
       await refreshLibrary(token);

@@ -14,12 +14,19 @@ export class FeatureService {
     return this.prisma.feature.update({ where: { id }, data });
   }
 
-  // Used by FeatureGuard to decide whether a FREE-plan user in this segment
-  // can use a specific AI operation, per the admin panel's live feature
-  // toggles. Unknown segment/key combos (no seeded row) default to blocked —
-  // fail closed rather than silently letting new operations through free.
-  async isFreeEnabled(segment: Segment, key: string): Promise<boolean> {
-    const feature = await this.prisma.feature.findUnique({ where: { segment_key: { segment, key } } });
+  // Used by FeatureGuard to decide whether a FREE-plan user can use a
+  // specific tool, per the admin panel's live feature toggles. Matches
+  // either a null-segment row (a tool available to every workspace — Office
+  // <-> PDF, Protect, Remove Password) or a row scoped to the caller's own
+  // segment (the per-profession AI operations); a given key is only ever
+  // seeded as one or the other, never both, so `findFirst` resolves to the
+  // single right row either way. Unknown/unseeded key combos default to
+  // blocked — fail closed rather than silently letting new operations
+  // through free.
+  async isFreeEnabled(segment: Segment | null, key: string): Promise<boolean> {
+    const feature = await this.prisma.feature.findFirst({
+      where: { key, OR: [{ segment: null }, ...(segment ? [{ segment }] : [])] },
+    });
     return feature?.freeEnabled ?? false;
   }
 }

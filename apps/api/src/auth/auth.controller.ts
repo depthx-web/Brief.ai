@@ -28,6 +28,7 @@ interface SignupBody {
   password?: string;
   name?: string;
   segment?: string;
+  referralCode?: string;
 }
 
 interface LoginBody {
@@ -69,7 +70,13 @@ export class AuthController {
         ? (body.segment as Segment)
         : undefined;
 
-    return this.authService.signup(body.email.trim().toLowerCase(), body.password, body.name, segment);
+    return this.authService.signup(
+      body.email.trim().toLowerCase(),
+      body.password,
+      body.name,
+      segment,
+      body.referralCode?.trim() || undefined
+    );
   }
 
   @Post('login')

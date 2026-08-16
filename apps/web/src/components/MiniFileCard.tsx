@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { generateFilePdf } from '@/lib/generateFilePdf';
-import { convertFile, downloadBlob } from '@/lib/convertApi';
+import { convertPdfToOffice, downloadBlob } from '@/lib/convertApi';
 
 interface Props {
   title: string;
@@ -41,7 +41,7 @@ export default function MiniFileCard({ title, filename, content }: Props) {
     try {
       const pdfBlob = await generateFilePdf(title, content);
       const pdfFile = new File([pdfBlob], `${filename}.pdf`, { type: 'application/pdf' });
-      const { blob, filename: outName } = await convertFile(pdfFile, 'docx');
+      const { blob, filename: outName } = await convertPdfToOffice(pdfFile, 'word');
       downloadBlob(blob, outName);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not generate the Word document.');

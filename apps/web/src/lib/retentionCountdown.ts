@@ -1,14 +1,17 @@
-export type CountdownUrgency = 'plenty' | 'soon' | 'critical' | 'expired';
+export type CountdownUrgency = 'plenty' | 'soon' | 'critical' | 'expired' | 'none';
 
 export interface Countdown {
   label: string;
   urgency: CountdownUrgency;
 }
 
-// Drives the Library project card's countdown badge — plain gray with
-// plenty of time left, ambering, then reading redline as the retention
-// window (24h by default, 7d/30d if extended) nears zero.
-export function formatCountdown(expiresAt: string | Date): Countdown {
+// Drives the Library project/file countdown badge — plain gray with plenty
+// of time left, ambering, then reading redline as the retention window
+// (24h by default, 7d/30d if extended) nears zero. null means the
+// file/project carries no expiry at all (e.g. an empty project, or an
+// Unsorted document with no project).
+export function formatCountdown(expiresAt: string | Date | null): Countdown {
+  if (expiresAt === null) return { label: 'No expiry', urgency: 'none' };
   const msLeft = new Date(expiresAt).getTime() - Date.now();
 
   if (msLeft <= 0) return { label: 'Expired', urgency: 'expired' };

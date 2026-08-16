@@ -50,9 +50,10 @@ export function signup(
   email: string,
   password: string,
   name?: string,
-  segment?: Segment
+  segment?: Segment,
+  referralCode?: string
 ): Promise<AuthResponse> {
-  return post<AuthResponse>('/auth/signup', { email, password, name, segment });
+  return post<AuthResponse>('/auth/signup', { email, password, name, segment, referralCode });
 }
 
 export function login(email: string, password: string): Promise<AuthResponse> {

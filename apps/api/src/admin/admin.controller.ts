@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import type { BillingCycle, DiscountType, Plan, Segment, UserStatus } from '@prisma/client';
 import { AdminAuthGuard } from './admin-auth.guard';
@@ -8,6 +8,10 @@ import { FeatureService } from '../features/feature.service';
 import { DiscountCodeService } from '../billing/discount-code.service';
 import { LiteLlmAdminService, type TaskAlias } from '../ai/litellm-admin.service';
 import { EmailCampaignService } from '../mail/email-campaign.service';
+import { CreditsService } from '../credits/credits.service';
+import { PlatformSettingsService } from '../platform-settings/platform-settings.service';
+import { LemonSqueezyService } from '../billing/lemon-squeezy.service';
+import type { CreditTransactionReason } from '@prisma/client';
 
 const VALID_SEGMENTS: Segment[] = ['LAWYER', 'ACCOUNTANT', 'RESEARCHER'];
 const VALID_CYCLES: BillingCycle[] = ['WEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY'];
@@ -42,6 +46,41 @@ interface CreateDiscountCodeBody {
   applicableSegments?: string[];
 }
 
+interface CreatePackBody {
+  size?: number;
+  priceCents?: number;
+}
+
+interface UpdatePackBody {
+  size?: number;
+  priceCents?: number;
+}
+
+interface AdjustBalanceBody {
+  delta?: number;
+  note?: string;
+}
+
+interface UpdateSettingsBody {
+  creditsEnabled?: boolean;
+  paymentsEnabled?: boolean;
+  commissionSignupPercent?: number;
+  commissionRenewalPercent?: number;
+  paypalFeePercent?: number;
+  paypalFeeFixedCents?: number;
+  dunningAutoRetryEnabled?: boolean;
+  dunningMaxAttempts?: number;
+  dunningIntervalDays?: number;
+}
+
+interface CancelSubscriptionBody {
+  immediately?: boolean;
+}
+
+interface ExtendSubscriptionBody {
+  renewalDate?: string;
+}
+
 @ApiTags('admin')
 @UseGuards(AdminAuthGuard)
 @Controller('admin')
@@ -52,7 +91,10 @@ export class AdminController {
     private readonly featureService: FeatureService,
     private readonly discountCodeService: DiscountCodeService,
     private readonly liteLlmAdmin: LiteLlmAdminService,
-    private readonly emailCampaignService: EmailCampaignService
+    private readonly emailCampaignService: EmailCampaignService,
+    private readonly creditsService: CreditsService,
+    private readonly platformSettings: PlatformSettingsService,
+    private readonly lemonSqueezy: LemonSqueezyService
   ) {}
 
   @Get('stats')
@@ -81,7 +123,19 @@ export class AdminController {
 
   @Get('users/:id')
   async getUser(@Param('id') id: string) {
-    return this.adminService.getUserDetail(id);
+    const [detail, creditBalance] = await Promise.all([
+      this.adminService.getUserDetail(id),
+      this.creditsService.getBalance(id),
+    ]);
+    return { ...detail, creditBalance };
+  }
+
+  @Post('users/:id/credits/adjust')
+  async adjustUserCredits(@Param('id') id: string, @Body() body: AdjustBalanceBody) {
+    if (typeof body.delta !== 'number') throw new BadRequestException('An adjustment amount is required.');
+    if (!body.note?.trim()) throw new BadRequestException('A reason is required.');
+    await this.creditsService.adjustBalanceManually(id, body.delta, body.note);
+    return { success: true };
   }
 
   @Post('users/:id/ban')
@@ -100,6 +154,28 @@ export class AdminController {
   async resetPassword(@Param('id') id: string) {
     await this.adminService.resetUserPassword(id);
     return { success: true };
+  }
+
+  // --- Subscription actions in the user detail drawer (Part 9 §2.2) ------
+
+  @Post('users/:id/subscription/cancel')
+  async cancelUserSubscription(@Param('id') id: string, @Body() body: CancelSubscriptionBody) {
+    await this.lemonSqueezy.cancelSubscription(id, Boolean(body.immediately));
+    return { success: true };
+  }
+
+  @Post('users/:id/subscription/extend')
+  async extendUserSubscription(@Param('id') id: string, @Body() body: ExtendSubscriptionBody) {
+    if (!body.renewalDate) throw new BadRequestException('A new renewal date is required.');
+    const date = new Date(body.renewalDate);
+    if (Number.isNaN(date.getTime())) throw new BadRequestException('Invalid date.');
+    await this.lemonSqueezy.extendSubscription(id, date);
+    return { success: true };
+  }
+
+  @Post('users/:id/subscription/refund')
+  async refundUserPayment(@Param('id') id: string) {
+    return this.lemonSqueezy.refundLastPayment(id);
   }
 
   @Get('plan-prices')
@@ -166,6 +242,97 @@ export class AdminController {
   async revokeDiscountCode(@Param('id') id: string) {
     await this.discountCodeService.revoke(id);
     return { success: true };
+  }
+
+  // --- Pay-as-you-go credit packs (extends Plans & Pricing, Part 7 §1) ----
+
+  @Get('settings')
+  async getSettings() {
+    return this.platformSettings.get();
+  }
+
+  @Patch('settings')
+  async updateSettings(@Body() body: UpdateSettingsBody) {
+    return this.platformSettings.update(body);
+  }
+
+  @Get('credit-packs')
+  async listCreditPacks() {
+    return this.creditsService.listPacks();
+  }
+
+  @Post('credit-packs')
+  async createCreditPack(@Body() body: CreatePackBody) {
+    if (!body.size || body.size <= 0) throw new BadRequestException('Pack size must be a positive number.');
+    if (typeof body.priceCents !== 'number' || body.priceCents < 0) {
+      throw new BadRequestException('Price must be a non-negative number.');
+    }
+    await this.creditsService.createPack(body.size, body.priceCents);
+    return { success: true };
+  }
+
+  @Patch('credit-packs/:id')
+  async updateCreditPack(@Param('id') id: string, @Body() body: UpdatePackBody) {
+    return this.creditsService.updatePack(id, body);
+  }
+
+  @Post('credit-packs/:id/best-value')
+  async setBestValuePack(@Param('id') id: string) {
+    await this.creditsService.setBestValue(id);
+    return { success: true };
+  }
+
+  @Delete('credit-packs/:id')
+  async deleteCreditPack(@Param('id') id: string) {
+    await this.creditsService.deletePack(id);
+    return { success: true };
+  }
+
+  @Get('credit-transactions')
+  async listCreditTransactions(@Query('userId') userId?: string, @Query('reason') reason?: string) {
+    return this.creditsService.listAllTransactions({
+      userId,
+      reason: reason as CreditTransactionReason | undefined,
+    });
+  }
+
+  // --- Billing admin section (Part 9 §2.1) --------------------------------
+
+  @Get('billing/transactions')
+  async listTransactions(
+    @Query('status') status?: string,
+    @Query('type') type?: string,
+    @Query('page') page?: string,
+    @Query('pageSize') pageSize?: string
+  ) {
+    return this.adminService.listPaymentTransactions({
+      status,
+      type,
+      page: page ? Math.max(1, parseInt(page, 10) || 1) : 1,
+      pageSize: pageSize ? Math.min(100, Math.max(1, parseInt(pageSize, 10) || 25)) : 25,
+    });
+  }
+
+  @Get('billing/failed-payments')
+  async listFailedPayments() {
+    return this.adminService.listFailedPayments();
+  }
+
+  @Post('billing/failed-payments/:userId/retry')
+  async retryFailedPayment(@Param('userId') userId: string) {
+    return this.lemonSqueezy.retryFailedPayment(userId);
+  }
+
+  @Get('billing/payment-provider')
+  async getPaymentProvider() {
+    const settings = await this.platformSettings.get();
+    const apiKey = process.env.LEMON_SQUEEZY_API_KEY;
+    return {
+      name: 'Lemon Squeezy',
+      configured: this.lemonSqueezy.isConfigured(),
+      maskedKey: apiKey ? `${apiKey.slice(0, 3)}${'•'.repeat(6)}${apiKey.slice(-4)}` : null,
+      enabled: settings.paymentsEnabled,
+    };
   }
 
   @Get('ai-providers')

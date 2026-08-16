@@ -3,7 +3,7 @@ import RequirePaidPlan from '@/components/RequirePaidPlan';
 
 export default function ProtectPage() {
   return (
-    <RequirePaidPlan>
+    <RequirePaidPlan featureKey="PROTECT_PDF">
       <ProtectPdf />
     </RequirePaidPlan>
   );

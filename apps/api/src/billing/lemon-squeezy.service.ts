@@ -1,10 +1,13 @@
-import { BadRequestException, Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import type { Segment } from '../auth/auth.service';
 import type { BillingCycle } from './pricing';
 import { DiscountCodeService } from './discount-code.service';
 import { EmailCampaignService } from '../mail/email-campaign.service';
+import { CreditsService } from '../credits/credits.service';
+import { PlatformSettingsService } from '../platform-settings/platform-settings.service';
+import { AffiliateService } from '../affiliate/affiliate.service';
 import { CYCLE_LABELS } from './pricing';
 
 const LEMON_SQUEEZY_API = 'https://api.lemonsqueezy.com/v1';
@@ -12,14 +15,18 @@ const LEMON_SQUEEZY_API = 'https://api.lemonsqueezy.com/v1';
 interface LemonSqueezyWebhookPayload {
   meta: {
     event_name: string;
-    custom_data?: { userId?: string; cycle?: string; discountCode?: string };
+    custom_data?: { userId?: string; cycle?: string; discountCode?: string; creditPackId?: string; creditAmount?: string };
   };
   data: {
+    id: string;
     attributes: {
       status: string;
       customer_id: number;
       renews_at: string | null;
       ends_at: string | null;
+      // Present on order_created / subscription_payment_* events. Cents,
+      // matching how the rest of the platform stores money (priceCents etc).
+      total?: number;
     };
   };
 }
@@ -37,7 +44,10 @@ export class LemonSqueezyService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly discountCodes: DiscountCodeService,
-    private readonly emailCampaigns: EmailCampaignService
+    private readonly emailCampaigns: EmailCampaignService,
+    private readonly credits: CreditsService,
+    private readonly platformSettings: PlatformSettingsService,
+    private readonly affiliates: AffiliateService
   ) {}
 
   private get apiKey(): string | undefined {
@@ -52,6 +62,13 @@ export class LemonSqueezyService {
     return Boolean(this.apiKey && this.storeId);
   }
 
+  private async assertPaymentsEnabled(): Promise<void> {
+    const settings = await this.platformSettings.get();
+    if (!settings.paymentsEnabled) {
+      throw new ServiceUnavailableException('Payments are temporarily disabled. Please try again later.');
+    }
+  }
+
   async createCheckoutUrl(
     userId: string,
     userEmail: string,
@@ -59,6 +76,7 @@ export class LemonSqueezyService {
     cycle: BillingCycle,
     discountCode?: string
   ): Promise<string> {
+    await this.assertPaymentsEnabled();
     if (discountCode) {
       // Checked first and independent of Lemon Squeezy's own configuration —
       // no reason to require billing to be fully set up before telling the
@@ -118,6 +136,57 @@ export class LemonSqueezyService {
     return json.data.attributes.url;
   }
 
+  // One-time purchase (a Lemon Squeezy "order", not a subscription) for a
+  // credit pack — separate flow from createCheckoutUrl above since it's a
+  // different LS product type and fires a different webhook event.
+  async createCreditPackCheckoutUrl(
+    userId: string,
+    userEmail: string,
+    packId: string,
+    packSize: number,
+    packVariantId: string
+  ): Promise<string> {
+    await this.assertPaymentsEnabled();
+    if (!this.isConfigured()) {
+      throw new ServiceUnavailableException(
+        'Billing is not configured yet. Set LEMON_SQUEEZY_API_KEY and LEMON_SQUEEZY_STORE_ID to enable checkout.'
+      );
+    }
+
+    const response = await fetch(`${LEMON_SQUEEZY_API}/checkouts`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/vnd.api+json',
+        'Content-Type': 'application/vnd.api+json',
+        Authorization: `Bearer ${this.apiKey}`,
+      },
+      body: JSON.stringify({
+        data: {
+          type: 'checkouts',
+          attributes: {
+            checkout_data: {
+              email: userEmail,
+              custom: { userId, creditPackId: packId, creditAmount: String(packSize) },
+            },
+          },
+          relationships: {
+            store: { data: { type: 'stores', id: this.storeId } },
+            variant: { data: { type: 'variants', id: packVariantId } },
+          },
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      const body = await response.text();
+      this.logger.error(`Lemon Squeezy credit-pack checkout creation failed: ${response.status} ${body}`);
+      throw new ServiceUnavailableException('Could not start checkout. Please try again shortly.');
+    }
+
+    const json = (await response.json()) as { data: { attributes: { url: string } } };
+    return json.data.attributes.url;
+  }
+
   // Lemon Squeezy signs each webhook body with HMAC-SHA256 over the raw
   // (unparsed) request bytes — signature verification fails silently if you
   // verify against the re-serialized JSON instead.
@@ -167,6 +236,14 @@ export class LemonSqueezyService {
       if (event_name === 'subscription_created' && cycle) {
         await this.emailCampaigns.sendUpgradeConfirmation(user.email, user.name, CYCLE_LABELS[cycle]);
       }
+    } else if (event_name === 'order_created') {
+      const creditAmount = Number(payload.meta.custom_data?.creditAmount ?? 0);
+      if (creditAmount > 0) {
+        await this.credits.grantPurchasedCredits(userId, creditAmount);
+        await this.recordTransaction(userId, 'CREDIT_PURCHASE', 'SUCCEEDED', payload.data.attributes.total ?? 0, payload.data.id);
+      } else {
+        this.logger.warn(`order_created webhook for user ${userId} had no creditAmount in custom_data.`);
+      }
     } else if (event_name === 'subscription_expired' || event_name === 'subscription_cancelled') {
       await this.prisma.user.update({
         where: { id: userId },
@@ -177,9 +254,175 @@ export class LemonSqueezyService {
           subscriptionCancelledAt: new Date(),
         },
       });
+    } else if (event_name === 'subscription_payment_success') {
+      const amountCents = payload.data.attributes.total ?? 0;
+      await this.recordTransaction(userId, 'SUBSCRIPTION_PAYMENT', 'SUCCEEDED', amountCents, payload.data.id);
+      // Recovers the account from dunning — a successful payment (whether
+      // on schedule or via Lemon Squeezy's own retry) clears the clock.
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { dunningAttemptCount: 0, lastPaymentFailedAt: null, nextDunningRetryAt: null },
+      });
+      // Single source of truth for affiliate commissions (Part 9 §4.3): this
+      // event fires on every successful subscription charge, first payment
+      // included, so whether it's a SIGNUP or RENEWAL commission is decided
+      // by whether a SIGNUP commission already exists for this user — avoids
+      // double-counting against subscription_created, which doesn't reliably
+      // carry a payment total.
+      const alreadyHadSignup = await this.affiliates.hasEarnedSignupCommission(userId);
+      await this.affiliates.awardCommission(userId, alreadyHadSignup ? 'RENEWAL' : 'SIGNUP', amountCents);
+    } else if (event_name === 'subscription_payment_failed') {
+      await this.recordTransaction(userId, 'SUBSCRIPTION_PAYMENT', 'FAILED', payload.data.attributes.total ?? 0, payload.data.id);
+      const settings = await this.platformSettings.get();
+      const nextRetryAt = new Date();
+      nextRetryAt.setDate(nextRetryAt.getDate() + settings.dunningIntervalDays);
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          dunningAttemptCount: { increment: 1 },
+          lastPaymentFailedAt: new Date(),
+          nextDunningRetryAt: nextRetryAt,
+        },
+      });
+    } else if (event_name === 'subscription_payment_refunded' || event_name === 'order_refunded') {
+      await this.recordTransaction(userId, 'REFUND', 'REFUNDED', payload.data.attributes.total ?? 0, payload.data.id);
     } else {
       this.logger.log(`Unhandled Lemon Squeezy event: ${event_name}`);
     }
+  }
+
+  private async recordTransaction(
+    userId: string,
+    type: 'SUBSCRIPTION_PAYMENT' | 'CREDIT_PURCHASE' | 'REFUND',
+    status: 'SUCCEEDED' | 'FAILED' | 'REFUNDED',
+    amountCents: number,
+    providerReferenceId: string
+  ): Promise<void> {
+    await this.prisma.paymentTransaction.create({
+      data: { userId, type, status, amountCents, providerReferenceId },
+    });
+  }
+
+  // Support-tool actions for the admin user drawer (Part 9 §2.2). These call
+  // Lemon Squeezy directly where a real API exists for the action; "manual
+  // extension" instead overrides currentPeriodEnd on our own side, since
+  // that's the field our own entitlement checks actually read — Lemon
+  // Squeezy doesn't expose an API to arbitrarily set a subscription's next
+  // renewal date, so mirroring it there isn't possible.
+
+  async cancelSubscription(userId: string, immediately: boolean): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found.');
+    if (!user.lemonSqueezySubscriptionId) throw new BadRequestException('This user has no active subscription.');
+    if (!this.isConfigured()) {
+      throw new ServiceUnavailableException('Billing is not configured yet.');
+    }
+
+    const response = await fetch(`${LEMON_SQUEEZY_API}/subscriptions/${user.lemonSqueezySubscriptionId}`, {
+      method: immediately ? 'DELETE' : 'PATCH',
+      headers: {
+        Accept: 'application/vnd.api+json',
+        'Content-Type': 'application/vnd.api+json',
+        Authorization: `Bearer ${this.apiKey}`,
+      },
+      ...(immediately
+        ? {}
+        : {
+            body: JSON.stringify({
+              data: {
+                type: 'subscriptions',
+                id: user.lemonSqueezySubscriptionId,
+                attributes: { cancelled: true },
+              },
+            }),
+          }),
+    });
+    if (!response.ok) {
+      const body = await response.text();
+      this.logger.error(`Lemon Squeezy cancellation failed: ${response.status} ${body}`);
+      throw new ServiceUnavailableException('Could not cancel this subscription. Please try again shortly.');
+    }
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: immediately
+        ? { plan: 'FREE', subscriptionStatus: 'cancelled', subscriptionCancelledAt: new Date() }
+        : { subscriptionStatus: 'cancelled', subscriptionCancelledAt: new Date() },
+    });
+  }
+
+  async extendSubscription(userId: string, newRenewalDate: Date): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found.');
+    await this.prisma.user.update({ where: { id: userId }, data: { currentPeriodEnd: newRenewalDate } });
+  }
+
+  async refundLastPayment(userId: string): Promise<{ amountCents: number }> {
+    const lastPayment = await this.prisma.paymentTransaction.findFirst({
+      where: { userId, status: 'SUCCEEDED' },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (!lastPayment || !lastPayment.providerReferenceId) {
+      throw new BadRequestException('No refundable payment found for this user.');
+    }
+    if (!this.isConfigured()) {
+      throw new ServiceUnavailableException('Billing is not configured yet.');
+    }
+
+    const response = await fetch(`${LEMON_SQUEEZY_API}/orders/${lastPayment.providerReferenceId}/refund`, {
+      method: 'POST',
+      headers: {
+        Accept: 'application/vnd.api+json',
+        'Content-Type': 'application/vnd.api+json',
+        Authorization: `Bearer ${this.apiKey}`,
+      },
+      body: JSON.stringify({ data: { type: 'orders', id: lastPayment.providerReferenceId } }),
+    });
+    if (!response.ok) {
+      const body = await response.text();
+      this.logger.error(`Lemon Squeezy refund failed: ${response.status} ${body}`);
+      throw new ServiceUnavailableException('Could not process this refund. Please try again shortly.');
+    }
+
+    await this.recordTransaction(userId, 'REFUND', 'REFUNDED', lastPayment.amountCents, lastPayment.providerReferenceId);
+    return { amountCents: lastPayment.amountCents };
+  }
+
+  // "Retry now" in the admin Failed Payments list. Lemon Squeezy runs its own
+  // dunning retry schedule internally and doesn't expose an API to force an
+  // off-cycle charge attempt — so this re-syncs the subscription's current
+  // status from Lemon Squeezy (picking up a recovery that already happened
+  // on their side) and logs the manual check-in either way.
+  async retryFailedPayment(userId: string): Promise<{ recovered: boolean }> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found.');
+    if (!user.lemonSqueezySubscriptionId) throw new BadRequestException('This user has no active subscription.');
+    if (!this.isConfigured()) {
+      throw new ServiceUnavailableException('Billing is not configured yet.');
+    }
+
+    const response = await fetch(`${LEMON_SQUEEZY_API}/subscriptions/${user.lemonSqueezySubscriptionId}`, {
+      headers: { Accept: 'application/vnd.api+json', Authorization: `Bearer ${this.apiKey}` },
+    });
+    if (!response.ok) {
+      throw new ServiceUnavailableException('Could not reach Lemon Squeezy. Please try again shortly.');
+    }
+    const json = (await response.json()) as { data: { attributes: { status: string; renews_at: string | null } } };
+    const recovered = json.data.attributes.status === 'active';
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: recovered
+        ? {
+            subscriptionStatus: json.data.attributes.status,
+            currentPeriodEnd: json.data.attributes.renews_at ? new Date(json.data.attributes.renews_at) : null,
+            dunningAttemptCount: 0,
+            lastPaymentFailedAt: null,
+            nextDunningRetryAt: null,
+          }
+        : { subscriptionStatus: json.data.attributes.status, nextDunningRetryAt: new Date() },
+    });
+    return { recovered };
   }
 
   parseWebhookBody(rawBody: Buffer): LemonSqueezyWebhookPayload {

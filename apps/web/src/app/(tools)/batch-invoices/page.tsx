@@ -3,7 +3,7 @@ import RequirePaidPlan from '@/components/RequirePaidPlan';
 
 export default function BatchInvoicesPage() {
   return (
-    <RequirePaidPlan>
+    <RequirePaidPlan featureKey="EXTRACT_INVOICE" segment="ACCOUNTANT">
       <BatchInvoices />
     </RequirePaidPlan>
   );

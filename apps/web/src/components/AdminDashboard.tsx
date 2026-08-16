@@ -2,7 +2,58 @@
 
 import { useEffect, useState } from 'react';
 import { useAdminAuth } from '@/lib/AdminAuthContext';
-import { fetchAdminStats, type AdminStats } from '@/lib/adminApi';
+import { fetchAdminStats, fetchAdminCreditTransactions, type AdminStats, type AdminCreditTransaction } from '@/lib/adminApi';
+
+const REASON_LABEL: Record<AdminCreditTransaction['reason'], string> = {
+  PURCHASE: 'Purchase',
+  AI_USAGE: 'AI usage',
+  MANUAL_ADMIN_ADJUSTMENT: 'Manual adjustment',
+};
+
+function CreditTransactionsTab() {
+  const { token } = useAdminAuth();
+  const [transactions, setTransactions] = useState<AdminCreditTransaction[] | null>(null);
+
+  useEffect(() => {
+    if (!token) return;
+    fetchAdminCreditTransactions(token).then(setTransactions);
+  }, [token]);
+
+  if (!transactions) return <p className="mt-6 text-sm text-ink-soft">Loading…</p>;
+
+  return (
+    <div className="mt-6 overflow-x-auto rounded-lg border border-gray-200 bg-white">
+      {transactions.length === 0 ? (
+        <p className="px-4 py-6 text-sm text-ink-soft">No credit transactions yet.</p>
+      ) : (
+        <table className="min-w-full text-left text-sm">
+          <thead className="border-b border-gray-200 text-xs uppercase text-ink-soft">
+            <tr>
+              <th className="px-3 py-2">User</th>
+              <th className="px-3 py-2">Type</th>
+              <th className="px-3 py-2">Amount</th>
+              <th className="px-3 py-2">Note</th>
+              <th className="px-3 py-2">When</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {transactions.map((t) => (
+              <tr key={t.id}>
+                <td className="px-3 py-2 text-ink">{t.user.name || t.user.email}</td>
+                <td className="px-3 py-2 text-ink-soft">{REASON_LABEL[t.reason]}</td>
+                <td className={`px-3 py-2 font-mono ${t.delta > 0 ? 'text-emerald' : 'text-ink'}`}>
+                  {t.delta > 0 ? `+${t.delta}` : t.delta}
+                </td>
+                <td className="px-3 py-2 text-ink-soft">{t.adminNote ?? '—'}</td>
+                <td className="px-3 py-2 text-ink-soft">{new Date(t.createdAt).toLocaleString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
+}
 
 function sumByStatus(groups: { status: string; _count: number }[], status: string): number {
   return groups.filter((g) => g.status === status).reduce((sum, g) => sum + g._count, 0);
@@ -22,6 +73,7 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [tab, setTab] = useState<'overview' | 'credits'>('overview');
 
   useEffect(() => {
     if (!token) return;
@@ -49,7 +101,25 @@ export default function AdminDashboard() {
     <div className="mx-auto max-w-5xl px-8 py-10">
       <h1 className="font-serif text-2xl font-medium text-navy">Analytics</h1>
 
-      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="mt-6 flex gap-1">
+        {(['overview', 'credits'] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`rounded-t-lg px-4 py-2 text-xs font-medium uppercase tracking-wide transition-colors ${
+              tab === t ? 'bg-white text-navy shadow-[0_-2px_8px_rgba(0,0,0,0.06)]' : 'bg-gray-100 text-ink-soft'
+            }`}
+          >
+            {t === 'overview' ? 'Overview' : 'Credit Transactions'}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'credits' ? (
+        <CreditTransactionsTab />
+      ) : (
+        <>
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <StatTile label="Total Users" value={stats.users.total} />
         <StatTile label="Library Documents" value={stats.libraryDocuments.total} />
         <StatTile label="Conversions OK" value={conversionSuccess} />
@@ -108,6 +178,8 @@ export default function AdminDashboard() {
           )}
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 }

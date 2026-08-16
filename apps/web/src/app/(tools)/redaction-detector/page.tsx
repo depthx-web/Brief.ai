@@ -3,7 +3,7 @@ import RequirePaidPlan from '@/components/RequirePaidPlan';
 
 export default function RedactionDetectorPage() {
   return (
-    <RequirePaidPlan>
+    <RequirePaidPlan featureKey="DETECT_SENSITIVE_DATA" segment="LAWYER">
       <RedactionDetector />
     </RequirePaidPlan>
   );

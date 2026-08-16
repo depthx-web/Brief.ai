@@ -4,9 +4,11 @@ import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 
 // Enforces the retention promise made in the upload dialog (Batch 3,
-// Section 2.1): a project and every file in it are deleted permanently once
-// its clock runs out. Checked every 15 minutes rather than daily, since a
-// 24h default window makes a once-a-day sweep too coarse.
+// Section 2.1; per-file fix in Batch 5, Part 8): each file in a project
+// carries its own clock — default 24h, extendable to 7 or 30 days — so one
+// old file expiring doesn't take the rest of a long-running project with
+// it. Checked every 15 minutes rather than daily, since a 24h default
+// window makes a once-a-day sweep too coarse.
 @Injectable()
 export class ProjectRetentionService {
   private readonly logger = new Logger(ProjectRetentionService.name);
@@ -17,21 +19,32 @@ export class ProjectRetentionService {
   ) {}
 
   @Cron('*/15 * * * *')
-  async deleteExpiredProjects(): Promise<void> {
-    const expired = await this.prisma.project.findMany({
+  async deleteExpiredDocuments(): Promise<void> {
+    const expired = await this.prisma.libraryDocument.findMany({
       where: { expiresAt: { lte: new Date() } },
-      select: { id: true, documents: { select: { storagePath: true } } },
+      select: { id: true, storagePath: true, projectId: true },
     });
 
-    for (const project of expired) {
+    const touchedProjectIds = new Set<string>();
+    for (const doc of expired) {
       try {
-        await Promise.all(project.documents.map((d) => this.storage.delete(d.storagePath)));
-        // LibraryDocument rows cascade-delete automatically (onDelete: Cascade in schema).
-        await this.prisma.project.delete({ where: { id: project.id } });
+        await this.storage.delete(doc.storagePath);
+        await this.prisma.libraryDocument.delete({ where: { id: doc.id } });
+        if (doc.projectId) touchedProjectIds.add(doc.projectId);
       } catch (err) {
         this.logger.error(
-          `Retention sweep failed for project ${project.id}: ${err instanceof Error ? err.message : String(err)}`
+          `Retention sweep failed for document ${doc.id}: ${err instanceof Error ? err.message : String(err)}`
         );
+      }
+    }
+
+    // A project left with zero files after its last one expired is just
+    // clutter on the Library page — clean it up rather than leaving an
+    // empty card around.
+    for (const projectId of touchedProjectIds) {
+      const remaining = await this.prisma.libraryDocument.count({ where: { projectId } });
+      if (remaining === 0) {
+        await this.prisma.project.delete({ where: { id: projectId } }).catch(() => {});
       }
     }
   }

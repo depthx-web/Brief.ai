@@ -7,7 +7,10 @@ import { useAdminAuth } from '@/lib/AdminAuthContext';
 
 const NAV_ITEMS = [
   { href: '/admin', label: 'Analytics' },
+  { href: '/admin/content', label: 'Site Content' },
   { href: '/admin/plans', label: 'Plans & Pricing' },
+  { href: '/admin/billing', label: 'Billing' },
+  { href: '/admin/referrals', label: 'Referral Program' },
   { href: '/admin/discounts', label: 'Discount codes' },
   { href: '/admin/users', label: 'Users' },
   { href: '/admin/ai-providers', label: 'AI providers' },
@@ -25,17 +28,19 @@ function TokenGate() {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          login(tokenInput);
+          login(tokenInput.trim());
         }}
         className="mt-6 space-y-4"
       >
         <div>
           <label className="block text-sm font-medium text-ink">Admin token</label>
           <input
-            type="password"
+            type="text"
+            autoComplete="off"
+            spellCheck={false}
             value={tokenInput}
             onChange={(e) => setTokenInput(e.target.value)}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-sm"
           />
         </div>
         <button

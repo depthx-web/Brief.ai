@@ -13,7 +13,8 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { OptionalJwtAuthGuard } from '../auth/optional-jwt-auth.guard';
-import { RequirePaidPlanGuard } from '../billing/require-paid-plan.guard';
+import { FeatureGuard } from '../features/feature.guard';
+import { RequireFeature } from '../features/require-feature.decorator';
 import { PasswordService } from './password.service';
 
 const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024;
@@ -26,7 +27,8 @@ export class PasswordController {
   // Passwords are sent as multipart form fields (not query params) so they
   // don't end up in URLs, access logs, or browser history.
   @Post('protect')
-  @UseGuards(OptionalJwtAuthGuard, RequirePaidPlanGuard)
+  @RequireFeature('PROTECT_PDF')
+  @UseGuards(OptionalJwtAuthGuard, FeatureGuard)
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MAX_FILE_SIZE_BYTES } }))
   async protect(
     @UploadedFile() file: Express.Multer.File | undefined,
@@ -55,7 +57,8 @@ export class PasswordController {
   }
 
   @Post('unlock')
-  @UseGuards(OptionalJwtAuthGuard, RequirePaidPlanGuard)
+  @RequireFeature('REMOVE_PASSWORD')
+  @UseGuards(OptionalJwtAuthGuard, FeatureGuard)
   @UseInterceptors(FileInterceptor('file', { limits: { fileSize: MAX_FILE_SIZE_BYTES } }))
   async unlock(
     @UploadedFile() file: Express.Multer.File | undefined,

@@ -3,7 +3,7 @@ import RequirePaidPlan from '@/components/RequirePaidPlan';
 
 export default function PlainSummaryPage() {
   return (
-    <RequirePaidPlan>
+    <RequirePaidPlan featureKey="SUMMARIZE_PLAIN" segment="LAWYER">
       <PlainLanguageSummary />
     </RequirePaidPlan>
   );

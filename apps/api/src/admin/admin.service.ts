@@ -159,6 +159,7 @@ export class AdminService {
         billingCycle: true,
         status: true,
         subscriptionStatus: true,
+        currentPeriodEnd: true,
         createdAt: true,
       },
     });
@@ -204,5 +205,44 @@ export class AdminService {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw new NotFoundException('User not found.');
     return user;
+  }
+
+  // --- Billing admin (Part 9 §2.1) ----------------------------------------
+
+  async listPaymentTransactions(filters: { status?: string; type?: string; page: number; pageSize: number }) {
+    const where: Record<string, unknown> = {};
+    if (filters.status) where.status = filters.status;
+    if (filters.type) where.type = filters.type;
+
+    const [transactions, total] = await Promise.all([
+      this.prisma.paymentTransaction.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip: (filters.page - 1) * filters.pageSize,
+        take: filters.pageSize,
+        include: { user: { select: { email: true, name: true } } },
+      }),
+      this.prisma.paymentTransaction.count({ where }),
+    ]);
+
+    return { transactions, total, page: filters.page, pageSize: filters.pageSize };
+  }
+
+  async listFailedPayments() {
+    const users = await this.prisma.user.findMany({
+      where: { dunningAttemptCount: { gt: 0 } },
+      orderBy: { lastPaymentFailedAt: 'desc' },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        plan: true,
+        billingCycle: true,
+        dunningAttemptCount: true,
+        lastPaymentFailedAt: true,
+        nextDunningRetryAt: true,
+      },
+    });
+    return { users };
   }
 }

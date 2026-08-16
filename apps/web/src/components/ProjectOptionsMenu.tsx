@@ -54,7 +54,7 @@ export default function ProjectOptionsMenu({ project, onExtended, onDeleted, onU
     if (!token) return;
     try {
       const updated = await extendProjectRetention(token, project.id, days);
-      onExtended({ ...project, expiresAt: updated.expiresAt });
+      onExtended({ ...project, nearestExpiresAt: updated.expiresAt });
       showSuccess(`Retention extended to ${days} days`);
     } catch (err) {
       showError(err instanceof Error ? err.message : 'Could not extend retention.');

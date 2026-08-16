@@ -7,11 +7,11 @@ const MASTER_KEY = process.env.LITELLM_MASTER_KEY;
 // USD, matching LiteLLM's max_budget unit — a coarse per-account cap so one
 // customer can't run up the shared provider bill. This is deliberately not
 // plan-dependent: access control (paid-only, or a specific free-plan
-// exception) is already enforced one layer up by FeatureGuard/
-// RequirePaidPlanGuard before a virtual key is ever requested, so by the
-// time we're here the caller is legitimately authorized — gating budget by
-// plan again at this layer would silently re-block requests those guards
-// already approved (e.g. an admin-enabled free-tier feature).
+// exception) is already enforced one layer up by FeatureGuard before a
+// virtual key is ever requested, so by the time we're here the caller is
+// legitimately authorized — gating budget by plan again at this layer would
+// silently re-block requests that guard already approved (e.g. an
+// admin-enabled free-tier feature).
 const BUDGET_USD = 20;
 
 @Injectable()

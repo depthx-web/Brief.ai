@@ -9,12 +9,23 @@ import {
   banAdminUser,
   reactivateAdminUser,
   resetAdminUserPassword,
+  adjustUserCredits,
+  cancelUserSubscription,
+  extendUserSubscription,
+  refundUserLastPayment,
   type AdminUserSummary,
   type AdminUserDetail,
   type AdminSegment,
   type AdminPlan,
   type AdminUserStatus,
 } from '@/lib/adminApi';
+import { showError, showSuccess } from '@/lib/toast';
+
+const ADJUSTMENT_REASONS = [
+  'Compensation for a technical error',
+  'Promotional gift',
+  'Other',
+];
 
 const SEGMENT_ICON: Record<AdminSegment, string> = {
   LAWYER: '⚖️',
@@ -46,6 +57,14 @@ function UserDrawer({ userId, onClose, onChanged }: { userId: string; onClose: (
   const [isActing, setIsActing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [confirmingReset, setConfirmingReset] = useState(false);
+  const [adjustingBalance, setAdjustingBalance] = useState(false);
+  const [adjustAmount, setAdjustAmount] = useState('');
+  const [adjustReason, setAdjustReason] = useState(ADJUSTMENT_REASONS[0]);
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const [cancelTiming, setCancelTiming] = useState<'immediate' | 'end_of_cycle'>('end_of_cycle');
+  const [extending, setExtending] = useState(false);
+  const [extendDate, setExtendDate] = useState('');
+  const [confirmingRefund, setConfirmingRefund] = useState(false);
 
   useEffect(() => {
     if (!token) return;
@@ -86,6 +105,73 @@ function UserDrawer({ userId, onClose, onChanged }: { userId: string; onClose: (
       await resetAdminUserPassword(token, userId);
       setMessage('A temporary password has been emailed to this user.');
       setConfirmingReset(false);
+    } finally {
+      setIsActing(false);
+    }
+  }
+
+  async function handleAdjustBalance() {
+    if (!token) return;
+    const delta = parseInt(adjustAmount, 10);
+    if (!delta) {
+      showError('Enter a non-zero amount.');
+      return;
+    }
+    setIsActing(true);
+    try {
+      await adjustUserCredits(token, userId, delta, adjustReason);
+      setDetail(await fetchAdminUser(token, userId));
+      setAdjustingBalance(false);
+      setAdjustAmount('');
+      showSuccess('Balance updated');
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Could not adjust this balance.');
+    } finally {
+      setIsActing(false);
+    }
+  }
+
+  async function handleCancelSubscription() {
+    if (!token) return;
+    setIsActing(true);
+    try {
+      await cancelUserSubscription(token, userId, cancelTiming === 'immediate');
+      setDetail(await fetchAdminUser(token, userId));
+      setConfirmingCancel(false);
+      onChanged();
+      showSuccess(cancelTiming === 'immediate' ? 'Subscription cancelled immediately' : 'Subscription will cancel at period end');
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Could not cancel this subscription.');
+    } finally {
+      setIsActing(false);
+    }
+  }
+
+  async function handleExtendSubscription() {
+    if (!token || !extendDate) return;
+    setIsActing(true);
+    try {
+      await extendUserSubscription(token, userId, new Date(extendDate).toISOString());
+      setDetail(await fetchAdminUser(token, userId));
+      setExtending(false);
+      setExtendDate('');
+      showSuccess('Renewal date updated');
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Could not extend this subscription.');
+    } finally {
+      setIsActing(false);
+    }
+  }
+
+  async function handleRefund() {
+    if (!token) return;
+    setIsActing(true);
+    try {
+      const { amountCents } = await refundUserLastPayment(token, userId);
+      setConfirmingRefund(false);
+      showSuccess(`Refunded $${(amountCents / 100).toFixed(2)}`);
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Could not process this refund.');
     } finally {
       setIsActing(false);
     }
@@ -135,6 +221,176 @@ function UserDrawer({ userId, onClose, onChanged }: { userId: string; onClose: (
             </div>
 
             {message && <p className="mt-4 text-sm text-emerald">{message}</p>}
+
+            <div className="mt-6 flex items-center justify-between rounded-lg border border-gray-200 p-3">
+              <div className="flex items-center gap-2">
+                <span aria-hidden className="text-lg">
+                  👛
+                </span>
+                <span className="font-mono text-lg text-ink">{detail.creditBalance} credits</span>
+              </div>
+              <button
+                onClick={() => setAdjustingBalance((v) => !v)}
+                className="rounded-md border border-navy-light px-3 py-1.5 text-xs font-medium text-navy-light hover:bg-navy-light/5"
+              >
+                Adjust balance manually
+              </button>
+            </div>
+
+            {adjustingBalance && (
+              <div className="mt-2 space-y-2 rounded-lg border border-gray-200 p-3">
+                <input
+                  type="number"
+                  value={adjustAmount}
+                  onChange={(e) => setAdjustAmount(e.target.value)}
+                  placeholder="+/- amount"
+                  className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+                />
+                <select
+                  value={adjustReason}
+                  onChange={(e) => setAdjustReason(e.target.value)}
+                  className="w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+                >
+                  {ADJUSTMENT_REASONS.map((r) => (
+                    <option key={r} value={r}>
+                      {r}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={handleAdjustBalance}
+                  disabled={isActing}
+                  className="w-full rounded-md bg-navy px-3 py-1.5 text-xs font-medium text-white hover:bg-navy-light disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Confirm adjustment
+                </button>
+              </div>
+            )}
+
+            <div className="mt-8">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Subscription</h3>
+              <div className="mt-2 space-y-1.5 rounded-lg border border-gray-200 p-3 font-mono text-xs text-ink">
+                <div className="flex justify-between">
+                  <span className="text-ink-soft">Plan</span>
+                  <span>
+                    {detail.user.plan}
+                    {detail.user.billingCycle ? ` · ${detail.user.billingCycle}` : ''}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-ink-soft">Next renewal</span>
+                  <span>{detail.user.currentPeriodEnd ? new Date(detail.user.currentPeriodEnd).toLocaleDateString() : '—'}</span>
+                </div>
+              </div>
+
+              <div className="mt-3 space-y-2">
+                {confirmingCancel ? (
+                  <div className="rounded-lg border border-redline/40 p-3">
+                    <p className="text-xs text-ink-soft">Cancel this subscription:</p>
+                    <div className="mt-2 flex overflow-hidden rounded-md border border-gray-300 text-xs">
+                      <button
+                        onClick={() => setCancelTiming('end_of_cycle')}
+                        className={`flex-1 px-3 py-1.5 ${cancelTiming === 'end_of_cycle' ? 'bg-navy text-white' : 'bg-white text-ink'}`}
+                      >
+                        End of cycle
+                      </button>
+                      <button
+                        onClick={() => setCancelTiming('immediate')}
+                        className={`flex-1 px-3 py-1.5 ${cancelTiming === 'immediate' ? 'bg-navy text-white' : 'bg-white text-ink'}`}
+                      >
+                        Immediately
+                      </button>
+                    </div>
+                    <div className="mt-2 flex gap-2">
+                      <button
+                        onClick={handleCancelSubscription}
+                        disabled={isActing}
+                        className="rounded-md bg-redline px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700"
+                      >
+                        Confirm cancellation
+                      </button>
+                      <button
+                        onClick={() => setConfirmingCancel(false)}
+                        className="rounded-md px-3 py-1.5 text-xs text-ink-soft hover:text-ink"
+                      >
+                        Back
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setConfirmingCancel(true)}
+                    className="w-full rounded-lg border border-redline px-4 py-2.5 text-sm font-medium text-redline transition-colors hover:bg-red-50"
+                  >
+                    Manually cancel subscription
+                  </button>
+                )}
+
+                {extending ? (
+                  <div className="rounded-lg border border-navy-light/40 p-3">
+                    <p className="text-xs text-ink-soft">New renewal date:</p>
+                    <input
+                      type="date"
+                      value={extendDate}
+                      onChange={(e) => setExtendDate(e.target.value)}
+                      className="mt-2 w-full rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+                    />
+                    <div className="mt-2 flex gap-2">
+                      <button
+                        onClick={handleExtendSubscription}
+                        disabled={isActing || !extendDate}
+                        className="rounded-md bg-navy px-3 py-1.5 text-xs font-medium text-white hover:bg-navy-light disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        Confirm extension
+                      </button>
+                      <button
+                        onClick={() => setExtending(false)}
+                        className="rounded-md px-3 py-1.5 text-xs text-ink-soft hover:text-ink"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setExtending(true)}
+                    className="w-full rounded-lg border border-navy-light px-4 py-2.5 text-sm font-medium text-navy-light transition-colors hover:bg-navy-light/5"
+                  >
+                    Manual extension
+                  </button>
+                )}
+
+                {confirmingRefund ? (
+                  <div className="rounded-lg border border-redline/40 p-3">
+                    <p className="text-xs text-ink-soft">
+                      This refunds this user&apos;s most recent successful payment via Lemon Squeezy. This cannot be undone.
+                    </p>
+                    <div className="mt-2 flex gap-2">
+                      <button
+                        onClick={handleRefund}
+                        disabled={isActing}
+                        className="rounded-md bg-redline px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700"
+                      >
+                        Confirm refund
+                      </button>
+                      <button
+                        onClick={() => setConfirmingRefund(false)}
+                        className="rounded-md px-3 py-1.5 text-xs text-ink-soft hover:text-ink"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setConfirmingRefund(true)}
+                    className="w-full rounded-lg border border-redline px-4 py-2.5 text-sm font-medium text-redline transition-colors hover:bg-red-50"
+                  >
+                    Refund last payment
+                  </button>
+                )}
+              </div>
+            </div>
 
             <div className="mt-6 space-y-2">
               {detail.user.status === 'BANNED' ? (

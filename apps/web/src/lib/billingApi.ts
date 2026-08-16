@@ -59,3 +59,27 @@ export async function startCheckout(token: string, cycle: BillingCycle): Promise
 export function formatCents(cents: number): string {
   return `$${(cents / 100).toFixed(cents % 100 === 0 ? 0 : 2)}`;
 }
+
+export interface PublicFeature {
+  // null = applies to every workspace (Office<->PDF, Protect, Remove
+  // Password), not scoped to one profession's AI operations.
+  segment: Segment | null;
+  key: string;
+  label: string;
+  freeEnabled: boolean;
+  order: number;
+}
+
+// Same Feature rows the admin's "Features per plan" panel edits — the
+// Pricing page's Free vs. paid feature lists are driven directly from this,
+// so toggling freeEnabled there actually changes what a visitor sees.
+export async function fetchPublicFeatures(): Promise<PublicFeature[]> {
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}/features`);
+  } catch {
+    throw new Error('Could not reach the server.');
+  }
+  if (!response.ok) throw new Error(`Request failed (${response.status}).`);
+  return response.json() as Promise<PublicFeature[]>;
+}

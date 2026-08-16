@@ -117,6 +117,7 @@ model User {
   documents    LibraryDocument[]
   projects     Project[]
   signatures   SavedSignature[]
+  creditTransactions CreditTransaction[]
 
   // Billing (Lemon Squeezy). plan/billingCycle reflect the last-confirmed
   // subscription state, synced via the Lemon Squeezy webhook — not the
@@ -136,6 +137,115 @@ model User {
   // winBackEmailSentAt prevents sending it more than once per cancellation.
   subscriptionCancelledAt      DateTime?
   winBackEmailSentAt           DateTime?
+
+  paymentTransactions          PaymentTransaction[]
+
+  // Dunning (Batch 5, Part 9 §2.1): incremented on each subscription_payment_failed
+  // webhook, reset to 0 on the next subscription_payment_success. Drives both
+  // the admin "Failed Payments" list and the automatic-retry cron.
+  dunningAttemptCount          Int       @default(0)
+  lastPaymentFailedAt          DateTime?
+  nextDunningRetryAt           DateTime?
+
+  // --- Affiliate program (Batch 5, Part 9 §4) -----------------------------
+  // A direct self-relation rather than a separate ReferralRelationship join
+  // table (spec's literal schema): each user has at most one referrer, ever,
+  // set once at signup — a plain nullable FK captures that exactly, and the
+  // referrals list/commission history is already fully queryable from
+  // Commission rows keyed by referredUserId, so a join table would just
+  // duplicate the same one fact.
+  affiliateLink       AffiliateLink?
+  referredByUserId    String?
+  referredBy          User?           @relation("Referrals", fields: [referredByUserId], references: [id], onDelete: SetNull)
+  referrals           User[]          @relation("Referrals")
+  commissionsEarned   Commission[]    @relation("ReferrerCommissions")
+  commissionsFromMe   Commission[]    @relation("ReferredCommissions")
+  payoutRequests      PayoutRequest[]
+}
+
+enum AffiliateLinkStatus {
+  ACTIVE
+  BLOCKED
+}
+
+model AffiliateLink {
+  id        String              @id @default(uuid())
+  userId    String              @unique
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code      String              @unique
+  status    AffiliateLinkStatus @default(ACTIVE)
+  createdAt DateTime            @default(now())
+  clicks    ClickEvent[]
+}
+
+// One row per visit to a referral link, whether or not it later converts —
+// the click count shown in the referral page's stats is COUNT(*) here,
+// independent of the Commission/referral rows.
+model ClickEvent {
+  id              String        @id @default(uuid())
+  affiliateLinkId String
+  affiliateLink   AffiliateLink @relation(fields: [affiliateLinkId], references: [id], onDelete: Cascade)
+  createdAt       DateTime      @default(now())
+
+  @@index([affiliateLinkId])
+}
+
+enum CommissionType {
+  SIGNUP
+  RENEWAL
+}
+
+// One row per commission-earning payment event (Part 9 §4.3): 5% on the
+// referred user's first payment, 3% on every renewal after, for as long as
+// they stay subscribed. This *is* the withdrawable-earnings ledger — a
+// user's balance is SUM(amountCents) here minus SUM(amountCents) of their
+// non-rejected PayoutRequests, mirroring the credit-balance-as-ledger-sum
+// pattern used elsewhere rather than a separately cached balance column.
+model Commission {
+  id             String         @id @default(uuid())
+  referrerUserId String
+  referrer       User           @relation("ReferrerCommissions", fields: [referrerUserId], references: [id], onDelete: Cascade)
+  referredUserId String
+  referred       User           @relation("ReferredCommissions", fields: [referredUserId], references: [id], onDelete: Cascade)
+  type           CommissionType
+  amountCents    Int
+  createdAt      DateTime       @default(now())
+
+  @@index([referrerUserId])
+  @@index([referredUserId])
+}
+
+enum PayoutMethod {
+  BANK_TRANSFER
+  PAYPAL
+}
+
+enum PayoutStatus {
+  UNDER_REVIEW
+  COMPLETED
+}
+
+model PayoutRequest {
+  id     String       @id @default(uuid())
+  userId String
+  user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  method PayoutMethod
+  // Requested amount, before any fee; netAmountCents is what the affiliate
+  // actually receives (PayPal fee deducted per Part 9 §4.3; bank transfer
+  // carries no deduction so netAmountCents == amountCents for that method).
+  amountCents    Int
+  netAmountCents Int
+  // Bank transfer: { bankName, accountNumber, accountHolder }. PayPal: { paypalEmail }.
+  details              Json
+  status               PayoutStatus @default(UNDER_REVIEW)
+  // Set by "Mark as paid manually" in the admin panel for payouts made
+  // outside the system.
+  transactionReference String?
+  createdAt            DateTime     @default(now())
+  completedAt          DateTime?
+
+  @@index([userId])
+  @@index([status])
 }
 
 enum EmailCampaignKey {
@@ -169,11 +279,9 @@ model Project {
   // creation time — drives the card's top-strip accent color on the grid.
   category  String?
   createdAt DateTime          @default(now())
-  expiresAt DateTime
   documents LibraryDocument[]
 
   @@index([userId])
-  @@index([expiresAt])
 }
 
 // Small enough (a canvas drawing or a compact uploaded image) to store as a
@@ -213,8 +321,14 @@ model LibraryDocument {
   projectId    String?
   project      Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
+  // Retention lives per-file, not per-project (Batch 5 fix) — a long-running
+  // project shouldn't be wiped out because one old file in it expired while
+  // the rest are recent. Null for documents with no project (never expire).
+  expiresAt    DateTime?
+
   @@index([userId])
   @@index([projectId])
+  @@index([expiresAt])
 }
 
 // Admin-editable price per segment x cycle — seeded from the original
@@ -235,14 +349,21 @@ model PlanPrice {
 // (checked by FeatureGuard on the AI endpoints); proEnabled is currently
 // always true in practice but kept for a future "some features are Pro-only
 // too" case without a schema change.
+// segment is nullable to represent a tool available to every workspace
+// (Office<->PDF conversion, Protect, Remove Password) rather than one
+// profession's AI operation — FeatureGuard checks a null-segment row
+// regardless of the caller's own segment. Note: MySQL's unique index
+// permits multiple NULLs, so this doesn't hard-block a duplicate global key
+// at the DB level — acceptable since Feature rows are only ever seeded via
+// migration, never created ad hoc from an API.
 model Feature {
-  id          String  @id @default(uuid())
-  segment     Segment
+  id          String   @id @default(uuid())
+  segment     Segment?
   key         String
   label       String
-  freeEnabled Boolean @default(false)
-  proEnabled  Boolean @default(true)
-  order       Int     @default(0)
+  freeEnabled Boolean  @default(false)
+  proEnabled  Boolean  @default(true)
+  order       Int      @default(0)
 
   @@unique([segment, key])
 }
@@ -268,4 +389,140 @@ model DiscountCode {
   applicableSegments Json
   revoked            Boolean      @default(false)
   createdAt          DateTime     @default(now())
+}
+
+// --- Content management (Batch 5, Part 9 §1) --------------------------------
+// Draft/publish is modeled as two JSON blobs per section rather than the
+// master spec's literal draft|published status enum on a single row: an
+// enum can't represent "an edited draft exists alongside a still-live
+// published version" at the same time, which the mandatory draft->publish
+// flow (Part 9 §1.3) requires — an admin must be able to preview unpublished
+// edits without touching what visitors currently see.
+
+model Page {
+  id              String            @id @default(uuid())
+  slug            String            @unique
+  metaTitle       String?
+  metaDescription String?           @db.Text
+  metaKeywords    Json?
+  ogImageUrl      String?
+  sections        ContentSection[]
+}
+
+model ContentSection {
+  id              String   @id @default(uuid())
+  pageId          String
+  page            Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  // Matches the actual component key in code (e.g. "hero", "faq").
+  sectionKey      String
+  order           Int      @default(0)
+  draftFields     Json
+  // Null until the first publish — public pages fall back to the
+  // hardcoded default copy in code when this is null, so an unpublished
+  // page never renders blank/broken content.
+  publishedFields Json?
+  updatedAt       DateTime @updatedAt
+
+  @@unique([pageId, sectionKey])
+}
+
+// --- Usage-based AI credits (Batch 5, Part 6 §7) ---------------------------
+
+// Pre-paid packs sold on the Pricing page's "Pay as you go" tab, alongside
+// (not instead of) the subscription cycles.
+model CreditPack {
+  id          String  @id @default(uuid())
+  size        Int
+  priceCents  Int
+  isBestValue Boolean @default(false)
+  order       Int     @default(0)
+  // Set by an admin once the matching one-time-purchase product is created
+  // in Lemon Squeezy — packs are admin-created dynamically, unlike the
+  // fixed segment×cycle subscription matrix, so this can't live in an env
+  // var the way LEMON_SQUEEZY_VARIANT_* does for subscriptions.
+  lemonSqueezyVariantId String?
+}
+
+enum CreditTransactionReason {
+  PURCHASE
+  AI_USAGE
+  MANUAL_ADMIN_ADJUSTMENT
+}
+
+// No separate balance table — a user's balance is SUM(delta) over their own
+// transactions. Slightly more to compute than a cached counter, but it can
+// never drift out of sync with the ledger, which matters more here.
+model CreditTransaction {
+  id        String                   @id @default(uuid())
+  userId    String
+  user      User                     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  delta     Int
+  reason    CreditTransactionReason
+  // Mandatory when reason = MANUAL_ADMIN_ADJUSTMENT (enforced in the
+  // service layer, not the DB) — every manual balance change needs a
+  // human-readable justification for the audit trail.
+  adminNote String?                  @db.Text
+  createdAt DateTime                 @default(now())
+
+  @@index([userId])
+}
+
+// Single-row table for admin-editable platform-wide settings that don't
+// belong to any one feature's own table — referenced by both the credits
+// system (creditsEnabled) and the affiliate program (commission/fee rates).
+model PlatformSettings {
+  id                       String   @id @default("singleton")
+  creditsEnabled           Boolean  @default(true)
+  // Global kill-switch for the "Lemon Squeezy" provider card in the admin
+  // Billing section (Part 9 §2.1) — checkout/credit-checkout both check this.
+  paymentsEnabled          Boolean  @default(true)
+  commissionSignupPercent  Int      @default(5)
+  commissionRenewalPercent Int      @default(3)
+  paypalFeePercent         Float    @default(2.9)
+  paypalFeeFixedCents      Int      @default(30)
+
+  // Dunning (Batch 5, Part 9 §2.1) — admin-editable so retry cadence can be
+  // tuned without a deploy.
+  dunningAutoRetryEnabled  Boolean  @default(true)
+  dunningMaxAttempts       Int      @default(3)
+  dunningIntervalDays      Int      @default(3)
+
+  updatedAt                DateTime @updatedAt
+}
+
+// --- Payments (Batch 5, Part 9 §2) ------------------------------------------
+
+enum PaymentTransactionType {
+  SUBSCRIPTION_PAYMENT
+  CREDIT_PURCHASE
+  REFUND
+}
+
+enum PaymentTransactionStatus {
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+// One row per real payment event reported by the Lemon Squeezy webhook —
+// the admin "Transactions" table's source of truth (Part 9 §2.1), separate
+// from CreditTransaction (that's the credit *ledger*, not money changing
+// hands) and separate from User.subscriptionStatus (that's current state,
+// not history).
+model PaymentTransaction {
+  id                  String                    @id @default(uuid())
+  userId              String
+  user                User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type                PaymentTransactionType
+  status              PaymentTransactionStatus
+  amountCents         Int
+  provider            String                    @default("LEMON_SQUEEZY")
+  // Lemon Squeezy order or subscription-invoice id — needed to call the
+  // refund API against the right resource later.
+  providerReferenceId String?
+  createdAt           DateTime                  @default(now())
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
 }

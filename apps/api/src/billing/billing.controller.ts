@@ -4,6 +4,7 @@ import {
   Controller,
   Get,
   Headers,
+  NotFoundException,
   Post,
   Req,
   UseGuards,
@@ -16,6 +17,7 @@ import type { SafeUser } from '../auth/auth.service';
 import { LemonSqueezyService } from './lemon-squeezy.service';
 import { PricingService } from './pricing.service';
 import type { BillingCycle } from './pricing';
+import { PrismaService } from '../prisma/prisma.service';
 
 const VALID_CYCLES: BillingCycle[] = ['WEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY'];
 
@@ -24,12 +26,17 @@ interface CheckoutBody {
   code?: string;
 }
 
+interface CreditCheckoutBody {
+  packId?: string;
+}
+
 @ApiTags('billing')
 @Controller('billing')
 export class BillingController {
   constructor(
     private readonly lemonSqueezy: LemonSqueezyService,
-    private readonly pricing: PricingService
+    private readonly pricing: PricingService,
+    private readonly prisma: PrismaService
   ) {}
 
   @Get('plans')
@@ -54,6 +61,26 @@ export class BillingController {
       user.segment,
       cycle,
       body.code
+    );
+    return { url };
+  }
+
+  @Post('credit-checkout')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  async creditCheckout(@CurrentUser() user: SafeUser, @Body() body: CreditCheckoutBody) {
+    if (!body.packId) throw new BadRequestException('A credit pack is required.');
+    const pack = await this.prisma.creditPack.findUnique({ where: { id: body.packId } });
+    if (!pack) throw new NotFoundException('Credit pack not found.');
+    if (!pack.lemonSqueezyVariantId) {
+      throw new BadRequestException('This credit pack is not yet available for purchase.');
+    }
+    const url = await this.lemonSqueezy.createCreditPackCheckoutUrl(
+      user.id,
+      user.email,
+      pack.id,
+      pack.size,
+      pack.lemonSqueezyVariantId
     );
     return { url };
   }

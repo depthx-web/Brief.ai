@@ -5,6 +5,7 @@ export interface LibraryDocumentSummary {
   filename: string;
   docType: string | null;
   projectId: string | null;
+  expiresAt: string | null;
   createdAt: string;
 }
 
@@ -18,7 +19,9 @@ export interface ProjectSummary {
   name: string;
   category: string | null;
   createdAt: string;
-  expiresAt: string;
+  // The closest-to-expiry file in the project — null if empty or no file
+  // carries a retention window. Drives the countdown badge.
+  nearestExpiresAt: string | null;
   documentCount: number;
 }
 
@@ -27,7 +30,6 @@ export interface ProjectDetail {
   name: string;
   category: string | null;
   createdAt: string;
-  expiresAt: string;
   documents: LibraryDocumentSummary[];
 }
 
@@ -54,13 +56,15 @@ export async function uploadDocument(
   file: File,
   text: string,
   docType?: string,
-  projectId?: string
+  projectId?: string,
+  retentionDays?: number
 ): Promise<LibraryDocumentSummary> {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('text', text);
   if (docType) formData.append('docType', docType);
   if (projectId) formData.append('projectId', projectId);
+  if (retentionDays) formData.append('retentionDays', String(retentionDays));
 
   let response: Response;
   try {
@@ -119,16 +123,20 @@ export async function downloadDocument(token: string, id: string, filename: stri
   URL.revokeObjectURL(url);
 }
 
-export async function createProject(
-  token: string,
-  name: string,
-  category?: string,
-  retentionDays?: number
-): Promise<ProjectSummary> {
+export async function createProject(token: string, name: string, category?: string): Promise<ProjectSummary> {
   const response = await fetch(`${API_URL}/library/projects`, {
     method: 'POST',
     headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, category, retentionDays }),
+    body: JSON.stringify({ name, category }),
+  });
+  return handleResponse<ProjectSummary>(response);
+}
+
+export async function renameProject(token: string, id: string, name: string): Promise<ProjectSummary> {
+  const response = await fetch(`${API_URL}/library/projects/${id}`, {
+    method: 'PATCH',
+    headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
   });
   return handleResponse<ProjectSummary>(response);
 }
@@ -143,13 +151,13 @@ export async function getProject(token: string, id: string): Promise<ProjectDeta
   return handleResponse<ProjectDetail>(response);
 }
 
-export async function extendProjectRetention(token: string, id: string, days: 7 | 30): Promise<ProjectSummary> {
+export async function extendProjectRetention(token: string, id: string, days: 7 | 30): Promise<{ expiresAt: string }> {
   const response = await fetch(`${API_URL}/library/projects/${id}/retention`, {
     method: 'PATCH',
     headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
     body: JSON.stringify({ days }),
   });
-  return handleResponse<ProjectSummary>(response);
+  return handleResponse<{ expiresAt: string }>(response);
 }
 
 export async function deleteProject(token: string, id: string): Promise<void> {

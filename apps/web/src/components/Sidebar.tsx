@@ -8,6 +8,8 @@ import WorkspacePlanCard from './WorkspacePlanCard';
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard' },
   { href: '/library', label: 'My Library' },
+  { href: '/wallet', label: '👛 My Wallet' },
+  { href: '/referrals', label: '🔗 Referral Program' },
   { href: '/tools', label: 'Tools' },
   { href: '/settings', label: 'Settings' },
 ];
@@ -44,13 +46,24 @@ export default function Sidebar({ onOpenSwitchModal }: { onOpenSwitchModal: () =
       <div className="flex-1" />
 
       <div className="border-t border-white/10 px-4 py-5">
-        <p className="truncate text-xs text-[#8FA1BC]">{user?.email}</p>
-        <button
-          onClick={logout}
-          className="mt-2 text-xs font-medium text-[#8FA1BC] hover:text-white"
-        >
-          Log out
-        </button>
+        {user ? (
+          <>
+            <p className="truncate text-xs text-[#8FA1BC]">{user.email}</p>
+            <button
+              onClick={logout}
+              className="mt-2 text-xs font-medium text-[#8FA1BC] hover:text-white"
+            >
+              Log out
+            </button>
+          </>
+        ) : (
+          <>
+            <p className="text-xs text-[#8FA1BC]">Browsing as a guest</p>
+            <Link href="/login" className="mt-2 block text-xs font-medium text-emerald hover:text-white">
+              Log in →
+            </Link>
+          </>
+        )}
       </div>
     </aside>
   );

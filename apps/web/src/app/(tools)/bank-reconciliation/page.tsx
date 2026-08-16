@@ -3,7 +3,7 @@ import RequirePaidPlan from '@/components/RequirePaidPlan';
 
 export default function BankReconciliationPage() {
   return (
-    <RequirePaidPlan>
+    <RequirePaidPlan featureKey="RECONCILE_BANK" segment="ACCOUNTANT">
       <BankReconciliation />
     </RequirePaidPlan>
   );

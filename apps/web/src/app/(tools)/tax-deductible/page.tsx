@@ -3,7 +3,7 @@ import RequirePaidPlan from '@/components/RequirePaidPlan';
 
 export default function TaxDeductiblePage() {
   return (
-    <RequirePaidPlan>
+    <RequirePaidPlan featureKey="FLAG_DEDUCTIBLE_EXPENSES" segment="ACCOUNTANT">
       <TaxDeductibleFlagger />
     </RequirePaidPlan>
   );

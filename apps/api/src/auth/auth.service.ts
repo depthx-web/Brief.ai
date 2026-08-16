@@ -5,6 +5,7 @@ import { randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import { EmailCampaignService } from '../mail/email-campaign.service';
+import { AffiliateService } from '../affiliate/affiliate.service';
 
 const API_PUBLIC_URL = process.env.API_PUBLIC_URL ?? 'http://localhost:3001';
 
@@ -33,10 +34,11 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly storage: StorageService,
-    private readonly emailCampaigns: EmailCampaignService
+    private readonly emailCampaigns: EmailCampaignService,
+    private readonly affiliateService: AffiliateService
   ) {}
 
-  async signup(email: string, password: string, name?: string, segment?: Segment) {
+  async signup(email: string, password: string, name?: string, segment?: Segment, referralCode?: string) {
     const existing = await this.prisma.user.findUnique({ where: { email } });
     if (existing) throw new ConflictException('An account with this email already exists.');
 
@@ -47,6 +49,9 @@ export class AuthService {
 
     // Fire-and-forget: a slow/failed welcome email shouldn't fail signup itself.
     this.emailCampaigns.sendWelcome(user.email, user.name).catch(() => {});
+    if (referralCode) {
+      await this.affiliateService.attachReferral(user.id, referralCode).catch(() => {});
+    }
 
     return this.buildAuthResponse(user);
   }

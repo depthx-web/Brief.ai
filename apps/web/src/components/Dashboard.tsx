@@ -10,6 +10,7 @@ import { showLoading, resolveLoading, failLoading } from '@/lib/toast';
 import { DOC_TYPES } from '@/lib/docTypes';
 import FileOptionsMenu from './FileOptionsMenu';
 import SwitchWorkspaceModal from './SwitchWorkspaceModal';
+import GuestSignupModal from './GuestSignupModal';
 
 const UPLOAD_LABEL: Record<Segment, string> = {
   LAWYER: 'Upload a contract',
@@ -45,10 +46,16 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null);
   const [selectedDocType, setSelectedDocType] = useState<string | null>(null);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [guestSignupOpen, setGuestSignupOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!token) return;
+    if (!token) {
+      // Guests have nowhere to persist a library, so there's nothing to
+      // fetch — resolve immediately instead of leaving "Loading…" stuck.
+      setIsLoadingRecent(false);
+      return;
+    }
     listDocuments(token)
       .then((docs) => setRecent(docs.slice(0, 6)))
       .catch(() => {})
@@ -60,7 +67,10 @@ export default function Dashboard() {
   }, [user?.segment]);
 
   async function handleFile(file: File) {
-    if (!token) return;
+    if (!token) {
+      setGuestSignupOpen(true);
+      return;
+    }
     setError(null);
     if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
       setError('Please select a PDF file.');
@@ -244,6 +254,7 @@ export default function Dashboard() {
         initialStep="cycle"
         onClose={() => setUpgradeModalOpen(false)}
       />
+      <GuestSignupModal open={guestSignupOpen} onClose={() => setGuestSignupOpen(false)} />
     </div>
   );
 }

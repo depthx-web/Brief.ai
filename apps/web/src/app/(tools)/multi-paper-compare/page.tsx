@@ -3,7 +3,7 @@ import RequirePaidPlan from '@/components/RequirePaidPlan';
 
 export default function MultiPaperComparePage() {
   return (
-    <RequirePaidPlan>
+    <RequirePaidPlan featureKey="COMPARE_PAPERS" segment="RESEARCHER">
       <MultiPaperCompare />
     </RequirePaidPlan>
   );

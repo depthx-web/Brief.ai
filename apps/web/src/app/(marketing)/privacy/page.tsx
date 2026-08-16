@@ -1,6 +1,12 @@
+import type { Metadata } from 'next';
 import LegalLayout, { type LegalSection } from '@/components/LegalLayout';
+import { fetchCmsPage } from '@/lib/cmsApi';
 
-const sections: LegalSection[] = [
+const DEFAULT_META_TITLE = 'Privacy Policy — Brief.ai';
+const DEFAULT_META_DESCRIPTION =
+  'How Brief.ai collects, processes, retains, and deletes your account and document data.';
+
+const DEFAULT_SECTIONS: LegalSection[] = [
   {
     id: 'overview',
     title: 'Overview',
@@ -119,6 +125,33 @@ const sections: LegalSection[] = [
   },
 ];
 
-export default function PrivacyPage() {
+function slugify(title: string): string {
+  return title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+}
+
+function sectionsFromCms(fields: unknown): LegalSection[] | null {
+  const items = (fields as { items?: { title: string; body: string }[] } | undefined)?.items;
+  if (!items?.length) return null;
+  return items.map((item) => ({
+    id: slugify(item.title),
+    title: item.title,
+    body: item.body.split('\n\n').map((paragraph, i) => <p key={i}>{paragraph}</p>),
+  }));
+}
+
+export async function generateMetadata(): Promise<Metadata> {
+  const page = await fetchCmsPage('privacy', false);
+  return {
+    title: page?.metaTitle ?? DEFAULT_META_TITLE,
+    description: page?.metaDescription ?? DEFAULT_META_DESCRIPTION,
+    ...(page?.ogImageUrl ? { openGraph: { images: [page.ogImageUrl] } } : {}),
+  };
+}
+
+export default async function PrivacyPage({ searchParams }: { searchParams: { cmsPreview?: string } }) {
+  const preview = searchParams.cmsPreview === '1';
+  const page = await fetchCmsPage('privacy', preview);
+  const sections = sectionsFromCms(page?.sections.body) ?? DEFAULT_SECTIONS;
+
   return <LegalLayout title="Privacy Policy" lastUpdated="August 15, 2026" sections={sections} />;
 }

@@ -13,6 +13,11 @@ import { AdminModule } from './admin/admin.module';
 import { BillingModule } from './billing/billing.module';
 import { WinBackModule } from './mail/winback.module';
 import { SignaturesModule } from './signatures/signatures.module';
+import { CreditsModule } from './credits/credits.module';
+import { PlatformSettingsModule } from './platform-settings/platform-settings.module';
+import { CmsModule } from './cms/cms.module';
+import { AffiliateModule } from './affiliate/affiliate.module';
+import { CompressionModule } from './compression/compression.module';
 
 @Module({
   imports: [
@@ -30,6 +35,11 @@ import { SignaturesModule } from './signatures/signatures.module';
     BillingModule,
     WinBackModule,
     SignaturesModule,
+    CreditsModule,
+    PlatformSettingsModule,
+    CmsModule,
+    AffiliateModule,
+    CompressionModule,
   ],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

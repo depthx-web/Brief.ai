@@ -3,7 +3,7 @@ import RequirePaidPlan from '@/components/RequirePaidPlan';
 
 export default function MethodologyExtractorPage() {
   return (
-    <RequirePaidPlan>
+    <RequirePaidPlan featureKey="EXTRACT_METHODOLOGY" segment="RESEARCHER">
       <MethodologyExtractor />
     </RequirePaidPlan>
   );

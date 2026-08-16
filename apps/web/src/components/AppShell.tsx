@@ -1,22 +1,34 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import Sidebar from './Sidebar';
 import SwitchWorkspaceModal from './SwitchWorkspaceModal';
+import GuestSignupModal from './GuestSignupModal';
+
+// Free users can use the dashboard, tools, and workspace without an
+// account — only pages tied to a persistent account (saved library,
+// credit wallet, billing/security settings, referral earnings) require
+// login. Everything else stays open so a guest never hits a forced
+// signup wall before they've even seen the product.
+const ACCOUNT_REQUIRED_PREFIXES = ['/library', '/wallet', '/settings', '/referrals'];
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const [modalOpen, setModalOpen] = useState(false);
   const [modalStep, setModalStep] = useState<'workspace' | 'cycle'>('workspace');
+  const [guestSignupOpen, setGuestSignupOpen] = useState(false);
+  const requiresAccount = ACCOUNT_REQUIRED_PREFIXES.some((p) => pathname.startsWith(p));
 
   useEffect(() => {
-    if (!isLoading && !user) router.replace('/login');
-  }, [isLoading, user, router]);
+    if (!isLoading && !user && requiresAccount) router.replace('/login');
+  }, [isLoading, user, requiresAccount, router]);
 
-  if (isLoading || !user) return null;
+  if (isLoading) return null;
+  if (!user && requiresAccount) return null;
 
   function openModal(step: 'workspace' | 'cycle') {
     setModalStep(step);
@@ -27,11 +39,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen">
       <Sidebar onOpenSwitchModal={() => openModal('workspace')} />
       <div className="bg-dot-pattern ml-60 h-screen flex-1 overflow-y-auto bg-surface">
-        {user.plan === 'FREE' && (
+        {(!user || user.plan === 'FREE') && (
           <div className="flex items-center justify-center gap-2 bg-emerald-soft px-4 py-2 text-center text-sm text-navy">
             <span>You&apos;re on the Free plan — core tools are unlimited.</span>
             <button
-              onClick={() => openModal('cycle')}
+              onClick={() => (user ? openModal('cycle') : setGuestSignupOpen(true))}
               className="font-medium text-emerald-dark hover:underline"
             >
               Upgrade for AI features →
@@ -41,6 +53,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         {children}
       </div>
       <SwitchWorkspaceModal open={modalOpen} initialStep={modalStep} onClose={() => setModalOpen(false)} />
+      <GuestSignupModal open={guestSignupOpen} onClose={() => setGuestSignupOpen(false)} />
     </div>
   );
 }

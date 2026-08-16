@@ -7,11 +7,20 @@ import {
   updateAdminPlanPrice,
   fetchAdminFeatures,
   updateAdminFeature,
+  fetchAdminSettings,
+  updateAdminSettings,
+  fetchAdminCreditPacks,
+  createAdminCreditPack,
+  updateAdminCreditPack,
+  setAdminCreditPackBestValue,
+  deleteAdminCreditPack,
   type AdminPlanPrice,
   type AdminFeature,
   type AdminSegment,
   type AdminBillingCycle,
+  type AdminCreditPack,
 } from '@/lib/adminApi';
+import { showError, showSuccess } from '@/lib/toast';
 
 const SEGMENTS: AdminSegment[] = ['LAWYER', 'ACCOUNTANT', 'RESEARCHER'];
 const SEGMENT_LABEL: Record<AdminSegment, string> = {
@@ -27,8 +36,36 @@ const CYCLE_LABEL: Record<AdminBillingCycle, string> = {
   YEARLY: 'Yearly',
 };
 
+// Tools with no segment (available to every workspace) don't have a "tab"
+// field in the Feature table itself — this mirrors the Tools page's own
+// Convert/Organize/Protect grouping purely for admin display, the same way
+// SEGMENT_LABEL above is a display-only mapping, not a stored field.
+const GLOBAL_TOOL_GROUPS: Record<string, string> = {
+  WORD_TO_PDF: 'Convert',
+  PDF_TO_WORD: 'Convert',
+  EXCEL_TO_PDF: 'Convert',
+  PDF_TO_EXCEL: 'Convert',
+  POWERPOINT_TO_PDF: 'Convert',
+  PDF_TO_POWERPOINT: 'Convert',
+  PDF_TO_HTML: 'Convert',
+  COMPRESS_HIGH_RATIO: 'Organize',
+  PROTECT_PDF: 'Protect',
+  REMOVE_PASSWORD: 'Protect',
+};
+const GLOBAL_TOOL_GROUP_ORDER = ['Convert', 'Organize', 'Protect'];
+
 function formatDollars(cents: number): string {
   return (cents / 100).toFixed(2);
+}
+
+function FeatureTableHead() {
+  return (
+    <div className="grid grid-cols-3 border-b border-gray-200 bg-surface px-4 py-2 text-xs font-semibold uppercase text-ink-soft">
+      <span>Feature</span>
+      <span className="text-center">Free</span>
+      <span className="text-center">Pro</span>
+    </div>
+  );
 }
 
 export default function AdminPlans() {
@@ -42,13 +79,20 @@ export default function AdminPlans() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [creditsEnabled, setCreditsEnabledState] = useState(true);
+  const [packs, setPacks] = useState<AdminCreditPack[]>([]);
+  const [packEdits, setPackEdits] = useState<Record<string, { size?: number; priceCents?: number }>>({});
+  const [editingPackCell, setEditingPackCell] = useState<string | null>(null);
+
   function load() {
     if (!token) return;
     setIsLoading(true);
-    Promise.all([fetchAdminPlanPrices(token), fetchAdminFeatures(token)])
-      .then(([p, f]) => {
+    Promise.all([fetchAdminPlanPrices(token), fetchAdminFeatures(token), fetchAdminSettings(token), fetchAdminCreditPacks(token)])
+      .then(([p, f, s, packList]) => {
         setPrices(p);
         setFeatures(f);
+        setCreditsEnabledState(s.creditsEnabled);
+        setPacks(packList);
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'Could not load plans.'))
       .finally(() => setIsLoading(false));
@@ -56,7 +100,53 @@ export default function AdminPlans() {
 
   useEffect(load, [token]);
 
-  const dirty = Object.keys(priceEdits).length > 0 || Object.keys(featureEdits).length > 0;
+  const dirty = Object.keys(priceEdits).length > 0 || Object.keys(featureEdits).length > 0 || Object.keys(packEdits).length > 0;
+
+  function packValue(pack: AdminCreditPack, field: 'size' | 'priceCents'): number {
+    return packEdits[pack.id]?.[field] ?? pack[field];
+  }
+
+  async function toggleCreditsEnabled() {
+    if (!token) return;
+    const next = !creditsEnabled;
+    setCreditsEnabledState(next);
+    try {
+      await updateAdminSettings(token, { creditsEnabled: next });
+    } catch (err) {
+      setCreditsEnabledState(!next);
+      showError(err instanceof Error ? err.message : 'Could not update this setting.');
+    }
+  }
+
+  async function handleSetBestValue(id: string) {
+    if (!token) return;
+    try {
+      await setAdminCreditPackBestValue(token, id);
+      setPacks((prev) => prev.map((p) => ({ ...p, isBestValue: p.id === id })));
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Could not update this pack.');
+    }
+  }
+
+  async function handleAddPack() {
+    if (!token) return;
+    try {
+      await createAdminCreditPack(token, 10, 1500);
+      load();
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Could not add a pack.');
+    }
+  }
+
+  async function handleDeletePack(id: string) {
+    if (!token) return;
+    try {
+      await deleteAdminCreditPack(token, id);
+      setPacks((prev) => prev.filter((p) => p.id !== id));
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Could not delete this pack.');
+    }
+  }
 
   function priceFor(segment: AdminSegment, cycle: AdminBillingCycle): number {
     const key = `${segment}:${cycle}`;
@@ -78,6 +168,40 @@ export default function AdminPlans() {
     }));
   }
 
+  function renderFeatureRow(feature: AdminFeature) {
+    const freeEnabled = featureEdits[feature.id]?.freeEnabled ?? feature.freeEnabled;
+    const proEnabled = featureEdits[feature.id]?.proEnabled ?? feature.proEnabled;
+    return (
+      <div key={feature.id} className="grid grid-cols-3 items-center border-b border-gray-100 px-4 py-3 text-sm last:border-b-0">
+        <span className="text-ink">{feature.label}</span>
+        <span className="flex justify-center">
+          <button
+            onClick={() => toggleFeature(feature, 'freeEnabled')}
+            className={`h-5 w-9 rounded-full transition-colors ${freeEnabled ? 'bg-emerald' : 'bg-gray-300'}`}
+          >
+            <span
+              className={`block h-4 w-4 translate-y-0.5 rounded-full bg-white transition-transform ${
+                freeEnabled ? 'translate-x-4' : 'translate-x-0.5'
+              }`}
+            />
+          </button>
+        </span>
+        <span className="flex justify-center">
+          <button
+            onClick={() => toggleFeature(feature, 'proEnabled')}
+            className={`h-5 w-9 rounded-full transition-colors ${proEnabled ? 'bg-emerald' : 'bg-gray-300'}`}
+          >
+            <span
+              className={`block h-4 w-4 translate-y-0.5 rounded-full bg-white transition-transform ${
+                proEnabled ? 'translate-x-4' : 'translate-x-0.5'
+              }`}
+            />
+          </button>
+        </span>
+      </div>
+    );
+  }
+
   async function handleSave() {
     if (!token) return;
     setIsSaving(true);
@@ -89,9 +213,12 @@ export default function AdminPlans() {
           return updateAdminPlanPrice(token, segment, cycle, priceCents);
         }),
         ...Object.entries(featureEdits).map(([id, data]) => updateAdminFeature(token, id, data)),
+        ...Object.entries(packEdits).map(([id, data]) => updateAdminCreditPack(token, id, data)),
       ]);
       setPriceEdits({});
       setFeatureEdits({});
+      setPackEdits({});
+      showSuccess('Saved successfully');
       load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save changes.');
@@ -171,51 +298,133 @@ export default function AdminPlans() {
             <div key={segment}>
               <h3 className="font-serif text-base font-semibold text-navy">{SEGMENT_LABEL[segment]}</h3>
               <div className="mt-2 overflow-hidden rounded-lg border border-gray-200 bg-white">
-                <div className="grid grid-cols-3 border-b border-gray-200 bg-surface px-4 py-2 text-xs font-semibold uppercase text-ink-soft">
-                  <span>Feature</span>
-                  <span className="text-center">Free</span>
-                  <span className="text-center">Pro</span>
-                </div>
-                {segmentFeatures.map((feature) => {
-                  const freeEnabled = featureEdits[feature.id]?.freeEnabled ?? feature.freeEnabled;
-                  const proEnabled = featureEdits[feature.id]?.proEnabled ?? feature.proEnabled;
-                  return (
-                    <div
-                      key={feature.id}
-                      className="grid grid-cols-3 items-center border-b border-gray-100 px-4 py-3 text-sm last:border-b-0"
-                    >
-                      <span className="text-ink">{feature.label}</span>
-                      <span className="flex justify-center">
-                        <button
-                          onClick={() => toggleFeature(feature, 'freeEnabled')}
-                          className={`h-5 w-9 rounded-full transition-colors ${freeEnabled ? 'bg-emerald' : 'bg-gray-300'}`}
-                        >
-                          <span
-                            className={`block h-4 w-4 translate-y-0.5 rounded-full bg-white transition-transform ${
-                              freeEnabled ? 'translate-x-4' : 'translate-x-0.5'
-                            }`}
-                          />
-                        </button>
-                      </span>
-                      <span className="flex justify-center">
-                        <button
-                          onClick={() => toggleFeature(feature, 'proEnabled')}
-                          className={`h-5 w-9 rounded-full transition-colors ${proEnabled ? 'bg-emerald' : 'bg-gray-300'}`}
-                        >
-                          <span
-                            className={`block h-4 w-4 translate-y-0.5 rounded-full bg-white transition-transform ${
-                              proEnabled ? 'translate-x-4' : 'translate-x-0.5'
-                            }`}
-                          />
-                        </button>
-                      </span>
-                    </div>
-                  );
-                })}
+                <FeatureTableHead />
+                {segmentFeatures.map((feature) => renderFeatureRow(feature))}
               </div>
             </div>
           );
         })}
+
+        {GLOBAL_TOOL_GROUP_ORDER.map((group) => {
+          const groupFeatures = features.filter((f) => f.segment === null && GLOBAL_TOOL_GROUPS[f.key] === group);
+          if (groupFeatures.length === 0) return null;
+          return (
+            <div key={group}>
+              <h3 className="font-serif text-base font-semibold text-navy">{group} (every workspace)</h3>
+              <div className="mt-2 overflow-hidden rounded-lg border border-gray-200 bg-white">
+                <FeatureTableHead />
+                {groupFeatures.map((feature) => renderFeatureRow(feature))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="mt-10">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Pay-as-you-go packs</h2>
+          <label className="flex items-center gap-2 text-sm text-ink">
+            Enable pay-as-you-go
+            <button
+              onClick={toggleCreditsEnabled}
+              className={`h-5 w-9 rounded-full transition-colors ${creditsEnabled ? 'bg-emerald' : 'bg-gray-300'}`}
+            >
+              <span
+                className={`block h-4 w-4 translate-y-0.5 rounded-full bg-white transition-transform ${
+                  creditsEnabled ? 'translate-x-4' : 'translate-x-0.5'
+                }`}
+              />
+            </button>
+          </label>
+        </div>
+
+        <div className="mt-3 overflow-hidden rounded-lg border border-gray-200 bg-white">
+          <table className="min-w-full text-left text-sm">
+            <thead className="border-b border-gray-200 text-xs uppercase text-ink-soft">
+              <tr>
+                <th className="px-4 py-2">Pack size</th>
+                <th className="px-4 py-2">Price</th>
+                <th className="px-4 py-2">Best value</th>
+                <th className="px-4 py-2" />
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {packs.map((pack) => {
+                const sizeCellKey = `${pack.id}:size`;
+                const priceCellKey = `${pack.id}:priceCents`;
+                return (
+                  <tr key={pack.id}>
+                    <td className="px-4 py-2.5">
+                      {editingPackCell === sizeCellKey ? (
+                        <input
+                          autoFocus
+                          type="number"
+                          defaultValue={packValue(pack, 'size')}
+                          onBlur={(e) => {
+                            const size = parseInt(e.target.value, 10);
+                            if (!Number.isNaN(size) && size > 0) {
+                              setPackEdits((prev) => ({ ...prev, [pack.id]: { ...prev[pack.id], size } }));
+                            }
+                            setEditingPackCell(null);
+                          }}
+                          onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
+                          className="w-20 rounded-md border-2 border-emerald px-2 py-1 font-mono text-sm"
+                        />
+                      ) : (
+                        <button onClick={() => setEditingPackCell(sizeCellKey)} className="rounded-md px-2 py-1 font-mono text-sm text-ink hover:bg-surface">
+                          {packValue(pack, 'size')} credits
+                        </button>
+                      )}
+                    </td>
+                    <td className="px-4 py-2.5">
+                      {editingPackCell === priceCellKey ? (
+                        <input
+                          autoFocus
+                          type="number"
+                          step="0.01"
+                          defaultValue={formatDollars(packValue(pack, 'priceCents'))}
+                          onBlur={(e) => {
+                            const cents = Math.round(parseFloat(e.target.value || '0') * 100);
+                            if (!Number.isNaN(cents) && cents >= 0) {
+                              setPackEdits((prev) => ({ ...prev, [pack.id]: { ...prev[pack.id], priceCents: cents } }));
+                            }
+                            setEditingPackCell(null);
+                          }}
+                          onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
+                          className="w-24 rounded-md border-2 border-emerald px-2 py-1 font-mono text-sm"
+                        />
+                      ) : (
+                        <button onClick={() => setEditingPackCell(priceCellKey)} className="rounded-md px-2 py-1 font-mono text-sm text-ink hover:bg-surface">
+                          ${formatDollars(packValue(pack, 'priceCents'))}
+                        </button>
+                      )}
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <button
+                        onClick={() => handleSetBestValue(pack.id)}
+                        className={`h-5 w-9 rounded-full transition-colors ${pack.isBestValue ? 'bg-emerald' : 'bg-gray-300'}`}
+                      >
+                        <span
+                          className={`block h-4 w-4 translate-y-0.5 rounded-full bg-white transition-transform ${
+                            pack.isBestValue ? 'translate-x-4' : 'translate-x-0.5'
+                          }`}
+                        />
+                      </button>
+                    </td>
+                    <td className="px-4 py-2.5 text-right">
+                      <button onClick={() => handleDeletePack(pack.id)} className="text-xs font-medium text-redline hover:underline">
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        <button onClick={handleAddPack} className="mt-3 text-sm font-medium text-emerald hover:underline">
+          + Add new pack
+        </button>
       </div>
 
       {dirty && (

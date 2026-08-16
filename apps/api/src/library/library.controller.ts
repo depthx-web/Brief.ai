@@ -36,22 +36,39 @@ export class LibraryController {
     @Body('text') text: string | undefined,
     @Body('docType') docType: string | undefined,
     @Body('projectId') projectId: string | undefined,
+    @Body('retentionDays') retentionDays: string | undefined,
     @CurrentUser() user: SafeUser
   ) {
     if (!file) throw new BadRequestException('No file uploaded.');
     if (!text?.trim()) throw new BadRequestException('No extracted text provided.');
-    return this.libraryService.addDocument(user.id, file, text, docType, projectId);
+    return this.libraryService.addDocument(
+      user.id,
+      file,
+      text,
+      docType,
+      projectId,
+      retentionDays ? Number(retentionDays) : undefined
+    );
   }
 
   @Post('projects')
   async createProject(
     @Body('name') name: string | undefined,
     @Body('category') category: string | undefined,
-    @Body('retentionDays') retentionDays: number | undefined,
     @CurrentUser() user: SafeUser
   ) {
     if (!name?.trim()) throw new BadRequestException('A project name is required.');
-    return this.libraryService.createProject(user.id, name.trim(), category, retentionDays);
+    return this.libraryService.createProject(user.id, name.trim(), category);
+  }
+
+  @Patch('projects/:id')
+  async renameProject(
+    @Param('id') id: string,
+    @Body('name') name: string | undefined,
+    @CurrentUser() user: SafeUser
+  ) {
+    if (!name?.trim()) throw new BadRequestException('A project name is required.');
+    return this.libraryService.renameProject(user.id, id, name.trim());
   }
 
   @Get('projects')

@@ -66,6 +66,82 @@ export class ConversionService {
     }
   }
 
+  // Real HTML output via poppler's pdftohtml (not a homebrewed text/layout
+  // reconstruction) — -s bundles every page into one file, -noframes drops
+  // the old frameset wrapper poppler defaults to.
+  async convertToHtml(file: Express.Multer.File): Promise<Buffer> {
+    const startedAt = Date.now();
+    const job = await this.prisma.conversionJob.create({
+      data: {
+        originalFilename: file.originalname,
+        sourceFormat: 'pdf',
+        targetFormat: 'html',
+        status: 'PROCESSING',
+      },
+    });
+
+    const workDir = await mkdtemp(join(tmpdir(), 'brief-ai-html-'));
+    const inputPath = join(workDir, 'input.pdf');
+    const outputBase = join(workDir, 'output');
+
+    try {
+      await writeFile(inputPath, file.buffer);
+      await this.runPdfToHtml(inputPath, outputBase);
+
+      const outputFiles = await readdir(workDir);
+      const outputName = outputFiles.find((name) => name.toLowerCase().endsWith('.html'));
+      if (!outputName) {
+        throw new Error('Conversion produced no output file.');
+      }
+      const outputBuffer = await readFile(join(workDir, outputName));
+
+      await this.prisma.conversionJob.update({
+        where: { id: job.id },
+        data: { status: 'SUCCESS', durationMs: Date.now() - startedAt },
+      });
+
+      return outputBuffer;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown conversion error';
+      this.logger.error(`Conversion ${job.id} failed: ${message}`);
+      await this.prisma.conversionJob.update({
+        where: { id: job.id },
+        data: { status: 'FAILED', errorMessage: message.slice(0, 2000), durationMs: Date.now() - startedAt },
+      });
+      throw err;
+    } finally {
+      await rm(workDir, { recursive: true, force: true });
+    }
+  }
+
+  private runPdfToHtml(inputPath: string, outputBase: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const args = ['-s', '-noframes', '-q', inputPath, outputBase];
+      const proc = spawn(process.env.PDFTOHTML_BIN ?? 'pdftohtml', args);
+
+      const timer = setTimeout(() => {
+        proc.kill('SIGKILL');
+        reject(new Error('Conversion timed out.'));
+      }, CONVERSION_TIMEOUT_MS);
+
+      let stderr = '';
+      proc.stderr?.on('data', (chunk: Buffer) => {
+        stderr += chunk.toString();
+      });
+
+      proc.on('error', (err) => {
+        clearTimeout(timer);
+        reject(err);
+      });
+
+      proc.on('close', (code) => {
+        clearTimeout(timer);
+        if (code === 0) resolve();
+        else reject(new Error(`pdftohtml exited with code ${code}: ${stderr.trim()}`));
+      });
+    });
+  }
+
   private runSoffice(
     inputPath: string,
     outDir: string,

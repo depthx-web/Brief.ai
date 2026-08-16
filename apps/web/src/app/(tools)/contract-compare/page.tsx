@@ -3,7 +3,7 @@ import RequirePaidPlan from '@/components/RequirePaidPlan';
 
 export default function ContractComparePage() {
   return (
-    <RequirePaidPlan>
+    <RequirePaidPlan featureKey="COMPARE_CONTRACTS" segment="LAWYER">
       <ContractCompare />
     </RequirePaidPlan>
   );

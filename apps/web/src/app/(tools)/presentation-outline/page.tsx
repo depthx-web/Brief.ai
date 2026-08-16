@@ -3,7 +3,7 @@ import RequirePaidPlan from '@/components/RequirePaidPlan';
 
 export default function PresentationOutlinePage() {
   return (
-    <RequirePaidPlan>
+    <RequirePaidPlan featureKey="GENERATE_OUTLINE" segment="RESEARCHER">
       <PresentationOutline />
     </RequirePaidPlan>
   );
