@@ -229,8 +229,16 @@ export class AiService {
     private readonly prisma: PrismaService,
     private readonly liteLlm: LiteLlmService
   ) {
+    // The OpenAI SDK throws at construction time if it can't resolve a
+    // non-empty apiKey (it falls back to reading OPENAI_API_KEY itself
+    // otherwise), which would crash the whole app at boot in any deployment
+    // without an LLM key configured yet. Falling back to a placeholder here
+    // keeps construction safe — an actual AI call made without a real key
+    // fails at that call site instead, the same graceful-degradation shape
+    // used by isConfigured() elsewhere in this module.
+    const apiKey = (LITELLM_PROXY_URL ? process.env.LITELLM_MASTER_KEY : process.env.LLM_API_KEY) || 'not-configured';
     this.client = new OpenAI({
-      apiKey: LITELLM_PROXY_URL ? (process.env.LITELLM_MASTER_KEY ?? '') : process.env.LLM_API_KEY,
+      apiKey,
       baseURL: LITELLM_PROXY_URL ?? (process.env.LLM_BASE_URL ?? 'https://api.deepseek.com'),
     });
   }
