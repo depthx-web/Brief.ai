@@ -1,0 +1,26 @@
+# Static variant of litellm-config.yaml used only by litellm.Dockerfile for
+# the hosted (Render free-tier) deployment.
+#
+# Unlike the local-dev config, this deliberately has NO database_url /
+# STORE_MODEL_IN_DB: a DB-backed proxy makes LiteLLM run a Prisma client
+# generation/migration step at container startup, which needs ~2GB of RAM
+# and OOMs on free-tier hosts capped at 512MB. Going static loses two
+# things — live model-swapping from the admin panel, and the per-user
+# LiteLLM-side spend cap normally applied via a virtual key (see
+# LiteLlmService.getOrCreateVirtualKey) — but neither is a hard failure:
+# ai.service.ts already falls back to the shared master key when no virtual
+# key is available, so AI calls keep working either way.
+model_list:
+  - model_name: task-simple
+    litellm_params:
+      model: deepseek/deepseek-chat
+      api_key: os.environ/LLM_API_KEY
+      api_base: os.environ/LLM_BASE_URL
+  - model_name: task-complex
+    litellm_params:
+      model: deepseek/deepseek-chat
+      api_key: os.environ/LLM_API_KEY
+      api_base: os.environ/LLM_BASE_URL
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
