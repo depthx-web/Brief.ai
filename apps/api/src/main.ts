@@ -20,7 +20,15 @@ async function bootstrap() {
     })
   );
   app.use(urlencoded({ extended: true, limit: '2mb' }));
-  app.enableCors({ origin: process.env.CORS_ORIGIN ?? 'http://localhost:3000' });
+  // The desktop app's requests come from Tauri's internal origin, not the
+  // web app's — always allow it alongside whatever CORS_ORIGIN configures
+  // for the web deploy, or every fetch from the desktop app fails CORS
+  // silently (caught and swallowed by each call site's error handling,
+  // which looks identical to "the API just isn't returning fresh data").
+  // http://tauri.localhost is Windows' scheme; tauri://localhost covers
+  // macOS/Linux.
+  const allowedOrigins = [process.env.CORS_ORIGIN ?? 'http://localhost:3000', 'http://tauri.localhost', 'tauri://localhost'];
+  app.enableCors({ origin: allowedOrigins });
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Brief.ai API')
