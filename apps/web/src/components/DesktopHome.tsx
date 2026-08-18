@@ -113,7 +113,7 @@ function DesktopHomeInner() {
             {greeting()}{firstName ? `, ${firstName}` : ''}
           </h1>
           <span className="text-[12.5px] text-ink-soft">
-            {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
           </span>
         </div>
 
