@@ -1,4 +1,4 @@
-export type DesktopNavKey = 'home' | 'convert' | 'organize' | 'protect' | 'ai-tools' | 'library' | 'recent';
+export type DesktopNavKey = 'home' | 'convert' | 'organize' | 'protect' | 'ai-tools' | 'library' | 'recent' | 'settings';
 
 // Slugs used in `/tools?tab=<slug>` links from the desktop sidebar — kept
 // separate from ToolsIndex's own `Tab` union (which uses display strings
@@ -63,14 +63,23 @@ const TOOL_ROUTE_CATEGORY: Record<string, DesktopNavKey> = {
   'presentation-outline': 'ai-tools',
 };
 
-// Best-effort mapping from the current pathname to which desktop sidebar
-// item should be highlighted. Approximate for `/tools` itself (it's a
-// client-side tab switcher, not separate routes) — defaults to 'convert'.
-export function getDesktopNavKeyForPath(pathname: string): DesktopNavKey {
+const TAB_SLUG_TO_NAV_KEY: Record<string, DesktopNavKey> = {
+  convert: 'convert',
+  organize: 'organize',
+  protect: 'protect',
+  'ai-tools': 'ai-tools',
+};
+
+// Maps the current pathname (plus, for /tools, its `tab` query param) to
+// which desktop sidebar item should be highlighted. `tabParam` is optional
+// so callers that can't cheaply read search params (or are on a route
+// where it doesn't apply) still get the pathname-only behavior.
+export function getDesktopNavKeyForPath(pathname: string, tabParam?: string | null): DesktopNavKey {
   const segment = pathname.split('/').filter(Boolean)[0] ?? '';
   if (segment === 'desktop-home' || segment === '') return 'home';
   if (segment === 'library') return 'library';
   if (segment === 'recent') return 'recent';
-  if (segment === 'tools') return 'convert';
+  if (segment === 'settings') return 'settings';
+  if (segment === 'tools') return (tabParam && TAB_SLUG_TO_NAV_KEY[tabParam]) || 'convert';
   return TOOL_ROUTE_CATEGORY[segment] ?? 'home';
 }

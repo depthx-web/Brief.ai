@@ -30,6 +30,16 @@ const DEFAULT_ANNOUNCEMENT: Announcement = {
   ctaHref: '/contract-compare',
 };
 
+// One announcement section per workspace segment (announcement_lawyer /
+// _accountant / _researcher), each independently editable at
+// /admin/content → "Desktop App — Home" — see the segment_desktop_home_
+// announcement migration.
+const SEGMENT_TO_ANNOUNCEMENT_KEY: Record<string, string> = {
+  LAWYER: 'lawyer',
+  ACCOUNTANT: 'accountant',
+  RESEARCHER: 'researcher',
+};
+
 // Real counts from ToolsIndex.tsx's TOOLS_BY_TAB, not placeholders — keep
 // these in sync if that catalog changes. AI count is Lawyer-segment sized
 // to match the profile card below; swap per effectiveSegment if this needs
@@ -78,17 +88,27 @@ function DesktopHomeInner() {
   // Lets the admin's "Site Content" live-preview iframe (which loads
   // /desktop-home?cmsPreview=1) show unpublished draft edits — everywhere
   // else this is absent, so it falls through to published content.
-  const preview = useSearchParams().get('cmsPreview') === '1';
+  const searchParams = useSearchParams();
+  const preview = searchParams.get('cmsPreview') === '1';
+  // The admin preview iframe passes this so the pane shows whichever
+  // segment's accordion section is actually open, regardless of the
+  // logged-in admin's own workspace — see AdminCms.tsx.
+  const previewSegment = searchParams.get('previewSegment');
   const [announcement, setAnnouncement] = useState<Announcement>(DEFAULT_ANNOUNCEMENT);
   const [dismissed, setDismissed] = useState(false);
   const [recentFiles, setRecentFiles] = useState<LibraryDocumentSummary[] | null>(null);
 
+  // Guests and users who haven't picked a workspace yet get the Legal
+  // variant — same default the section had before this was per-segment.
+  const effectiveSegmentKey = previewSegment ?? (user?.segment ? SEGMENT_TO_ANNOUNCEMENT_KEY[user.segment] : null) ?? 'lawyer';
+  const announcementKey = `announcement_${effectiveSegmentKey}`;
+
   useEffect(() => {
     fetchCmsPage('desktop-home', preview).then((page) => {
-      const fields = page?.sections.announcement as Partial<Announcement> | undefined;
+      const fields = page?.sections[announcementKey] as Partial<Announcement> | undefined;
       if (fields?.headline) setAnnouncement({ ...DEFAULT_ANNOUNCEMENT, ...fields });
     });
-  }, [preview]);
+  }, [preview, announcementKey]);
 
   useEffect(() => {
     if (!token) {

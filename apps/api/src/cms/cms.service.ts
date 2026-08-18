@@ -45,7 +45,11 @@ const CMS_PAGES: { slug: string; label: string; sections: { key: string; label: 
     // 20260816160000_add_desktop_home_cms.
     slug: 'desktop-home',
     label: 'Desktop App — Home',
-    sections: [{ key: 'announcement', label: 'News / promo card' }],
+    sections: [
+      { key: 'announcement_lawyer', label: 'News / promo card — Legal' },
+      { key: 'announcement_accountant', label: 'News / promo card — Accounting' },
+      { key: 'announcement_researcher', label: 'News / promo card — Research' },
+    ],
   },
 ];
 

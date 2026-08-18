@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { isTauri } from '@/lib/platform';
 import { getDesktopNavKeyForPath } from '@/lib/desktopNav';
@@ -18,9 +18,19 @@ import GuestSignupModal from './GuestSignupModal';
 const ACCOUNT_REQUIRED_PREFIXES = ['/library', '/wallet', '/settings', '/referrals', '/recent'];
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={null}>
+      <AppShellInner>{children}</AppShellInner>
+    </Suspense>
+  );
+}
+
+function AppShellInner({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  // Only read for /tools's sidebar-highlight purposes — see getDesktopNavKeyForPath.
+  const tabParam = useSearchParams().get('tab');
   const [modalOpen, setModalOpen] = useState(false);
   const [modalStep, setModalStep] = useState<'workspace' | 'cycle'>('workspace');
   const [guestSignupOpen, setGuestSignupOpen] = useState(false);
@@ -41,7 +51,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   // Desktop gets its own sidebar shell instead of the web dashboard's
   // Sidebar + upgrade banner — see DesktopShell/DesktopSidebar.
   if (isTauri()) {
-    return <DesktopShell active={getDesktopNavKeyForPath(pathname)}>{children}</DesktopShell>;
+    return <DesktopShell active={getDesktopNavKeyForPath(pathname, tabParam)}>{children}</DesktopShell>;
   }
 
   return (

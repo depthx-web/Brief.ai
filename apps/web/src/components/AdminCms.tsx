@@ -64,6 +64,15 @@ function pathForSlug(slug: string): string {
   return PAGE_PATH[slug] ?? `/${slug}`;
 }
 
+// The desktop-home preview otherwise shows whichever segment's announcement
+// the admin's own logged-in account happens to be — pass along which
+// section's accordion is actually open so the pane matches what's being
+// edited instead.
+function previewSegmentParam(openSection: string | null): string {
+  if (!openSection?.startsWith('announcement_')) return '';
+  return `&previewSegment=${openSection.slice('announcement_'.length)}`;
+}
+
 export default function AdminCms() {
   const { token } = useAdminAuth();
   const [pages, setPages] = useState<AdminCmsPageSummary[]>([]);
@@ -280,7 +289,7 @@ export default function AdminCms() {
             <div className="mt-2 overflow-hidden rounded-lg border border-gray-200" style={{ height: '75vh' }}>
               <iframe
                 key={previewNonce}
-                src={`${PREVIEW_ORIGIN}${pathForSlug(slug)}?cmsPreview=1&_r=${previewNonce}`}
+                src={`${PREVIEW_ORIGIN}${pathForSlug(slug)}?cmsPreview=1&_r=${previewNonce}${previewSegmentParam(openSection)}`}
                 className="h-full w-full"
                 title="Live preview"
               />
@@ -374,7 +383,7 @@ function SectionEditor({
   if (sectionKey === 'workspaces') return <WorkspacesEditor fields={fields as { items: WorkspaceItem[] }} onChange={onChange} />;
   if (sectionKey === 'faq') return <FaqEditor fields={fields as { items: FaqItem[] }} onChange={onChange} />;
   if (sectionKey === 'body') return <LegalSectionsEditor fields={fields as { items: LegalSectionItem[] }} onChange={onChange} />;
-  if (sectionKey === 'announcement') return <AnnouncementEditor fields={fields as AnnouncementFields} onChange={onChange} />;
+  if (sectionKey.startsWith('announcement')) return <AnnouncementEditor fields={fields as AnnouncementFields} onChange={onChange} />;
   return <p className="text-sm text-ink-soft">No editor available for this section yet.</p>;
 }
 

@@ -81,6 +81,7 @@ export default function DesktopSidebar({ active }: { active: DesktopNavKey }) {
   const { user, logout } = useAuth();
   const connection = useConnectionState();
   const { label, dot, body } = CONNECTION_COPY[connection];
+  const settingsActive = active === 'settings';
 
   return (
     <aside className="flex h-full w-60 shrink-0 flex-col bg-navy py-[22px] text-white">
@@ -130,25 +131,45 @@ export default function DesktopSidebar({ active }: { active: DesktopNavKey }) {
         </div>
 
         {user ? (
-          <div className="flex items-center gap-2.5 px-2 py-2">
+          <div className="flex items-center gap-2 px-2 py-2">
             <div className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-emerald-soft font-mono text-[11px] font-semibold text-emerald-dark">
               {(user.name ?? user.email).slice(0, 2).toUpperCase()}
             </div>
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <div className="truncate text-[13px] font-semibold text-white">{user.name ?? user.email}</div>
               <div className="font-mono text-[10.5px]" style={{ color: MUTED }}>
                 {(user.segment && SEGMENT_LABEL[user.segment]) ?? 'No workspace'} &middot;{' '}
                 {user.plan === 'PAID' ? 'Pro' : 'Free'}
               </div>
             </div>
-            <button onClick={logout} className="ml-auto text-[11px] hover:text-white" style={{ color: MUTED }}>
+            <Link
+              href="/settings"
+              aria-label="Settings"
+              title="Settings"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md hover:bg-white/[0.08]"
+              style={{ background: settingsActive ? 'rgba(255,255,255,0.08)' : undefined }}
+            >
+              {SettingsIcon(settingsActive ? '#1E9D75' : NAV_INACTIVE)}
+            </Link>
+            <button onClick={logout} className="text-[11px] hover:text-white" style={{ color: MUTED }}>
               Log out
             </button>
           </div>
         ) : (
-          <Link href="/login" className="mt-4 flex items-center gap-2.5 px-2 py-2 text-[13px] font-medium text-emerald hover:text-emerald-dark">
-            Log in for AI tools &rarr;
-          </Link>
+          <div className="flex items-center gap-2.5 px-2 py-2">
+            <Link href="/login" className="flex-1 text-[13px] font-medium text-emerald hover:text-emerald-dark">
+              Log in for AI tools &rarr;
+            </Link>
+            <Link
+              href="/settings"
+              aria-label="Settings"
+              title="Settings"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md hover:bg-white/[0.08]"
+              style={{ background: settingsActive ? 'rgba(255,255,255,0.08)' : undefined }}
+            >
+              {SettingsIcon(settingsActive ? '#1E9D75' : NAV_INACTIVE)}
+            </Link>
+          </div>
         )}
       </div>
     </aside>
@@ -253,6 +274,14 @@ function RecentIcon(color: string) {
     <svg {...iconProps(color)}>
       <circle cx="12" cy="12" r="8" />
       <path d="M12 8v4l3 2" />
+    </svg>
+  );
+}
+function SettingsIcon(color: string) {
+  return (
+    <svg {...iconProps(color)}>
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
     </svg>
   );
 }
