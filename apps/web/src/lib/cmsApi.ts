@@ -15,13 +15,16 @@ export async function fetchCmsPage(slug: string, preview: boolean): Promise<CmsP
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 3000);
-    // The desktop static export has no server to revalidate against at
-    // runtime — 'no-store'/'no-cache' force Next's dynamic-render bailout,
-    // which static export can't do, so CMS content gets baked in at build
-    // time there instead (force-cache). The live web deploy keeps its
-    // always-fresh behavior unchanged.
-    const cacheMode =
-      process.env.NEXT_PUBLIC_BUILD_TARGET === 'desktop' ? 'force-cache' : preview ? 'no-store' : 'no-cache';
+    // force-cache only applies to the desktop build's server-side/build-time
+    // calls (output:'export' has no server to revalidate against at runtime,
+    // and 'no-store'/'no-cache' would force Next's dynamic-render bailout,
+    // which static export can't do). Client-side calls — like DesktopHome's
+    // runtime useEffect fetch, which needs to see newly published content
+    // on every app launch, not whatever got cached the first time — always
+    // run in a real browser/webview (`window` defined), so this only ever
+    // takes effect during the actual `next build` process.
+    const isDesktopBuildTimeCall = typeof window === 'undefined' && process.env.NEXT_PUBLIC_BUILD_TARGET === 'desktop';
+    const cacheMode = isDesktopBuildTimeCall ? 'force-cache' : preview ? 'no-store' : 'no-cache';
     const res = await fetch(`${API_URL}/cms/pages/${slug}${preview ? '?preview=1' : ''}`, {
       signal: controller.signal,
       cache: cacheMode,
