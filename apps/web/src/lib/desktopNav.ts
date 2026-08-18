@@ -1,4 +1,14 @@
-export type DesktopNavKey = 'home' | 'convert' | 'organize' | 'protect' | 'ai-tools' | 'library' | 'recent' | 'settings';
+export type DesktopNavKey =
+  | 'home'
+  | 'convert'
+  | 'organize'
+  | 'protect'
+  | 'ai-tools'
+  | 'library'
+  | 'recent'
+  | 'wallet'
+  | 'referrals'
+  | 'settings';
 
 // Slugs used in `/tools?tab=<slug>` links from the desktop sidebar — kept
 // separate from ToolsIndex's own `Tab` union (which uses display strings
@@ -79,6 +89,8 @@ export function getDesktopNavKeyForPath(pathname: string, tabParam?: string | nu
   if (segment === 'desktop-home' || segment === '') return 'home';
   if (segment === 'library') return 'library';
   if (segment === 'recent') return 'recent';
+  if (segment === 'wallet') return 'wallet';
+  if (segment === 'referrals') return 'referrals';
   if (segment === 'settings') return 'settings';
   if (segment === 'tools') return (tabParam && TAB_SLUG_TO_NAV_KEY[tabParam]) || 'convert';
   return TOOL_ROUTE_CATEGORY[segment] ?? 'home';

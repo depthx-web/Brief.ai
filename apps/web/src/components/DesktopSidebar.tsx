@@ -3,7 +3,9 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/AuthContext';
+import { getCreditBalance } from '@/lib/creditsApi';
 import type { DesktopNavKey } from '@/lib/desktopNav';
+import LoginModal from './LoginModal';
 
 const SEGMENT_LABEL: Record<string, string> = {
   LAWYER: 'Legal',
@@ -24,6 +26,13 @@ const WORKSPACE_ITEMS: { navKey: DesktopNavKey; href: string; icon: (color: stri
 const FILE_ITEMS: { navKey: DesktopNavKey; href: string; icon: (color: string) => React.ReactNode; label: string }[] = [
   { navKey: 'library', href: '/library', icon: LibraryIcon, label: 'Library' },
   { navKey: 'recent', href: '/recent', icon: RecentIcon, label: 'Recent' },
+];
+
+// Account-level pages — separate from workspace tools and file management.
+const ACCOUNT_ITEMS: { navKey: DesktopNavKey; href: string; icon: (color: string) => React.ReactNode; label: string }[] = [
+  { navKey: 'wallet', href: '/wallet', icon: WalletIcon, label: 'Wallet' },
+  { navKey: 'referrals', href: '/referrals', icon: ReferralIcon, label: 'Referral Program' },
+  { navKey: 'settings', href: '/settings', icon: SettingsIcon, label: 'Settings' },
 ];
 
 // Muted navy-gray for secondary text on the dark sidebar — not the same as
@@ -78,10 +87,19 @@ const CONNECTION_COPY: Record<ConnectionState, { label: string; dot: string; bod
 };
 
 export default function DesktopSidebar({ active }: { active: DesktopNavKey }) {
-  const { user, logout } = useAuth();
+  const { user, token, logout } = useAuth();
   const connection = useConnectionState();
   const { label, dot, body } = CONNECTION_COPY[connection];
-  const settingsActive = active === 'settings';
+  const [balance, setBalance] = useState<number | null>(null);
+  const [loginOpen, setLoginOpen] = useState(false);
+
+  useEffect(() => {
+    if (!token) {
+      setBalance(null);
+      return;
+    }
+    getCreditBalance(token).then(setBalance).catch(() => {});
+  }, [token]);
 
   return (
     <aside className="flex h-full w-60 shrink-0 flex-col bg-navy py-[22px] text-white">
@@ -94,7 +112,7 @@ export default function DesktopSidebar({ active }: { active: DesktopNavKey }) {
         </div>
       </Link>
 
-      <div className="px-3.5">
+      <div className="min-h-0 flex-1 overflow-y-auto px-3.5">
         <div className="px-2 pb-2 font-mono text-[10px] font-semibold uppercase tracking-wider" style={{ color: MUTED, letterSpacing: '1px' }}>
           Workspace
         </div>
@@ -112,11 +130,18 @@ export default function DesktopSidebar({ active }: { active: DesktopNavKey }) {
             <NavRow key={item.navKey} {...item} isActive={active === item.navKey} />
           ))}
         </nav>
+
+        <div className="mt-5 px-2 pb-2 font-mono text-[10px] font-semibold uppercase tracking-wider" style={{ color: MUTED, letterSpacing: '1px' }}>
+          Account
+        </div>
+        <nav className="flex flex-col gap-0.5">
+          {ACCOUNT_ITEMS.map((item) => (
+            <NavRow key={item.navKey} {...item} isActive={active === item.navKey} />
+          ))}
+        </nav>
       </div>
 
-      <div className="flex-1" />
-
-      <div className="px-3.5">
+      <div className="px-3.5 pt-3">
         <div className="mb-3.5 flex items-start gap-2 rounded-[10px] bg-navy-light p-3.5">
           <span
             className="mt-1 h-2 w-2 shrink-0 rounded-full"
@@ -130,8 +155,15 @@ export default function DesktopSidebar({ active }: { active: DesktopNavKey }) {
           </div>
         </div>
 
+        {balance !== null && (
+          <Link href="/wallet" className="mb-2 flex items-center gap-1.5 px-2 font-mono text-[10px] hover:text-white" style={{ color: MUTED }}>
+            {WalletIcon(MUTED)}
+            {balance} credit{balance === 1 ? '' : 's'}
+          </Link>
+        )}
+
         {user ? (
-          <div className="flex items-center gap-2 px-2 py-2">
+          <div className="flex items-center gap-2.5 px-2 py-2">
             <div className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-emerald-soft font-mono text-[11px] font-semibold text-emerald-dark">
               {(user.name ?? user.email).slice(0, 2).toUpperCase()}
             </div>
@@ -142,36 +174,21 @@ export default function DesktopSidebar({ active }: { active: DesktopNavKey }) {
                 {user.plan === 'PAID' ? 'Pro' : 'Free'}
               </div>
             </div>
-            <Link
-              href="/settings"
-              aria-label="Settings"
-              title="Settings"
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md hover:bg-white/[0.08]"
-              style={{ background: settingsActive ? 'rgba(255,255,255,0.08)' : undefined }}
-            >
-              {SettingsIcon(settingsActive ? '#1E9D75' : NAV_INACTIVE)}
-            </Link>
             <button onClick={logout} className="text-[11px] hover:text-white" style={{ color: MUTED }}>
               Log out
             </button>
           </div>
         ) : (
-          <div className="flex items-center gap-2.5 px-2 py-2">
-            <Link href="/login" className="flex-1 text-[13px] font-medium text-emerald hover:text-emerald-dark">
-              Log in for AI tools &rarr;
-            </Link>
-            <Link
-              href="/settings"
-              aria-label="Settings"
-              title="Settings"
-              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md hover:bg-white/[0.08]"
-              style={{ background: settingsActive ? 'rgba(255,255,255,0.08)' : undefined }}
-            >
-              {SettingsIcon(settingsActive ? '#1E9D75' : NAV_INACTIVE)}
-            </Link>
-          </div>
+          <button
+            onClick={() => setLoginOpen(true)}
+            className="flex w-full items-center gap-2.5 px-2 py-2 text-left text-[13px] font-medium text-emerald hover:text-emerald-dark"
+          >
+            Log in for AI tools &rarr;
+          </button>
         )}
       </div>
+
+      <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
     </aside>
   );
 }
@@ -274,6 +291,23 @@ function RecentIcon(color: string) {
     <svg {...iconProps(color)}>
       <circle cx="12" cy="12" r="8" />
       <path d="M12 8v4l3 2" />
+    </svg>
+  );
+}
+function WalletIcon(color: string) {
+  return (
+    <svg {...iconProps(color)}>
+      <path d="M3 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" />
+      <path d="M16 12h3v3h-3a1.5 1.5 0 0 1 0-3z" />
+    </svg>
+  );
+}
+function ReferralIcon(color: string) {
+  return (
+    <svg {...iconProps(color)}>
+      <circle cx="7" cy="7" r="3" />
+      <circle cx="17" cy="17" r="3" />
+      <path d="M9.5 9.5l5 5" />
     </svg>
   );
 }

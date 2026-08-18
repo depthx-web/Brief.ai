@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
+import { isTauri } from '@/lib/platform';
 import {
   fetchPlans,
   startCheckout,
@@ -169,17 +170,26 @@ function PricingPageInner() {
     }
   }
 
-  return (
-    <div className="bg-surface px-6 py-20 sm:px-12">
-      <div className={`mx-auto text-center ${tab === 'CREDITS' ? 'max-w-2xl' : 'max-w-3xl'}`}>
-        <h1 className="font-serif text-3xl font-medium text-navy sm:text-4xl">{heading}</h1>
+  const desktop = isTauri();
 
-        <div className="relative mt-10 flex justify-center gap-1">
+  return (
+    <div className={desktop ? 'px-9 py-7' : 'bg-surface px-6 py-20 sm:px-12'}>
+      <div className={desktop ? '' : `mx-auto text-center ${tab === 'CREDITS' ? 'max-w-2xl' : 'max-w-3xl'}`}>
+        {desktop ? (
+          <div className="mb-6">
+            <h1 className="font-serif text-2xl font-medium text-navy">Pricing</h1>
+            <p className="mt-1.5 text-xs text-ink-soft">Compare plans for your workspace</p>
+          </div>
+        ) : (
+          <h1 className="font-serif text-3xl font-medium text-navy sm:text-4xl">{heading}</h1>
+        )}
+
+        <div className={`relative flex gap-1 ${desktop ? '' : 'mt-10 justify-center'}`}>
           {(Object.keys(PLAN_COPY) as Segment[]).map((key) => (
             <button
               key={key}
               onClick={() => setTab(key)}
-              className={`rounded-t-lg px-5 pb-3 pt-2.5 font-mono text-xs uppercase tracking-wide transition-all ${
+              className={`rounded-t-lg ${desktop ? 'px-4 pb-2 pt-2' : 'px-5 pb-3 pt-2.5'} font-mono text-xs uppercase tracking-wide transition-all ${
                 tab === key
                   ? 'bg-paper font-semibold text-navy shadow-[0_-2px_8px_rgba(0,0,0,0.06)]'
                   : 'bg-[#E9E2CE] text-[#6B6250] opacity-70 hover:opacity-90'
@@ -191,7 +201,7 @@ function PricingPageInner() {
           {showCreditsTab && (
             <button
               onClick={() => setTab('CREDITS')}
-              className={`rounded-t-lg px-5 pb-3 pt-2.5 font-mono text-xs uppercase tracking-wide transition-all ${
+              className={`rounded-t-lg ${desktop ? 'px-4 pb-2 pt-2' : 'px-5 pb-3 pt-2.5'} font-mono text-xs uppercase tracking-wide transition-all ${
                 tab === 'CREDITS'
                   ? 'bg-paper font-semibold text-navy shadow-[0_-2px_8px_rgba(0,0,0,0.06)]'
                   : 'bg-[#E9E2CE] text-[#6B6250] opacity-70 hover:opacity-90'
@@ -203,7 +213,7 @@ function PricingPageInner() {
         </div>
 
         {tab === 'CREDITS' ? (
-          <div className="rounded-b-xl rounded-tr-xl border border-paper-line bg-white p-10 text-left shadow-sm">
+          <div className={`rounded-b-xl rounded-tr-xl border border-paper-line bg-white text-left shadow-sm ${desktop ? 'p-6' : 'p-10'}`}>
             <h2 className="font-serif text-xl font-semibold text-navy">Pay as you go</h2>
             <p className="mt-1 text-sm text-ink-soft">
               1 credit = 1 AI analysis, chat session, or comparison. No subscription required.
@@ -268,7 +278,7 @@ function PricingPageInner() {
             {/* Free plan — sits alongside the paid plan, not hidden behind a separate tab.
                 Its feature list is exactly the segment's freeEnabled features, live from
                 the admin panel's "Features per plan" toggles. */}
-            <div className="rounded-b-xl rounded-tr-xl border border-paper-line bg-white p-10 text-left shadow-sm sm:rounded-tl-xl">
+            <div className={`rounded-b-xl rounded-tr-xl border border-paper-line bg-white text-left shadow-sm sm:rounded-tl-xl ${desktop ? 'p-6' : 'p-10'}`}>
               <h2 className="font-serif text-xl font-semibold text-navy">Free</h2>
               <p className="mt-6">
                 <span className="font-serif text-4xl font-medium text-navy">$0</span>
@@ -302,7 +312,7 @@ function PricingPageInner() {
               )}
             </div>
 
-            <div className="rounded-xl border border-paper-line bg-white p-10 text-left shadow-sm">
+            <div className={`rounded-xl border border-paper-line bg-white text-left shadow-sm ${desktop ? 'p-6' : 'p-10'}`}>
               <h2 className="font-serif text-xl font-semibold text-navy">{current?.name}</h2>
 
               <div className="mt-6 grid grid-cols-4 gap-2">
