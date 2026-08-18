@@ -15,9 +15,16 @@ export async function fetchCmsPage(slug: string, preview: boolean): Promise<CmsP
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 3000);
+    // The desktop static export has no server to revalidate against at
+    // runtime — 'no-store'/'no-cache' force Next's dynamic-render bailout,
+    // which static export can't do, so CMS content gets baked in at build
+    // time there instead (force-cache). The live web deploy keeps its
+    // always-fresh behavior unchanged.
+    const cacheMode =
+      process.env.NEXT_PUBLIC_BUILD_TARGET === 'desktop' ? 'force-cache' : preview ? 'no-store' : 'no-cache';
     const res = await fetch(`${API_URL}/cms/pages/${slug}${preview ? '?preview=1' : ''}`, {
       signal: controller.signal,
-      cache: preview ? 'no-store' : 'no-cache',
+      cache: cacheMode,
     });
     clearTimeout(timeout);
     if (!res.ok) return null;

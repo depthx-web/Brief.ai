@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import * as Dialog from '@radix-ui/react-dialog';
 import { useAuth } from '@/lib/AuthContext';
+import { isTauri } from '@/lib/platform';
 import type { Segment } from '@/lib/authApi';
 import { fetchMyActivity, type AiActivity } from '@/lib/aiApi';
 import { showError, showSuccess } from '@/lib/toast';
@@ -65,10 +66,10 @@ export default function Settings() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-8 py-10">
+    <div className={isTauri() ? 'px-8 py-7' : 'mx-auto max-w-2xl px-8 py-10'}>
       <h1 className="font-serif text-2xl font-medium text-navy">Settings</h1>
 
-      <section className="mt-10">
+      <section className="mt-8">
         <h2 className="font-serif text-lg font-semibold text-navy">Profile</h2>
         <div className="mt-4 space-y-4">
           <div>
@@ -83,7 +84,7 @@ export default function Settings() {
         </div>
       </section>
 
-      <section className="mt-10">
+      <section className="mt-8 border-t border-[#EEF1F4] pt-8">
         <h2 className="font-serif text-lg font-semibold text-navy">Professional Workspace</h2>
         <p className="mt-1 text-sm text-ink-soft">Changes which analysis view opens in the Document Workspace.</p>
         <div className="mt-4 grid grid-cols-3 gap-3">
@@ -115,7 +116,7 @@ export default function Settings() {
       <ChangeEmailSection currentEmail={user.email} />
       <ChangePasswordSection />
 
-      <section className="mt-14">
+      <section className="mt-8 border-t border-[#EEF1F4] pt-8">
         <h2 className="font-serif text-lg font-semibold text-navy">Subscription</h2>
         <div className="mt-4 flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4">
           <div>
@@ -128,7 +129,7 @@ export default function Settings() {
         </div>
       </section>
 
-      <section className="mt-14">
+      <section className="mt-8 border-t border-[#EEF1F4] pt-8">
         <h2 className="font-serif text-lg font-semibold text-navy">Activity</h2>
         <p className="mt-1 text-sm text-ink-soft">
           {user.segment === 'LAWYER'
@@ -203,7 +204,7 @@ function ChangeEmailSection({ currentEmail }: { currentEmail: string }) {
   }
 
   return (
-    <section className="mt-14 border-t border-gray-200 pt-8">
+    <section className="mt-8 border-t border-[#EEF1F4] pt-8">
       <h2 className="font-serif text-lg font-semibold text-navy">Email address</h2>
       <p className="mt-1 text-sm text-ink-soft">Currently {currentEmail}.</p>
       <form onSubmit={handleSubmit} className="mt-4 space-y-3">
@@ -272,7 +273,7 @@ function ChangePasswordSection() {
   }
 
   return (
-    <section className="mt-14 border-t border-gray-200 pt-8">
+    <section className="mt-8 border-t border-[#EEF1F4] pt-8">
       <h2 className="font-serif text-lg font-semibold text-navy">Password</h2>
       <form onSubmit={handleSubmit} className="mt-4 space-y-3">
         <div>
@@ -341,7 +342,7 @@ function DeleteAccountSection() {
   }
 
   return (
-    <section className="mt-14 border-t border-gray-200 pt-8">
+    <section className="mt-8 border-t border-[#EEF1F4] pt-8">
       <h2 className="font-serif text-lg font-semibold text-navy">Privacy</h2>
       <p className="mt-1 text-sm text-ink-soft">
         Permanently delete your account and every document in your library.

@@ -1,10 +1,10 @@
 import RemovePasswordPdf from '@/components/RemovePasswordPdf';
-import RequirePaidPlan from '@/components/RequirePaidPlan';
+import LocalOrPaidGate from '@/components/LocalOrPaidGate';
 
 export default function RemovePasswordPage() {
   return (
-    <RequirePaidPlan featureKey="REMOVE_PASSWORD">
+    <LocalOrPaidGate featureKey="REMOVE_PASSWORD">
       <RemovePasswordPdf />
-    </RequirePaidPlan>
+    </LocalOrPaidGate>
   );
 }

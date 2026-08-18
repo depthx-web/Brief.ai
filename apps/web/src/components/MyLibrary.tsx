@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
+import { isTauri } from '@/lib/platform';
 import { extractPdfText } from '@/lib/extractPdfText';
 import {
   createProject,
@@ -129,15 +130,33 @@ export default function MyLibrary() {
     }
   }
 
+  const desktop = isTauri();
+  // Desktop-dense, matching the tool-grid rhythm from the Convert/Organize/
+  // Protect panels; web keeps its fixed, wider 3-across layout.
+  const cardGridClass = desktop
+    ? 'grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(200px,1fr))]'
+    : 'grid grid-cols-1 gap-4 sm:grid-cols-3';
+  const totalFiles = unsorted.length + projects.reduce((sum, p) => sum + p.documentCount, 0);
+
   return (
-    <div className="mx-auto max-w-5xl px-8 py-10">
+    <div className={desktop ? 'px-9 py-7' : 'mx-auto max-w-5xl px-8 py-10'}>
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-serif text-2xl font-medium text-navy">My Library</h1>
-          <p className="mt-1 text-sm text-ink-soft">
-            Files are grouped into projects — search across everything by meaning, not just keywords.
-          </p>
-        </div>
+        {desktop ? (
+          <div>
+            <h1 className="font-serif text-2xl font-medium text-navy">Library</h1>
+            <div className="mt-1.5 flex items-center gap-1.5 font-mono text-xs text-ink-soft">
+              <span className="h-[5px] w-[5px] rounded-full bg-emerald" />
+              {totalFiles} file{totalFiles === 1 ? '' : 's'} &middot; stored on this device
+            </div>
+          </div>
+        ) : (
+          <div>
+            <h1 className="font-serif text-2xl font-medium text-navy">My Library</h1>
+            <p className="mt-1 text-sm text-ink-soft">
+              Files are grouped into projects — search across everything by meaning, not just keywords.
+            </p>
+          </div>
+        )}
         <button
           onClick={() => inputRef.current?.click()}
           className="rounded-md bg-emerald px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-dark"
@@ -198,7 +217,7 @@ export default function MyLibrary() {
               <p className="text-sm text-ink-soft">No matches.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className={cardGridClass}>
               {results.map((doc) => (
                 <div key={doc.id} className="shadow-level-1 flex flex-col rounded-lg border border-gray-200 bg-white p-4">
                   <button onClick={() => router.push(`/workspace?doc=${doc.id}`)} className="text-left">
@@ -237,7 +256,7 @@ export default function MyLibrary() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className={cardGridClass}>
               {projects.map((project) => (
                 <ProjectCard
                   key={project.id}
@@ -253,7 +272,7 @@ export default function MyLibrary() {
           {unsorted.length > 0 && (
             <div className="mt-10">
               <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-ink-soft">Unsorted</h2>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className={cardGridClass}>
                 {unsorted.map((doc) => (
                   <div key={doc.id} className="shadow-level-1 flex flex-col rounded-lg border border-gray-200 bg-white p-4">
                     <div className="flex items-start justify-between gap-2">

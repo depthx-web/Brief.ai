@@ -3,7 +3,10 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
+import { isTauri } from '@/lib/platform';
+import { getDesktopNavKeyForPath } from '@/lib/desktopNav';
 import Sidebar from './Sidebar';
+import DesktopShell from './DesktopShell';
 import SwitchWorkspaceModal from './SwitchWorkspaceModal';
 import GuestSignupModal from './GuestSignupModal';
 
@@ -12,7 +15,7 @@ import GuestSignupModal from './GuestSignupModal';
 // credit wallet, billing/security settings, referral earnings) require
 // login. Everything else stays open so a guest never hits a forced
 // signup wall before they've even seen the product.
-const ACCOUNT_REQUIRED_PREFIXES = ['/library', '/wallet', '/settings', '/referrals'];
+const ACCOUNT_REQUIRED_PREFIXES = ['/library', '/wallet', '/settings', '/referrals', '/recent'];
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -33,6 +36,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   function openModal(step: 'workspace' | 'cycle') {
     setModalStep(step);
     setModalOpen(true);
+  }
+
+  // Desktop gets its own sidebar shell instead of the web dashboard's
+  // Sidebar + upgrade banner — see DesktopShell/DesktopSidebar.
+  if (isTauri()) {
+    return <DesktopShell active={getDesktopNavKeyForPath(pathname)}>{children}</DesktopShell>;
   }
 
   return (

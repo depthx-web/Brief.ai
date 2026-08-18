@@ -149,7 +149,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function PrivacyPage({ searchParams }: { searchParams: { cmsPreview?: string } }) {
-  const preview = searchParams.cmsPreview === '1';
+  // Short-circuits before touching `searchParams` in the desktop static
+  // export, where NEXT_PUBLIC_BUILD_TARGET is inlined at build time — reading
+  // it at all forces Next.js's dynamic-render bailout, which static export
+  // can't do. Preview mode has no meaning in the installed app anyway.
+  const preview = process.env.NEXT_PUBLIC_BUILD_TARGET !== 'desktop' && searchParams.cmsPreview === '1';
   const page = await fetchCmsPage('privacy', preview);
   const sections = sectionsFromCms(page?.sections.body) ?? DEFAULT_SECTIONS;
 

@@ -2,15 +2,16 @@
 
 import Link from 'next/link';
 import { useAuth } from '@/lib/AuthContext';
+import HomeLogoLink from './HomeLogoLink';
 
 export default function MarketingNav() {
   const { user } = useAuth();
 
   return (
     <nav className="sticky top-0 z-50 flex items-center justify-between bg-navy/95 px-6 py-5 text-white backdrop-blur-md sm:px-12">
-      <Link href="/" className="font-serif text-2xl font-semibold tracking-tight">
+      <HomeLogoLink className="font-serif text-2xl font-semibold tracking-tight">
         brief<span className="text-emerald">.ai</span>
-      </Link>
+      </HomeLogoLink>
       <div className="hidden gap-9 text-sm text-[#C9D4E3] sm:flex">
         <a href="/#workspaces" className="transition-colors hover:text-white">
           Workspaces

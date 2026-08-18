@@ -38,8 +38,8 @@ export default function ProjectCard({ project, onExtended, onDeleted, onUpgradeN
       <div
         role="button"
         tabIndex={0}
-        onClick={() => router.push(`/library/${project.id}`)}
-        onKeyDown={(e) => e.key === 'Enter' && router.push(`/library/${project.id}`)}
+        onClick={() => router.push(`/library?projectId=${project.id}`)}
+        onKeyDown={(e) => e.key === 'Enter' && router.push(`/library?projectId=${project.id}`)}
         className="w-full cursor-pointer p-4 text-left"
       >
         <div className="flex items-start justify-between gap-2">

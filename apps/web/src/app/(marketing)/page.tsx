@@ -166,9 +166,14 @@ async function fetchCmsSections(preview: boolean): Promise<CmsSections> {
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 3000);
+    // See the matching comment in lib/cmsApi.ts — the desktop static export
+    // bakes CMS content in at build time (force-cache) since there's no
+    // server to revalidate against at runtime; the web deploy is unchanged.
+    const cacheMode =
+      process.env.NEXT_PUBLIC_BUILD_TARGET === 'desktop' ? 'force-cache' : preview ? 'no-store' : 'no-cache';
     const res = await fetch(`${API_URL}/cms/pages/home${preview ? '?preview=1' : ''}`, {
       signal: controller.signal,
-      cache: preview ? 'no-store' : 'no-cache',
+      cache: cacheMode,
     });
     clearTimeout(timeout);
     if (!res.ok) return {};
@@ -184,7 +189,13 @@ export default async function LandingPage({
 }: {
   searchParams: { cmsPreview?: string; ref?: string };
 }) {
-  const preview = searchParams.cmsPreview === '1';
+  // Swaps in an empty object before any property read in the desktop static
+  // export — touching `searchParams` at all (cmsPreview here, ref below for
+  // ReferralCapture) forces Next.js's dynamic-render bailout, which static
+  // export can't do. Preview mode and referral tracking are both meaningless
+  // in the installed desktop app anyway.
+  const safeSearchParams = process.env.NEXT_PUBLIC_BUILD_TARGET === 'desktop' ? {} : searchParams;
+  const preview = safeSearchParams.cmsPreview === '1';
   const sections = await fetchCmsSections(preview);
 
   const hero = sections.hero ?? DEFAULT_HERO;
@@ -194,7 +205,7 @@ export default async function LandingPage({
 
   return (
     <>
-      <ReferralCapture code={searchParams.ref} />
+      <ReferralCapture code={safeSearchParams.ref} />
       <section className="relative grid gap-10 overflow-hidden bg-gradient-to-b from-navy via-[#142A4D] to-navy-light px-6 py-20 text-white sm:px-12 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:py-24">
         <div className="relative z-[2]">
           <div className="mb-5 flex items-center gap-2.5 font-mono text-xs uppercase tracking-wider text-emerald before:h-px before:w-5 before:bg-emerald">

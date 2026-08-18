@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
+import { isTauri } from '@/lib/platform';
 import GoogleSignInButton from './GoogleSignInButton';
 
 export default function LoginForm() {
@@ -32,14 +33,18 @@ export default function LoginForm() {
       <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
         <h1 className="font-serif text-2xl font-semibold text-navy">Log in</h1>
 
-        <div className="mt-6">
-          <GoogleSignInButton />
-        </div>
-        <div className="my-5 flex items-center gap-3 text-xs text-ink-soft">
-          <span className="h-px flex-1 bg-gray-200" />
-          or
-          <span className="h-px flex-1 bg-gray-200" />
-        </div>
+        {!isTauri() && (
+          <>
+            <div className="mt-6">
+              <GoogleSignInButton />
+            </div>
+            <div className="my-5 flex items-center gap-3 text-xs text-ink-soft">
+              <span className="h-px flex-1 bg-gray-200" />
+              or
+              <span className="h-px flex-1 bg-gray-200" />
+            </div>
+          </>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

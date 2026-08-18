@@ -46,6 +46,15 @@ interface FaqItem {
   a: string;
 }
 
+interface AnnouncementFields {
+  badge: string;
+  kicker: string;
+  headline: string;
+  body: string;
+  ctaLabel: string;
+  ctaHref: string;
+}
+
 const PREVIEW_ORIGIN = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
 
 // Maps a CMS slug to the public route that actually renders it — "home" is
@@ -365,6 +374,7 @@ function SectionEditor({
   if (sectionKey === 'workspaces') return <WorkspacesEditor fields={fields as { items: WorkspaceItem[] }} onChange={onChange} />;
   if (sectionKey === 'faq') return <FaqEditor fields={fields as { items: FaqItem[] }} onChange={onChange} />;
   if (sectionKey === 'body') return <LegalSectionsEditor fields={fields as { items: LegalSectionItem[] }} onChange={onChange} />;
+  if (sectionKey === 'announcement') return <AnnouncementEditor fields={fields as AnnouncementFields} onChange={onChange} />;
   return <p className="text-sm text-ink-soft">No editor available for this section yet.</p>;
 }
 
@@ -388,6 +398,19 @@ function HeroEditor({ fields, onChange }: { fields: HeroFields; onChange: (f: He
       <TextField label="Heading — line 1" value={fields.headingLine1} onChange={(v) => onChange({ ...fields, headingLine1: v })} />
       <TextField label="Heading — line 2 (emphasized)" value={fields.headingLine2} onChange={(v) => onChange({ ...fields, headingLine2: v })} />
       <TextField label="Subtext" value={fields.subtext} onChange={(v) => onChange({ ...fields, subtext: v })} multiline />
+    </div>
+  );
+}
+
+function AnnouncementEditor({ fields, onChange }: { fields: AnnouncementFields; onChange: (f: AnnouncementFields) => void }) {
+  return (
+    <div className="space-y-3">
+      <TextField label="Badge (e.g. New)" value={fields.badge} onChange={(v) => onChange({ ...fields, badge: v })} />
+      <TextField label="Kicker" value={fields.kicker} onChange={(v) => onChange({ ...fields, kicker: v })} />
+      <TextField label="Headline" value={fields.headline} onChange={(v) => onChange({ ...fields, headline: v })} />
+      <TextField label="Body" value={fields.body} onChange={(v) => onChange({ ...fields, body: v })} multiline />
+      <TextField label="CTA label" value={fields.ctaLabel} onChange={(v) => onChange({ ...fields, ctaLabel: v })} />
+      <TextField label="CTA link (e.g. /contract-compare)" value={fields.ctaHref} onChange={(v) => onChange({ ...fields, ctaHref: v })} />
     </div>
   );
 }

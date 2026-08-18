@@ -1,10 +1,10 @@
 import ProtectPdf from '@/components/ProtectPdf';
-import RequirePaidPlan from '@/components/RequirePaidPlan';
+import LocalOrPaidGate from '@/components/LocalOrPaidGate';
 
 export default function ProtectPage() {
   return (
-    <RequirePaidPlan featureKey="PROTECT_PDF">
+    <LocalOrPaidGate featureKey="PROTECT_PDF">
       <ProtectPdf />
-    </RequirePaidPlan>
+    </LocalOrPaidGate>
   );
 }

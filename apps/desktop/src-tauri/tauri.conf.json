@@ -1,0 +1,89 @@
+{
+  "$schema": "../../../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "Brief.ai",
+  "version": "0.1.0",
+  "identifier": "ai.brief.desktop",
+  "build": {
+    "frontendDist": "../../web/out",
+    "devUrl": "http://localhost:3000",
+    "beforeDevCommand": "npm run dev --prefix ../web",
+    "beforeBuildCommand": "npm run build:desktop --prefix ../web"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Brief.ai",
+        "url": "desktop-home.html",
+        "width": 1280,
+        "height": 832,
+        "minWidth": 960,
+        "minHeight": 640,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "publisher": "Brief.ai",
+    "copyright": "Copyright © 2026 Brief.ai",
+    "shortDescription": "Local PDF and document tools",
+    "longDescription": "Brief.ai desktop — protect, unlock, compress, and convert PDF and office documents locally, with no upload required.",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "externalBin": ["binaries/qpdf", "binaries/gs", "binaries/pdftohtml"],
+    "resources": {
+      "binaries-src/poppler-extracted/poppler-25.12.0/Library/bin/Lerc.dll": "Lerc.dll",
+      "binaries-src/poppler-extracted/poppler-25.12.0/Library/bin/cairo.dll": "cairo.dll",
+      "binaries-src/poppler-extracted/poppler-25.12.0/Library/bin/charset.dll": "charset.dll",
+      "binaries-src/poppler-extracted/poppler-25.12.0/Library/bin/deflate.dll": "deflate.dll",
+      "binaries-src/poppler-extracted/poppler-25.12.0/Library/bin/expat.dll": "expat.dll",
+      "binaries-src/poppler-extracted/poppler-25.12.0/Library/bin/fontconfig-1.dll": "fontconfig-1.dll",
+      "binaries-src/poppler-extracted/poppler-25.12.0/Library/bin/freetype.dll": "freetype.dll",
+      "binaries-src/poppler-extracted/poppler-25.12.0/Library/bin/iconv.dll": "iconv.dll",
+      "binaries-src/poppler-extracted/poppler-25.12.0/Library/bin/jpeg8.dll": "jpeg8.dll",
+      "binaries-src/poppler-extracted/poppler-25.12.0/Library/bin/lcms2.dll": "lcms2.dll",
+      "binaries-src/poppler-extracted/poppler-25.12.0/Library/bin/libcrypto-3-x64.dll": "libcrypto-3-x64.dll",
+      "binaries-src/poppler-extracted/poppler-25.12.0/Library/bin/libcurl.dll": "libcurl.dll",
+      "binaries-src/poppler-extracted/poppler-25.12.0/Library/bin/libexpat.dll": "libexpat.dll",
+      "binaries-src/poppler-extracted/poppler-25.12.0/Library/bin/liblzma.dll": "liblzma.dll",
+      "binaries-src/poppler-extracted/poppler-25.12.0/Library/bin/libpng16.dll": "libpng16.dll",
+      "binaries-src/poppler-extracted/poppler-25.12.0/Library/bin/libssh2.dll": "libssh2.dll",
+      "binaries-src/poppler-extracted/poppler-25.12.0/Library/bin/libtiff.dll": "libtiff.dll",
+      "binaries-src/poppler-extracted/poppler-25.12.0/Library/bin/libzstd.dll": "libzstd.dll",
+      "binaries-src/poppler-extracted/poppler-25.12.0/Library/bin/openjp2.dll": "openjp2.dll",
+      "binaries-src/poppler-extracted/poppler-25.12.0/Library/bin/pixman-1-0.dll": "pixman-1-0.dll",
+      "binaries-src/poppler-extracted/poppler-25.12.0/Library/bin/poppler-cpp.dll": "poppler-cpp.dll",
+      "binaries-src/poppler-extracted/poppler-25.12.0/Library/bin/poppler-glib.dll": "poppler-glib.dll",
+      "binaries-src/poppler-extracted/poppler-25.12.0/Library/bin/poppler.dll": "poppler.dll",
+      "binaries-src/poppler-extracted/poppler-25.12.0/Library/bin/tiff.dll": "tiff.dll",
+      "binaries-src/poppler-extracted/poppler-25.12.0/Library/bin/zlib.dll": "zlib.dll",
+      "binaries-src/poppler-extracted/poppler-25.12.0/Library/bin/zstd.dll": "zstd.dll",
+      "binaries-src/qpdf-extracted/qpdf-12.4.0-msvc64/bin/qpdf30.dll": "qpdf30.dll",
+      "binaries-src/qpdf-extracted/qpdf-12.4.0-msvc64/bin/concrt140.dll": "concrt140.dll",
+      "binaries-src/qpdf-extracted/qpdf-12.4.0-msvc64/bin/msvcp140.dll": "msvcp140.dll",
+      "binaries-src/qpdf-extracted/qpdf-12.4.0-msvc64/bin/msvcp140_1.dll": "msvcp140_1.dll",
+      "binaries-src/qpdf-extracted/qpdf-12.4.0-msvc64/bin/msvcp140_2.dll": "msvcp140_2.dll",
+      "binaries-src/qpdf-extracted/qpdf-12.4.0-msvc64/bin/msvcp140_atomic_wait.dll": "msvcp140_atomic_wait.dll",
+      "binaries-src/qpdf-extracted/qpdf-12.4.0-msvc64/bin/msvcp140_codecvt_ids.dll": "msvcp140_codecvt_ids.dll",
+      "binaries-src/qpdf-extracted/qpdf-12.4.0-msvc64/bin/vcruntime140.dll": "vcruntime140.dll",
+      "binaries-src/qpdf-extracted/qpdf-12.4.0-msvc64/bin/vcruntime140_1.dll": "vcruntime140_1.dll",
+      "binaries-src/gs-resources/gsdll64.dll": "gsdll64.dll",
+      "binaries-src/gs-resources/Resource": "gs-resources/Resource",
+      "binaries-src/gs-resources/lib": "gs-resources/lib",
+      "binaries-src/gs-resources/iccprofiles": "gs-resources/iccprofiles"
+    },
+    "android": {
+      "debugApplicationIdSuffix": ".debug"
+    }
+  }
+}

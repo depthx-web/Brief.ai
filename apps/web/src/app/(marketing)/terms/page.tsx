@@ -148,7 +148,9 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function TermsPage({ searchParams }: { searchParams: { cmsPreview?: string } }) {
-  const preview = searchParams.cmsPreview === '1';
+  // See the matching comment in privacy/page.tsx — short-circuits before
+  // touching `searchParams` in the desktop static export.
+  const preview = process.env.NEXT_PUBLIC_BUILD_TARGET !== 'desktop' && searchParams.cmsPreview === '1';
   const page = await fetchCmsPage('terms', preview);
   const sections = sectionsFromCms(page?.sections.body) ?? DEFAULT_SECTIONS;
 

@@ -1,10 +1,10 @@
 import PdfToHtmlPdf from '@/components/PdfToHtmlPdf';
-import RequirePaidPlan from '@/components/RequirePaidPlan';
+import LocalOrPaidGate from '@/components/LocalOrPaidGate';
 
 export default function PdfToHtmlPage() {
   return (
-    <RequirePaidPlan featureKey="PDF_TO_HTML">
+    <LocalOrPaidGate featureKey="PDF_TO_HTML">
       <PdfToHtmlPdf />
-    </RequirePaidPlan>
+    </LocalOrPaidGate>
   );
 }

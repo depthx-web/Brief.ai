@@ -231,28 +231,39 @@ export default function Workspace() {
 
   return (
     <div className="flex h-screen flex-col">
-      <div className="flex items-center justify-between border-b border-gray-200 bg-white px-5 py-3">
-        <div className="flex min-w-0 items-center gap-4">
+      <div className="flex h-12 items-center justify-between border-b border-[#E4E8ED] bg-white px-5">
+        <div className="flex min-w-0 items-center gap-3.5">
           <button
             onClick={() => router.push('/dashboard')}
-            className="text-sm text-ink-soft hover:text-navy"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-ink-soft hover:text-navy"
             aria-label="Back"
+            title="Back"
           >
-            ← Back
+            <BackIcon />
           </button>
-          <span className="truncate font-mono text-sm text-ink">{filename || 'Loading…'}</span>
+          <span className="truncate font-mono text-[13px] text-ink">{filename || 'Loading…'}</span>
           {docType && (
             <span className="shrink-0 rounded-full bg-emerald-soft px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-emerald">
               {docType}
             </span>
           )}
         </div>
-        <div className="flex shrink-0 gap-4 text-sm">
-          <button onClick={handleDownload} className="text-ink-soft hover:text-navy">
-            Download
+        <div className="flex shrink-0 items-center gap-1">
+          <button
+            onClick={handleDownload}
+            className="flex h-7 w-7 items-center justify-center rounded-md text-ink-soft hover:text-navy"
+            aria-label="Download"
+            title="Download"
+          >
+            <DownloadIcon />
           </button>
-          <button onClick={handleDelete} className="text-ink-soft hover:text-redline">
-            Delete
+          <button
+            onClick={handleDelete}
+            className="flex h-7 w-7 items-center justify-center rounded-md text-ink-soft hover:text-redline"
+            aria-label="Delete"
+            title="Delete"
+          >
+            <DeleteIcon />
           </button>
         </div>
       </div>
@@ -499,5 +510,28 @@ export default function Workspace() {
         </div>
       </div>
     </div>
+  );
+}
+
+function BackIcon() {
+  return (
+    <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M19 12H5M12 19l-7-7 7-7" />
+    </svg>
+  );
+}
+function DownloadIcon() {
+  return (
+    <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3v12M12 15l-4-4M12 15l4-4" />
+      <path d="M5 17v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2" />
+    </svg>
+  );
+}
+function DeleteIcon() {
+  return (
+    <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m-8 0 1 13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1l1-13" />
+    </svg>
   );
 }

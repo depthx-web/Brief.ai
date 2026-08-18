@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/AuthContext';
 import type { Segment } from '@/lib/authApi';
 import { fetchPublicFeatures, type PublicFeature } from '@/lib/billingApi';
 import { getCreditBalance } from '@/lib/creditsApi';
+import { isTauri } from '@/lib/platform';
 import ToolSourceModal from './ToolSourceModal';
 import GuestSignupModal from './GuestSignupModal';
 import UpgradePromptModal from './UpgradePromptModal';
@@ -61,6 +62,15 @@ function isNew(launchedAt: string | undefined): boolean {
 
 const TABS = ['Convert', 'Organize', 'Protect', 'AI tools'] as const;
 type Tab = (typeof TABS)[number];
+
+// Lets the desktop sidebar (and any other external link) land directly on a
+// tab via `/tools?tab=ai-tools` without needing the display-string casing.
+const TAB_SLUG_TO_TAB: Record<string, Tab> = {
+  convert: 'Convert',
+  organize: 'Organize',
+  protect: 'Protect',
+  'ai-tools': 'AI tools',
+};
 
 const TOOLS_BY_TAB: Record<Tab, Tool[]> = {
   Convert: [
@@ -264,7 +274,18 @@ function ToolsIndexInner() {
   const overrideSegment = workspaceParam ? WORKSPACE_PARAM_TO_SEGMENT[workspaceParam] : null;
   const effectiveSegment = overrideSegment ?? user?.segment ?? null;
 
-  const [tab, setTab] = useState<Tab>(overrideSegment ? 'AI tools' : 'Organize');
+  const tabParam = searchParams.get('tab');
+  const initialTab = (tabParam && TAB_SLUG_TO_TAB[tabParam]) || (overrideSegment ? 'AI tools' : 'Organize');
+  const [tab, setTab] = useState<Tab>(initialTab);
+
+  // The desktop sidebar has no other way to switch tabs (the on-page strip
+  // below is web-only) — a Link to `/tools?tab=organize` from another panel
+  // keeps this same component instance mounted, so `tab` needs to react to
+  // the query param changing, not just read it once on mount.
+  useEffect(() => {
+    if (tabParam && TAB_SLUG_TO_TAB[tabParam]) setTab(TAB_SLUG_TO_TAB[tabParam]);
+  }, [tabParam]);
+
   const [sourceModalHref, setSourceModalHref] = useState<string | null>(null);
   const [signupModalTool, setSignupModalTool] = useState<string | null>(null);
   const [upgradeTool, setUpgradeTool] = useState<string | null>(null);
@@ -354,7 +375,11 @@ function ToolsIndexInner() {
           ? 'border-emerald outline-emerald'
           : 'border-navy-light outline-navy-light';
     const stampClass = tool.borderVariant === 'redline' ? 'text-redline' : tool.ai ? 'text-emerald' : 'text-ink';
-    const cardClass = `group relative flex aspect-square flex-col items-center justify-center rounded-[20px] border-2 outline outline-2 outline-offset-2 bg-white p-4 text-center shadow-level-1 transition-all duration-200 hover:-rotate-2 hover:shadow-level-2 ${stampColorClass}`;
+    // Desktop panels use the --paper card tone (these tiles represent an
+    // operation on a document) instead of the web catalog's white — see
+    // brief-ai-desktop-design-details.md's Tool Grid section.
+    const cardBg = isTauri() ? 'bg-paper' : 'bg-white';
+    const cardClass = `group relative flex aspect-square flex-col items-center justify-center rounded-[20px] border-2 outline outline-2 outline-offset-2 ${cardBg} p-4 text-center shadow-level-1 transition-all duration-200 hover:-rotate-2 hover:shadow-level-2 ${stampColorClass}`;
     const inner = (
       <>
         {isProTool(tool) && (
@@ -391,29 +416,51 @@ function ToolsIndexInner() {
     );
   }
 
+  const desktop = isTauri();
+  // Desktop-dense: reflows to the panel width instead of the web catalog's
+  // fixed, centered 4-across grid — see the Tool Grid section of
+  // brief-ai-desktop-design-details.md.
+  const gridClass = desktop
+    ? 'fade-in-200 grid gap-3 [grid-template-columns:repeat(auto-fill,minmax(140px,1fr))]'
+    : 'fade-in-200 mx-auto grid max-w-[960px] grid-cols-2 gap-6 sm:grid-cols-4';
+  // Convert/Organize/Protect all run locally on desktop (Tauri sidecars +
+  // client-side tools); only AI tools need a connection.
+  const tabIsLocal = tab !== 'AI tools';
+
   return (
-    <div className="mx-auto max-w-5xl px-8 py-10">
-      <h1 className="font-serif text-2xl font-medium text-navy">All my tools in one place</h1>
+    <div className={desktop ? 'px-9 py-7' : 'mx-auto max-w-5xl px-8 py-10'}>
+      {desktop ? (
+        <div className="mb-6">
+          <h1 className="font-serif text-2xl font-medium text-navy">{tab}</h1>
+          <div className="mt-1.5 flex items-center gap-1.5 font-mono text-xs text-ink-soft">
+            {tabIsLocal ? <span className="h-[5px] w-[5px] rounded-full bg-emerald" /> : <ClockIcon />}
+            {TOOLS_BY_TAB[tab].length} tools &middot; {tabIsLocal ? 'runs on this device' : 'needs internet'}
+          </div>
+        </div>
+      ) : (
+        <>
+          <h1 className="font-serif text-2xl font-medium text-navy">All my tools in one place</h1>
+          <div className="relative mt-8 flex gap-1">
+            {TABS.map((t) => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={`rounded-t-lg px-5 pb-3 pt-2.5 text-sm font-medium transition-all ${
+                  tab === t
+                    ? 'bg-paper text-navy shadow-[0_-2px_8px_rgba(0,0,0,0.06)]'
+                    : 'bg-gray-100 text-ink-soft opacity-70 hover:opacity-90'
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
 
-      <div className="relative mt-8 flex gap-1">
-        {TABS.map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`rounded-t-lg px-5 pb-3 pt-2.5 text-sm font-medium transition-all ${
-              tab === t
-                ? 'bg-paper text-navy shadow-[0_-2px_8px_rgba(0,0,0,0.06)]'
-                : 'bg-gray-100 text-ink-soft opacity-70 hover:opacity-90'
-            }`}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
-
-      <div className="rounded-b-xl rounded-tr-xl border border-paper-line bg-paper p-8">
+      <div className={desktop ? '' : 'rounded-b-xl rounded-tr-xl border border-paper-line bg-paper p-8'}>
         {tab === 'AI tools' && !effectiveSegment ? (
-          <div key={`${tab}-${effectiveSegment}`} className="fade-in-200 space-y-10">
+          <div key={`${tab}-${effectiveSegment}`} className={desktop ? 'space-y-8' : 'fade-in-200 space-y-10'}>
             {SEGMENT_ORDER.map((segment) => {
               const group = tools.filter((tool) => tool.segments?.includes(segment));
               if (group.length === 0) return null;
@@ -423,16 +470,13 @@ function ToolsIndexInner() {
                   <h2 className="mb-4 flex items-center gap-2 font-serif text-base font-semibold text-navy">
                     <span aria-hidden>{icon}</span> {label}
                   </h2>
-                  <div className="mx-auto grid max-w-[960px] grid-cols-2 gap-6 sm:grid-cols-4">{group.map(renderToolCard)}</div>
+                  <div className={gridClass}>{group.map(renderToolCard)}</div>
                 </div>
               );
             })}
           </div>
         ) : (
-          // Capped and centered rather than stretched full-width — a sparse
-          // tab (e.g. 4 cards in Convert) reads as an intentional, compact
-          // row instead of leaving a wide empty gap beside it.
-          <div key={`${tab}-${effectiveSegment}`} className="fade-in-200 mx-auto grid max-w-[960px] grid-cols-2 gap-6 sm:grid-cols-4">
+          <div key={`${tab}-${effectiveSegment}`} className={gridClass}>
             {tools.map(renderToolCard)}
           </div>
         )}
@@ -450,5 +494,14 @@ export default function ToolsIndex() {
     <Suspense fallback={null}>
       <ToolsIndexInner />
     </Suspense>
+  );
+}
+
+function ClockIcon() {
+  return (
+    <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3.5 2" />
+    </svg>
   );
 }

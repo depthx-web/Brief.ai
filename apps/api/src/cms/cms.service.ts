@@ -37,6 +37,16 @@ const CMS_PAGES: { slug: string; label: string; sections: { key: string; label: 
     label: 'Terms of Service',
     sections: [{ key: 'body', label: 'Body' }],
   },
+  {
+    // Not a real website page — no route renders this slug on the web.
+    // Backs the news/promo card on the desktop app's Home screen; reuses
+    // this generic page/section machinery for one card rather than a
+    // bespoke "announcements" feature. See migration
+    // 20260816160000_add_desktop_home_cms.
+    slug: 'desktop-home',
+    label: 'Desktop App — Home',
+    sections: [{ key: 'announcement', label: 'News / promo card' }],
+  },
 ];
 
 @Injectable()

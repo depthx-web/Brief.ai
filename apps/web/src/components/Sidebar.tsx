@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
+import HomeLogoLink from './HomeLogoLink';
 import WorkspacePlanCard from './WorkspacePlanCard';
 
 const NAV_ITEMS = [
@@ -20,9 +21,9 @@ export default function Sidebar({ onOpenSwitchModal }: { onOpenSwitchModal: () =
 
   return (
     <aside className="fixed inset-y-0 left-0 z-10 flex h-screen w-60 shrink-0 flex-col overflow-y-auto bg-navy text-white">
-      <Link href="/" className="px-6 py-6 font-serif text-xl font-semibold">
+      <HomeLogoLink className="px-6 py-6 font-serif text-xl font-semibold">
         brief<span className="text-emerald">.ai</span>
-      </Link>
+      </HomeLogoLink>
 
       <nav className="flex flex-col gap-1 px-3">
         {NAV_ITEMS.map((item) => {

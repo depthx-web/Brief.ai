@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import * as Dialog from '@radix-ui/react-dialog';
 import { useAuth } from '@/lib/AuthContext';
+import { isTauri } from '@/lib/platform';
 import GoogleSignInButton from './GoogleSignInButton';
 
 interface Props {
@@ -55,14 +56,18 @@ export default function GuestSignupModal({ open, onClose, toolName }: Props) {
             {toolName ? `${toolName} needs an account with an active plan.` : 'This tool needs an account with an active plan.'}
           </Dialog.Description>
 
-          <div className="mt-5">
-            <GoogleSignInButton label="Continue with Google" />
-          </div>
-          <div className="my-4 flex items-center gap-3 text-xs text-ink-soft">
-            <span className="h-px flex-1 bg-gray-200" />
-            or
-            <span className="h-px flex-1 bg-gray-200" />
-          </div>
+          {!isTauri() && (
+            <>
+              <div className="mt-5">
+                <GoogleSignInButton label="Continue with Google" />
+              </div>
+              <div className="my-4 flex items-center gap-3 text-xs text-ink-soft">
+                <span className="h-px flex-1 bg-gray-200" />
+                or
+                <span className="h-px flex-1 bg-gray-200" />
+              </div>
+            </>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-3">
             <input
