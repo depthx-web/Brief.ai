@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import DocumentDemo from '@/components/DocumentDemo';
+import DesktopAppSection from '@/components/DesktopAppSection';
 import ReferralCapture from '@/components/ReferralCapture';
 import { fetchCmsPage } from '@/lib/cmsApi';
 
@@ -312,6 +313,8 @@ export default async function LandingPage({
         </div>
       </section>
 
+      <DesktopAppSection />
+
       <section id="trust" className="bg-navy px-6 py-16 text-white sm:px-12">
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-14 lg:grid-cols-[1fr_1.4fr] lg:items-center">
@@ -370,27 +373,6 @@ export default async function LandingPage({
         >
           Try Brief.ai Free
         </Link>
-      </section>
-
-      <section className="border-t border-white/5 bg-navy px-6 py-16 text-white sm:px-12">
-        <div className="mx-auto flex max-w-4xl flex-col items-center gap-6 text-center sm:flex-row sm:justify-between sm:text-left">
-          <div>
-            <div className="mb-2.5 font-mono text-xs uppercase tracking-wider text-emerald">Desktop App</div>
-            <h2 className="mb-2 font-serif text-2xl font-medium leading-tight sm:text-[26px]">
-              Prefer working offline?
-            </h2>
-            <p className="max-w-md text-[15px] leading-relaxed text-[#C9D4E3]">
-              Protect, unlock, compress, and convert files right on your machine — no upload, no account,
-              no internet required for the core tools.
-            </p>
-          </div>
-          <Link
-            href="/download"
-            className="shrink-0 rounded-md bg-emerald px-7 py-3.5 text-[15px] font-semibold text-white transition-all hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(30,157,117,0.4)]"
-          >
-            Download for Windows
-          </Link>
-        </div>
       </section>
     </>
   );

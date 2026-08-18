@@ -22,6 +22,9 @@ export default function MarketingNav() {
         <Link href="/pricing" className="transition-colors hover:text-white">
           Pricing
         </Link>
+        <a href="/#desktop-app" className="transition-colors hover:text-white">
+          Desktop App
+        </a>
       </div>
       {user ? (
         <Link

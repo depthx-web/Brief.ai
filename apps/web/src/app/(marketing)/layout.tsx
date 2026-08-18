@@ -7,6 +7,7 @@ const PRODUCT_LINKS = [
   { label: 'Pricing', href: '/pricing' },
   { label: 'Tools', href: '/tools' },
   { label: 'Free Plan', href: '/pricing' },
+  { label: 'Desktop App', href: '/#desktop-app' },
 ];
 
 const LEGAL_LINKS = [
