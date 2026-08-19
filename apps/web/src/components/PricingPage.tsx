@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import * as Dialog from '@radix-ui/react-dialog';
 import { useAuth } from '@/lib/AuthContext';
 import { isTauri } from '@/lib/platform';
 import {
@@ -110,6 +111,7 @@ function PricingPageInner() {
   const [buyingPackId, setBuyingPackId] = useState<string | null>(null);
   const [features, setFeatures] = useState<PublicFeature[]>([]);
   const [cms, setCms] = useState<CmsSections>({});
+  const [compareOpen, setCompareOpen] = useState(false);
 
   useEffect(() => {
     fetchPlans()
@@ -211,6 +213,14 @@ function PricingPageInner() {
             </button>
           )}
         </div>
+
+        {tab !== 'CREDITS' && (
+          <div className={desktop ? 'mb-3' : 'mb-1 mt-3'}>
+            <button onClick={() => setCompareOpen(true)} className="text-[13px] text-emerald hover:underline">
+              Compare all three plans &rarr;
+            </button>
+          </div>
+        )}
 
         {tab === 'CREDITS' ? (
           <div className={`rounded-b-xl rounded-tr-xl border border-paper-line bg-white text-left shadow-sm ${desktop ? 'p-6' : 'p-10'}`}>
@@ -315,7 +325,7 @@ function PricingPageInner() {
             <div className={`rounded-xl border border-paper-line bg-white text-left shadow-sm ${desktop ? 'p-6' : 'p-10'}`}>
               <h2 className="font-serif text-xl font-semibold text-navy">{current?.name}</h2>
 
-              <div className="mt-6 grid grid-cols-4 gap-2">
+              <div className="mt-6 grid grid-cols-4 gap-1">
                 {CYCLES.map((c) => {
                   const active = cycle === c.value;
                   return (
@@ -327,7 +337,10 @@ function PricingPageInner() {
                       }`}
                     >
                       {(c.value === 'QUARTERLY' || c.value === 'YEARLY') && (
-                        <span className="absolute -top-2 right-1 rounded bg-amber-400 px-1 py-0.5 font-mono text-[9px] font-semibold text-navy">
+                        <span
+                          className="absolute -top-2 right-1 rounded px-1 py-0.5 font-mono text-[9px] font-semibold"
+                          style={{ background: 'rgba(212,160,84,0.18)', color: '#8A6423' }}
+                        >
                           Save {c.value === 'QUARTERLY' ? '10%' : '20%'}
                         </span>
                       )}
@@ -337,12 +350,18 @@ function PricingPageInner() {
                 })}
               </div>
 
-              <p className="mt-6">
-                <span className="font-serif text-4xl font-medium text-navy">
-                  {selectedPrice ? formatCents(selectedPrice.priceCents) : '—'}
-                </span>
-                <span className="ml-1 text-sm text-ink-soft">{CYCLE_PERIOD[cycle]}</span>
-              </p>
+              <div className="mt-6">
+                {selectedPrice ? (
+                  <p>
+                    <span className="font-serif text-4xl font-medium text-navy">{formatCents(selectedPrice.priceCents)}</span>
+                    <span className="ml-1 text-sm text-ink-soft">{CYCLE_PERIOD[cycle]}</span>
+                  </p>
+                ) : (
+                  <span className="inline-block rounded-full border border-[#E4E8ED] bg-surface px-3 py-1.5 font-mono text-[11px] text-ink-soft">
+                    Billing setup in progress
+                  </span>
+                )}
+              </div>
 
               <ul className="mt-6 space-y-2.5 text-sm text-ink-soft">
                 <li className="flex items-center gap-2">
@@ -377,7 +396,8 @@ function PricingPageInner() {
                 </Link>
               )}
               {!billingConfigured && (
-                <p className="mt-3 text-center text-xs text-ink-soft">
+                <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-ink-soft">
+                  <InfoIcon />
                   Billing isn&apos;t live yet — every tool is free to use while we finish it.
                 </p>
               )}
@@ -400,7 +420,82 @@ function PricingPageInner() {
           ))}
         </div>
       </div>
+
+      <ComparePlansModal
+        open={compareOpen}
+        onClose={() => setCompareOpen(false)}
+        pricing={pricing}
+        features={features}
+        onSelectSegment={(s) => {
+          setTab(s);
+          setCompareOpen(false);
+        }}
+      />
     </div>
+  );
+}
+
+function ComparePlansModal({
+  open,
+  onClose,
+  pricing,
+  features,
+  onSelectSegment,
+}: {
+  open: boolean;
+  onClose: () => void;
+  pricing: SegmentPricing[] | null;
+  features: PublicFeature[];
+  onSelectSegment: (segment: Segment) => void;
+}) {
+  return (
+    <Dialog.Root open={open} onOpenChange={(next) => !next && onClose()}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="overlay-dim fixed inset-0 z-50" />
+        <Dialog.Content className="animate-modal-in fixed left-1/2 top-1/2 z-50 w-full max-w-3xl -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-7 shadow-level-4">
+          <Dialog.Title className="font-serif text-xl font-medium text-navy">Compare all plans</Dialog.Title>
+          <Dialog.Description className="mt-1 text-sm text-ink-soft">
+            Monthly pricing shown — pick a workspace to choose a billing cycle.
+          </Dialog.Description>
+
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {(Object.keys(PLAN_COPY) as Segment[]).map((segment) => {
+              const monthly = pricing?.find((p) => p.segment === segment)?.cycles.find((c) => c.cycle === 'MONTHLY');
+              const segmentFeatures = features.filter((f) => f.segment === segment).sort((a, b) => a.order - b.order);
+              return (
+                <div key={segment} className="rounded-xl border border-paper-line p-5">
+                  <h3 className="font-serif text-base font-semibold text-navy">{PLAN_COPY[segment].name}</h3>
+                  <p className="mt-3">
+                    <span className="font-serif text-2xl font-medium text-navy">
+                      {monthly ? formatCents(monthly.priceCents) : '—'}
+                    </span>
+                    <span className="ml-1 text-xs text-ink-soft">/month</span>
+                  </p>
+                  <ul className="mt-4 space-y-2 text-xs text-ink-soft">
+                    {segmentFeatures.map((f) => (
+                      <li key={f.key} className="flex items-center gap-1.5">
+                        <span className="text-[7px] text-emerald">●</span>
+                        {f.label}
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    onClick={() => onSelectSegment(segment)}
+                    className="mt-5 block w-full rounded-lg bg-emerald px-4 py-2 text-center text-xs font-medium text-white transition-colors hover:bg-emerald-dark"
+                  >
+                    View plan &rarr;
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          <button onClick={onClose} className="mt-6 text-sm font-medium text-ink-soft hover:text-ink">
+            Close
+          </button>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
 
@@ -409,5 +504,14 @@ export default function PricingPage() {
     <Suspense fallback={null}>
       <PricingPageInner />
     </Suspense>
+  );
+}
+
+function InfoIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v5M12 8h.01" />
+    </svg>
   );
 }

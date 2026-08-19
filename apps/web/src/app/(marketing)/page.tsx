@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import DocumentDemo from '@/components/DocumentDemo';
 import DesktopAppSection from '@/components/DesktopAppSection';
+import Reveal from '@/components/Reveal';
 import ReferralCapture from '@/components/ReferralCapture';
 import { fetchCmsPage } from '@/lib/cmsApi';
 
@@ -263,31 +264,30 @@ export default async function LandingPage({
           </p>
         </div>
         <div className="grid gap-6 sm:grid-cols-3">
-          {workspaces.map((ws) => (
-            <div
-              key={ws.eyebrow}
-              className="flex flex-col rounded-xl border border-gray-200 bg-white p-7 transition-all hover:-translate-y-1 hover:border-emerald"
-            >
-              <span className="mb-3.5 block font-mono text-[11px] uppercase tracking-wide text-emerald">
-                {ws.eyebrow}
-              </span>
-              <h3 className="mb-3 font-serif text-xl font-semibold text-navy">{ws.title}</h3>
-              <p className="mb-4 text-sm leading-relaxed text-ink-soft">{ws.description}</p>
-              <ul className="text-sm text-ink-soft">
-                {ws.features.map((f) => (
-                  <li key={f} className="flex items-center gap-2 border-t border-gray-100 py-1.5">
-                    <span className="text-[8px] text-emerald">●</span>
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <a
-                href={`/tools?workspace=${WORKSPACE_PARAM[ws.eyebrow] ?? ws.eyebrow.toLowerCase()}`}
-                className="mt-4 text-[13px] font-medium text-emerald hover:underline"
-              >
-                See all {ws.eyebrow} tools →
-              </a>
-            </div>
+          {workspaces.map((ws, i) => (
+            <Reveal key={ws.eyebrow} delayMs={i * 80}>
+              <div className="flex h-full flex-col rounded-xl border border-gray-200 bg-white p-7 transition-all hover:-translate-y-1 hover:border-emerald">
+                <span className="mb-3.5 block font-mono text-[11px] uppercase tracking-wide text-emerald">
+                  {ws.eyebrow}
+                </span>
+                <h3 className="mb-3 font-serif text-xl font-semibold text-navy">{ws.title}</h3>
+                <p className="mb-4 text-sm leading-relaxed text-ink-soft">{ws.description}</p>
+                <ul className="text-sm text-ink-soft">
+                  {ws.features.map((f) => (
+                    <li key={f} className="flex items-center gap-2 border-t border-gray-100 py-1.5">
+                      <span className="text-[8px] text-emerald">●</span>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <a
+                  href={`/tools?workspace=${WORKSPACE_PARAM[ws.eyebrow] ?? ws.eyebrow.toLowerCase()}`}
+                  className="mt-4 text-[13px] font-medium text-emerald hover:underline"
+                >
+                  See all {ws.eyebrow} tools →
+                </a>
+              </div>
+            </Reveal>
           ))}
         </div>
       </section>
@@ -301,14 +301,16 @@ export default async function LandingPage({
         </div>
         <div className="relative grid gap-10 sm:grid-cols-3">
           <div className="pointer-events-none absolute left-0 right-0 top-7 hidden h-px bg-paper-line sm:block" aria-hidden />
-          {HOW_IT_WORKS.map((step) => (
-            <div key={step.title} className="relative flex flex-col items-start">
-              <div className={`mb-5 flex h-14 w-14 items-center justify-center rounded-full ${step.circleClass}`}>
-                {step.icon}
+          {HOW_IT_WORKS.map((step, i) => (
+            <Reveal key={step.title} delayMs={i * 100}>
+              <div className="relative flex flex-col items-start">
+                <div className={`mb-5 flex h-14 w-14 items-center justify-center rounded-full ${step.circleClass}`}>
+                  {step.icon}
+                </div>
+                <h3 className="mb-2 font-serif text-lg font-semibold text-navy">{step.title}</h3>
+                <p className="text-sm leading-relaxed text-ink-soft">{step.body}</p>
               </div>
-              <h3 className="mb-2 font-serif text-lg font-semibold text-navy">{step.title}</h3>
-              <p className="text-sm leading-relaxed text-ink-soft">{step.body}</p>
-            </div>
+            </Reveal>
           ))}
         </div>
       </section>
@@ -334,14 +336,14 @@ export default async function LandingPage({
             </div>
           </div>
 
-          <div className="mt-8 flex flex-wrap gap-3 border-t border-white/15 pt-8">
+          <Reveal className="mt-8 flex flex-wrap gap-3 border-t border-white/15 pt-8">
             <span className="flex items-center gap-1.5 rounded-full border border-white/20 bg-white/[0.08] px-3 py-1.5 font-mono text-[11px] text-white">
               🛡 GDPR-aligned
             </span>
             <span className="flex items-center gap-1.5 rounded-full border border-white/20 bg-white/[0.08] px-3 py-1.5 font-mono text-[11px] text-white">
               🔒 TLS encrypted
             </span>
-          </div>
+          </Reveal>
         </div>
       </section>
 
@@ -351,8 +353,10 @@ export default async function LandingPage({
           <h2 className="font-serif text-3xl font-medium leading-tight text-navy sm:text-4xl">Before you ask</h2>
         </div>
         <div className="divide-y divide-paper-line border-t border-paper-line">
-          {faq.map((item) => (
-            <FaqRow key={item.q} question={item.q} answer={item.a} />
+          {faq.map((item, i) => (
+            <Reveal key={item.q} delayMs={i * 60}>
+              <FaqRow question={item.q} answer={item.a} />
+            </Reveal>
           ))}
         </div>
       </section>
