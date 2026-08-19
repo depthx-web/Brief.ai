@@ -76,8 +76,15 @@ export class AuthService {
     return this.toSafeUser(user);
   }
 
+  // Segment (professional workspace) is chosen once at signup and is
+  // permanent from then on — only set it here if the account doesn't
+  // already have one. Plan/billing changes go through a separate flow.
   async updateProfile(id: string, data: { name?: string; segment?: Segment }): Promise<SafeUser> {
-    const user = await this.prisma.user.update({ where: { id }, data });
+    const current = await this.prisma.user.findUniqueOrThrow({ where: { id } });
+    const user = await this.prisma.user.update({
+      where: { id },
+      data: { name: data.name, segment: current.segment ? undefined : data.segment },
+    });
     return this.toSafeUser(user);
   }
 

@@ -3,17 +3,9 @@
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { CATEGORY_ACCENT } from '@/lib/docTypes';
-import { formatCountdown } from '@/lib/retentionCountdown';
+import { COUNTDOWN_BADGE_CLASS, useCountdown } from '@/lib/retentionCountdown';
 import type { ProjectSummary } from '@/lib/libraryApi';
 import ProjectOptionsMenu from './ProjectOptionsMenu';
-
-const BADGE_CLASS = {
-  plenty: 'bg-gray-100 text-ink-soft',
-  soon: 'bg-amber-100 text-amber-700',
-  critical: 'bg-red-50 text-redline',
-  expired: 'bg-gray-100 text-ink-soft/60',
-  none: 'bg-gray-100 text-ink-soft/60',
-} as const;
 
 interface Props {
   project: ProjectSummary;
@@ -30,7 +22,7 @@ export default function ProjectCard({ project, onExtended, onDeleted, onUpgradeN
   const router = useRouter();
 
   const accent = user?.segment ? CATEGORY_ACCENT[user.segment] : '#0F2340';
-  const countdown = formatCountdown(project.nearestExpiresAt);
+  const countdown = useCountdown(project.nearestExpiresAt);
 
   return (
     <div className="shadow-level-1 overflow-hidden rounded-[10px] border border-gray-200 bg-white transition-shadow hover:shadow-level-2">
@@ -48,7 +40,7 @@ export default function ProjectCard({ project, onExtended, onDeleted, onUpgradeN
           </span>
           <div className="flex items-center gap-1">
             <span
-              className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${BADGE_CLASS[countdown.urgency]}`}
+              className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${COUNTDOWN_BADGE_CLASS[countdown.urgency]}`}
             >
               {countdown.label}
             </span>

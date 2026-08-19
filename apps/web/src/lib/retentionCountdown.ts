@@ -1,9 +1,20 @@
+import { useEffect, useState } from 'react';
+
 export type CountdownUrgency = 'plenty' | 'soon' | 'critical' | 'expired' | 'none';
 
 export interface Countdown {
   label: string;
   urgency: CountdownUrgency;
 }
+
+// Shared badge styling for every countdown display (ProjectCard, ProjectDetail, MyLibrary).
+export const COUNTDOWN_BADGE_CLASS: Record<CountdownUrgency, string> = {
+  plenty: 'bg-gray-100 text-ink-soft',
+  soon: 'bg-amber-100 text-amber-700',
+  critical: 'bg-red-50 text-redline',
+  expired: 'bg-gray-100 text-ink-soft/60',
+  none: 'bg-gray-100 text-ink-soft/60',
+};
 
 // Drives the Library project/file countdown badge — plain gray with plenty
 // of time left, ambering, then reading redline as the retention window
@@ -28,4 +39,25 @@ export function formatCountdown(expiresAt: string | Date | null): Countdown {
   }
   const minutes = Math.max(1, Math.ceil(msLeft / (60 * 1000)));
   return { label: `${minutes}m left`, urgency };
+}
+
+// Live-ticking version of formatCountdown — without this, a badge computed
+// once at render time freezes (e.g. stays "58m left" forever instead of
+// counting down to deletion). Ticks every 30s once under an hour remains
+// (so the minutes figure stays accurate), otherwise every 60s.
+export function useCountdown(expiresAt: string | Date | null): Countdown {
+  const [countdown, setCountdown] = useState<Countdown>(() => formatCountdown(expiresAt));
+
+  useEffect(() => {
+    setCountdown(formatCountdown(expiresAt));
+    if (expiresAt === null) return;
+
+    const msLeft = new Date(expiresAt).getTime() - Date.now();
+    if (msLeft <= 0) return;
+    const intervalMs = msLeft <= 60 * 60 * 1000 ? 30_000 : 60_000;
+    const id = setInterval(() => setCountdown(formatCountdown(expiresAt)), intervalMs);
+    return () => clearInterval(id);
+  }, [expiresAt]);
+
+  return countdown;
 }

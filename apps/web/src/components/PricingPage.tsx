@@ -58,7 +58,7 @@ const DEFAULT_FAQS = [
   },
   {
     q: 'Can I switch professions/workspace later?',
-    a: 'Yes — change it anytime from Settings or the dashboard sidebar. It only affects which workspace view you see, not your saved documents.',
+    a: 'No — your workspace is set once at registration and can’t be changed afterward. You can still change your billing plan anytime from Settings or the dashboard sidebar.',
   },
   {
     q: 'What does "processed locally" mean?',
@@ -217,7 +217,7 @@ function PricingPageInner() {
         {tab !== 'CREDITS' && (
           <div className={desktop ? 'mb-3' : 'mb-1 mt-3'}>
             <button onClick={() => setCompareOpen(true)} className="text-[13px] text-emerald hover:underline">
-              Compare all three plans &rarr;
+              Compare plans &rarr;
             </button>
           </div>
         )}
@@ -424,78 +424,166 @@ function PricingPageInner() {
       <ComparePlansModal
         open={compareOpen}
         onClose={() => setCompareOpen(false)}
+        segment={segment ?? 'LAWYER'}
         pricing={pricing}
         features={features}
-        onSelectSegment={(s) => {
-          setTab(s);
-          setCompareOpen(false);
-        }}
+        user={user}
+        token={token}
       />
     </div>
   );
 }
 
+// Workspace is locked at registration — see Settings.tsx — so this compares
+// Free vs. Paid *within one workspace* rather than across the three
+// segments, with a cycle picker for the paid column's price.
 function ComparePlansModal({
   open,
   onClose,
+  segment,
   pricing,
   features,
-  onSelectSegment,
+  user,
+  token,
 }: {
   open: boolean;
   onClose: () => void;
+  segment: Segment;
   pricing: SegmentPricing[] | null;
   features: PublicFeature[];
-  onSelectSegment: (segment: Segment) => void;
+  user: { plan: 'FREE' | 'PAID' } | null;
+  token: string | null;
 }) {
+  const [cycle, setCycle] = useState<BillingCycle>('MONTHLY');
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const cyclesForSegment = pricing?.find((p) => p.segment === segment)?.cycles;
+  const selectedPrice = cyclesForSegment?.find((c) => c.cycle === cycle);
+  const segmentFeatures = features.filter((f) => f.segment === segment).sort((a, b) => a.order - b.order);
+
+  async function handleSubscribe() {
+    if (!token) return;
+    setIsCheckingOut(true);
+    setError(null);
+    try {
+      const url = await startCheckout(token, cycle);
+      window.location.href = url;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not start checkout.');
+    } finally {
+      setIsCheckingOut(false);
+    }
+  }
+
   return (
     <Dialog.Root open={open} onOpenChange={(next) => !next && onClose()}>
       <Dialog.Portal>
         <Dialog.Overlay className="overlay-dim fixed inset-0 z-50" />
-        <Dialog.Content className="animate-modal-in fixed left-1/2 top-1/2 z-50 w-full max-w-3xl -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-7 shadow-level-4">
-          <Dialog.Title className="font-serif text-xl font-medium text-navy">Compare all plans</Dialog.Title>
+        <Dialog.Content className="animate-modal-in fixed left-1/2 top-1/2 z-50 w-full max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-7 shadow-level-4">
+          <Dialog.Title className="font-serif text-xl font-medium text-navy">
+            Compare plans &mdash; {PLAN_COPY[segment].name}
+          </Dialog.Title>
           <Dialog.Description className="mt-1 text-sm text-ink-soft">
-            Monthly pricing shown — pick a workspace to choose a billing cycle.
+            Everything below is scoped to your workspace — pick a billing cycle for Paid.
           </Dialog.Description>
 
-          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-            {(Object.keys(PLAN_COPY) as Segment[]).map((segment) => {
-              const monthly = pricing?.find((p) => p.segment === segment)?.cycles.find((c) => c.cycle === 'MONTHLY');
-              const segmentFeatures = features.filter((f) => f.segment === segment).sort((a, b) => a.order - b.order);
-              return (
-                <div key={segment} className="rounded-xl border border-paper-line p-5">
-                  <h3 className="font-serif text-base font-semibold text-navy">{PLAN_COPY[segment].name}</h3>
-                  <p className="mt-3">
-                    <span className="font-serif text-2xl font-medium text-navy">
-                      {monthly ? formatCents(monthly.priceCents) : '—'}
-                    </span>
-                    <span className="ml-1 text-xs text-ink-soft">/month</span>
-                  </p>
-                  <ul className="mt-4 space-y-2 text-xs text-ink-soft">
-                    {segmentFeatures.map((f) => (
-                      <li key={f.key} className="flex items-center gap-1.5">
-                        <span className="text-[7px] text-emerald">●</span>
-                        {f.label}
-                      </li>
-                    ))}
-                  </ul>
+          <div className="mt-6 grid grid-cols-2 gap-4">
+            <div className="rounded-xl border border-paper-line p-5">
+              <h3 className="font-serif text-base font-semibold text-navy">Free</h3>
+              <p className="mt-2 font-serif text-2xl font-medium text-navy">$0</p>
+            </div>
+            <div className="rounded-xl border border-emerald p-5">
+              <h3 className="font-serif text-base font-semibold text-navy">Paid</h3>
+              <div className="mt-2 grid grid-cols-4 gap-1">
+                {CYCLES.map((c) => (
                   <button
-                    onClick={() => onSelectSegment(segment)}
-                    className="mt-5 block w-full rounded-lg bg-emerald px-4 py-2 text-center text-xs font-medium text-white transition-colors hover:bg-emerald-dark"
+                    key={c.value}
+                    onClick={() => setCycle(c.value)}
+                    className={`rounded-md border px-1 py-1.5 text-center text-[10px] font-medium transition-colors ${
+                      cycle === c.value ? 'border-emerald bg-emerald text-white' : 'border-gray-200 text-ink-soft hover:border-gray-300'
+                    }`}
                   >
-                    View plan &rarr;
+                    {c.label}
                   </button>
-                </div>
-              );
-            })}
+                ))}
+              </div>
+              <p className="mt-3">
+                <span className="font-serif text-2xl font-medium text-navy">
+                  {selectedPrice ? formatCents(selectedPrice.priceCents) : '—'}
+                </span>
+                <span className="ml-1 text-xs text-ink-soft">{CYCLE_PERIOD[cycle]}</span>
+              </p>
+            </div>
           </div>
 
-          <button onClick={onClose} className="mt-6 text-sm font-medium text-ink-soft hover:text-ink">
-            Close
-          </button>
+          <div className="mt-6 flex items-center justify-end gap-6 text-[11px] font-medium text-ink-soft">
+            <span className="w-10 text-center">Free</span>
+            <span className="w-10 text-center">Paid</span>
+          </div>
+          <ul className="mt-1 divide-y divide-gray-100">
+            <li className="flex items-center justify-between py-2 text-sm">
+              <span className="text-ink">{CORE_TOOLS_LINE}</span>
+              <span className="flex items-center gap-6">
+                <span className="flex w-10 justify-center text-emerald"><CheckIcon /></span>
+                <span className="flex w-10 justify-center text-emerald"><CheckIcon /></span>
+              </span>
+            </li>
+            {segmentFeatures.map((f) => (
+              <li key={f.key} className="flex items-center justify-between py-2 text-sm">
+                <span className="text-ink">{f.label}</span>
+                <span className="flex items-center gap-6">
+                  <span className="flex w-10 justify-center">
+                    {f.freeEnabled ? <CheckIcon className="text-emerald" /> : <DashIcon className="text-gray-300" />}
+                  </span>
+                  <span className="flex w-10 justify-center text-emerald"><CheckIcon /></span>
+                </span>
+              </li>
+            ))}
+          </ul>
+
+          {error && <p className="mt-4 text-sm text-redline">{error}</p>}
+
+          <div className="mt-6 flex items-center gap-4">
+            {user ? (
+              <button
+                onClick={handleSubscribe}
+                disabled={isCheckingOut}
+                className="rounded-lg bg-emerald px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
+              >
+                {isCheckingOut ? 'Starting checkout…' : 'Subscribe'}
+              </button>
+            ) : (
+              <Link
+                href="/signup"
+                className="rounded-lg bg-emerald px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-emerald-dark"
+              >
+                Sign Up
+              </Link>
+            )}
+            <button onClick={onClose} className="text-sm font-medium text-ink-soft hover:text-ink">
+              Close
+            </button>
+          </div>
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
+  );
+}
+
+function CheckIcon({ className }: { className?: string }) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+  );
+}
+
+function DashIcon({ className }: { className?: string }) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" className={className}>
+      <path d="M5 12h14" />
+    </svg>
   );
 }
 

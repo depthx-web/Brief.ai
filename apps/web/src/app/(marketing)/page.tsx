@@ -145,7 +145,7 @@ const DEFAULT_FAQ: FaqItem[] = [
   },
   {
     q: 'Which plan is right for me?',
-    a: 'Start with the workspace that matches your work — Legal, Accounting, or Research — then pick weekly, monthly, quarterly, or yearly billing. You can switch workspace or cycle anytime from your dashboard.',
+    a: 'Choose the workspace that matches your work — Legal, Accounting, or Research — at signup (this is permanent), then pick weekly, monthly, quarterly, or yearly billing. You can change your billing cycle anytime from your dashboard.',
   },
   {
     q: 'Can I cancel anytime?',

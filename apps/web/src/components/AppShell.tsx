@@ -7,7 +7,7 @@ import { isTauri } from '@/lib/platform';
 import { getDesktopNavKeyForPath } from '@/lib/desktopNav';
 import Sidebar from './Sidebar';
 import DesktopShell from './DesktopShell';
-import SwitchWorkspaceModal from './SwitchWorkspaceModal';
+import ChangePlanModal from './ChangePlanModal';
 import GuestSignupModal from './GuestSignupModal';
 
 // Free users can use the dashboard, tools, and workspace without an
@@ -32,7 +32,6 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
   // Only read for /tools's sidebar-highlight purposes — see getDesktopNavKeyForPath.
   const tabParam = useSearchParams().get('tab');
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalStep, setModalStep] = useState<'workspace' | 'cycle'>('workspace');
   const [guestSignupOpen, setGuestSignupOpen] = useState(false);
   const requiresAccount = ACCOUNT_REQUIRED_PREFIXES.some((p) => pathname.startsWith(p));
 
@@ -43,11 +42,6 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
   if (isLoading) return null;
   if (!user && requiresAccount) return null;
 
-  function openModal(step: 'workspace' | 'cycle') {
-    setModalStep(step);
-    setModalOpen(true);
-  }
-
   // Desktop gets its own sidebar shell instead of the web dashboard's
   // Sidebar + upgrade banner — see DesktopShell/DesktopSidebar.
   if (isTauri()) {
@@ -56,13 +50,13 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen">
-      <Sidebar onOpenSwitchModal={() => openModal('workspace')} />
+      <Sidebar onOpenSwitchModal={() => setModalOpen(true)} />
       <div className="bg-dot-pattern ml-60 h-screen flex-1 overflow-y-auto bg-surface">
         {(!user || user.plan === 'FREE') && (
           <div className="flex items-center justify-center gap-2 bg-emerald-soft px-4 py-2 text-center text-sm text-navy">
             <span>You&apos;re on the Free plan — core tools are unlimited.</span>
             <button
-              onClick={() => (user ? openModal('cycle') : setGuestSignupOpen(true))}
+              onClick={() => (user ? setModalOpen(true) : setGuestSignupOpen(true))}
               className="font-medium text-emerald-dark hover:underline"
             >
               Upgrade for AI features →
@@ -71,7 +65,7 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
         )}
         {children}
       </div>
-      <SwitchWorkspaceModal open={modalOpen} initialStep={modalStep} onClose={() => setModalOpen(false)} />
+      <ChangePlanModal open={modalOpen} onClose={() => setModalOpen(false)} />
       <GuestSignupModal open={guestSignupOpen} onClose={() => setGuestSignupOpen(false)} />
     </div>
   );

@@ -7,6 +7,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '@/lib/AuthContext';
 import { fetchCmsPage } from '@/lib/cmsApi';
 import { listDocuments, type LibraryDocumentSummary } from '@/lib/libraryApi';
+import { useGreeting } from '@/lib/greeting';
 import DesktopSidebar from './DesktopSidebar';
 import ActivityBall from './ActivityBall';
 
@@ -69,13 +70,6 @@ const QUICK_ACCESS = [
   },
 ];
 
-function greeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'Good morning';
-  if (hour < 18) return 'Good afternoon';
-  return 'Good evening';
-}
-
 export default function DesktopHome() {
   return (
     <Suspense fallback={null}>
@@ -122,6 +116,7 @@ function DesktopHomeInner() {
   }, [token]);
 
   const firstName = user?.name?.split(' ')[0] ?? null;
+  const greeting = useGreeting();
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-surface">
@@ -131,7 +126,7 @@ function DesktopHomeInner() {
       <main className="min-w-0 flex-1 overflow-y-auto px-9 py-7">
         <div className="mb-[22px] flex items-baseline justify-between">
           <h1 className="font-serif text-[26px] font-medium text-navy">
-            {greeting()}{firstName ? `, ${firstName}` : ''}
+            {greeting}{firstName ? `, ${firstName}` : ''}
           </h1>
           <span className="text-[12.5px] text-ink-soft">
             {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}

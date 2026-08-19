@@ -425,6 +425,32 @@ export class LemonSqueezyService {
     return { recovered };
   }
 
+  // Card-on-file, billing address and invoice download are all owned by
+  // Lemon Squeezy's own hosted checkout/portal, not stored locally — this
+  // just hands back the per-subscription self-service portal URL rather
+  // than duplicating PCI-sensitive data in our own database.
+  async getCustomerPortalUrl(userId: string): Promise<string> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found.');
+    if (!user.lemonSqueezySubscriptionId) {
+      throw new BadRequestException('Subscribe to a plan first — billing details appear here after your first payment.');
+    }
+    if (!this.isConfigured()) {
+      throw new ServiceUnavailableException('Billing is not configured yet.');
+    }
+
+    const response = await fetch(`${LEMON_SQUEEZY_API}/subscriptions/${user.lemonSqueezySubscriptionId}`, {
+      headers: { Accept: 'application/vnd.api+json', Authorization: `Bearer ${this.apiKey}` },
+    });
+    if (!response.ok) {
+      const body = await response.text();
+      this.logger.error(`Lemon Squeezy portal lookup failed: ${response.status} ${body}`);
+      throw new ServiceUnavailableException('Could not reach Lemon Squeezy. Please try again shortly.');
+    }
+    const json = (await response.json()) as { data: { attributes: { urls: { customer_portal: string } } } };
+    return json.data.attributes.urls.customer_portal;
+  }
+
   parseWebhookBody(rawBody: Buffer): LemonSqueezyWebhookPayload {
     try {
       return JSON.parse(rawBody.toString('utf8')) as LemonSqueezyWebhookPayload;

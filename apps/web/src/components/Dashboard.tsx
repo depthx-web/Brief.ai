@@ -8,8 +8,9 @@ import { listDocuments, uploadDocument, type LibraryDocumentSummary } from '@/li
 import type { Segment } from '@/lib/authApi';
 import { showLoading, resolveLoading, failLoading } from '@/lib/toast';
 import { DOC_TYPES } from '@/lib/docTypes';
+import { useGreeting } from '@/lib/greeting';
 import FileOptionsMenu from './FileOptionsMenu';
-import SwitchWorkspaceModal from './SwitchWorkspaceModal';
+import ChangePlanModal from './ChangePlanModal';
 import GuestSignupModal from './GuestSignupModal';
 
 const UPLOAD_LABEL: Record<Segment, string> = {
@@ -104,12 +105,14 @@ export default function Dashboard() {
   const fileSectionTitle = user?.segment ? FILE_SECTION_TITLE[user.segment] : 'Recent Files';
   const statusBadge = user?.segment ? STATUS_BADGE[user.segment] : null;
   const docTypes = user?.segment ? DOC_TYPES[user.segment] : [];
+  const greeting = useGreeting();
+  const firstName = user?.name?.split(' ')[0] ?? null;
 
   return (
     <div className="mx-auto max-w-5xl px-8 py-10">
       <div className="flex items-center justify-between">
         <h1 className="font-serif text-2xl font-medium text-navy">
-          Welcome{user?.name ? `, ${user.name}` : ''}
+          {greeting}{firstName ? `, ${firstName}` : ''}
         </h1>
         <button
           key={user?.segment}
@@ -249,11 +252,7 @@ export default function Dashboard() {
         )}
       </div>
 
-      <SwitchWorkspaceModal
-        open={upgradeModalOpen}
-        initialStep="cycle"
-        onClose={() => setUpgradeModalOpen(false)}
-      />
+      <ChangePlanModal open={upgradeModalOpen} onClose={() => setUpgradeModalOpen(false)} />
       <GuestSignupModal open={guestSignupOpen} onClose={() => setGuestSignupOpen(false)} />
     </div>
   );

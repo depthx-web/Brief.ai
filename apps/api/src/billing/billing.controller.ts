@@ -65,6 +65,17 @@ export class BillingController {
     return { url };
   }
 
+  // Hands back Lemon Squeezy's own hosted customer portal — where a
+  // subscriber updates their payment method and billing address, and
+  // downloads past invoices. We don't store any of that locally.
+  @Get('portal')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  async portal(@CurrentUser() user: SafeUser) {
+    const url = await this.lemonSqueezy.getCustomerPortalUrl(user.id);
+    return { url };
+  }
+
   @Post('credit-checkout')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)

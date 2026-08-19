@@ -56,6 +56,29 @@ export async function startCheckout(token: string, cycle: BillingCycle): Promise
   return url;
 }
 
+// Opens Lemon Squeezy's own hosted customer portal — payment method,
+// billing address, and downloadable invoices all live there, not locally.
+export async function getBillingPortalUrl(token: string): Promise<string> {
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}/billing/portal`, { headers: { Authorization: `Bearer ${token}` } });
+  } catch {
+    throw new Error('Could not reach the server.');
+  }
+  if (!response.ok) {
+    let message = `Request failed (${response.status}).`;
+    try {
+      const body = await response.json();
+      if (typeof body?.message === 'string') message = body.message;
+    } catch {
+      // not JSON — keep generic message
+    }
+    throw new Error(message);
+  }
+  const { url } = (await response.json()) as { url: string };
+  return url;
+}
+
 export function formatCents(cents: number): string {
   return `$${(cents / 100).toFixed(cents % 100 === 0 ? 0 : 2)}`;
 }

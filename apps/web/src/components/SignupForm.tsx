@@ -77,7 +77,7 @@ export default function SignupForm() {
             What&apos;s your field?
           </h1>
           <p className="mt-2 text-center text-sm text-ink-soft">
-            This shapes your workspace — you can change it later in Settings.
+            This shapes your workspace — choose carefully, this can&apos;t be changed later.
           </p>
 
           <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">

@@ -63,7 +63,7 @@ export default function WorkspacePlanCard({ onSwitchClick }: { onSwitchClick: ()
         onClick={onSwitchClick}
         className="mt-2 block text-left text-xs font-medium text-emerald hover:text-white"
       >
-        Switch workspace or plan →
+        Change plan →
       </button>
     </div>
   );

@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { isTauri } from '@/lib/platform';
 import type { Segment } from '@/lib/authApi';
 import { fetchMyActivity, type AiActivity } from '@/lib/aiApi';
+import { getBillingPortalUrl } from '@/lib/billingApi';
 import { showError, showSuccess } from '@/lib/toast';
 
 const SEGMENTS: { value: Segment; label: string }[] = [
@@ -14,6 +15,13 @@ const SEGMENTS: { value: Segment; label: string }[] = [
   { value: 'ACCOUNTANT', label: 'Accountant' },
   { value: 'RESEARCHER', label: 'Researcher' },
 ];
+
+const CYCLE_LABEL: Record<string, string> = {
+  WEEKLY: 'Weekly',
+  MONTHLY: 'Monthly',
+  QUARTERLY: 'Quarterly',
+  YEARLY: 'Yearly',
+};
 
 const OPERATION_LABELS: Record<string, string> = {
   SUMMARIZE: 'Summarize',
@@ -26,12 +34,13 @@ const OPERATION_LABELS: Record<string, string> = {
 export default function Settings() {
   const { user, token, updateProfile } = useAuth();
   const [name, setName] = useState(user?.name ?? '');
-  const [segment, setSegment] = useState<Segment | null>(user?.segment ?? null);
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activity, setActivity] = useState<AiActivity | null>(null);
   const [activityError, setActivityError] = useState<string | null>(null);
+  const [isOpeningPortal, setIsOpeningPortal] = useState(false);
+  const [portalError, setPortalError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!token) return;
@@ -50,12 +59,28 @@ export default function Settings() {
 
   if (!user) return null;
 
+  async function handleOpenPortal() {
+    if (!token) return;
+    setPortalError(null);
+    setIsOpeningPortal(true);
+    try {
+      const url = await getBillingPortalUrl(token);
+      window.open(url, '_blank', 'noopener');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Could not open billing.';
+      setPortalError(message);
+      showError(message);
+    } finally {
+      setIsOpeningPortal(false);
+    }
+  }
+
   async function handleSave() {
     setError(null);
     setSaved(false);
     setIsSaving(true);
     try {
-      await updateProfile({ name: name.trim() || undefined, segment: segment ?? undefined });
+      await updateProfile({ name: name.trim() || undefined });
       setSaved(true);
       showSuccess('Saved successfully');
     } catch (err) {
@@ -86,18 +111,20 @@ export default function Settings() {
 
       <section className="mt-8 border-t border-[#EEF1F4] pt-8">
         <h2 className="font-serif text-lg font-semibold text-navy">Professional Workspace</h2>
-        <p className="mt-1 text-sm text-ink-soft">Changes which analysis view opens in the Document Workspace.</p>
+        <p className="mt-1 text-sm text-ink-soft">
+          Set at registration and locked from then on — it determines which analysis view opens in the Document
+          Workspace. You can still change your plan below.
+        </p>
         <div className="mt-4 grid grid-cols-3 gap-3">
           {SEGMENTS.map((s) => (
-            <button
+            <div
               key={s.value}
-              onClick={() => setSegment(s.value)}
-              className={`rounded-lg border-2 px-4 py-3 text-sm font-medium transition-colors ${
-                segment === s.value ? 'border-emerald text-navy' : 'border-gray-200 text-ink-soft hover:border-gray-300'
+              className={`rounded-lg border-2 px-4 py-3 text-sm font-medium ${
+                user.segment === s.value ? 'border-emerald bg-emerald-soft text-navy' : 'border-gray-200 text-ink-soft/50'
               }`}
             >
               {s.label}
-            </button>
+            </div>
           ))}
         </div>
       </section>
@@ -120,13 +147,38 @@ export default function Settings() {
         <h2 className="font-serif text-lg font-semibold text-navy">Subscription</h2>
         <div className="mt-4 flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4">
           <div>
-            <p className="text-sm font-medium text-ink">Free plan</p>
-            <p className="text-xs text-ink-soft">Billing isn&apos;t live yet — everything is free while we finish it.</p>
+            <p className="text-sm font-medium text-ink">
+              {user.plan === 'PAID' ? `${CYCLE_LABEL[user.billingCycle ?? 'MONTHLY']} plan` : 'Free plan'}
+            </p>
+            {user.plan !== 'PAID' && (
+              <p className="text-xs text-ink-soft">Billing address and payment method are set up when you subscribe.</p>
+            )}
           </div>
           <a href="/pricing" className="text-sm font-medium text-navy hover:text-emerald">
-            View plans
+            {user.plan === 'PAID' ? 'Change plan' : 'View plans'}
           </a>
         </div>
+
+        <div className="mt-3 flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4">
+          <div>
+            <p className="text-sm font-medium text-ink">Billing details</p>
+            <p className="text-xs text-ink-soft">
+              {user.plan === 'PAID'
+                ? 'Payment method, billing address, and invoices — managed securely by our payment processor.'
+                : 'Available once you have an active subscription.'}
+            </p>
+          </div>
+          {user.plan === 'PAID' && (
+            <button
+              onClick={handleOpenPortal}
+              disabled={isOpeningPortal}
+              className="text-sm font-medium text-navy hover:text-emerald disabled:cursor-not-allowed disabled:text-gray-300"
+            >
+              {isOpeningPortal ? 'Opening…' : 'Manage billing →'}
+            </button>
+          )}
+        </div>
+        {portalError && <p className="mt-2 text-xs text-redline">{portalError}</p>}
       </section>
 
       <section className="mt-8 border-t border-[#EEF1F4] pt-8">

@@ -3,21 +3,13 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
-import { getProject, renameProject, type ProjectDetail as ProjectDetailData } from '@/lib/libraryApi';
-import { formatCountdown } from '@/lib/retentionCountdown';
+import { getProject, renameProject, type ProjectDetail as ProjectDetailData, type LibraryDocumentSummary } from '@/lib/libraryApi';
+import { COUNTDOWN_BADGE_CLASS, useCountdown } from '@/lib/retentionCountdown';
 import { CATEGORY_ACCENT } from '@/lib/docTypes';
 import { showError, showSuccess } from '@/lib/toast';
 import FileOptionsMenu from './FileOptionsMenu';
 import AddFilesToProjectDialog from './AddFilesToProjectDialog';
-import SwitchWorkspaceModal from './SwitchWorkspaceModal';
-
-const COUNTDOWN_BADGE_CLASS = {
-  plenty: 'bg-gray-100 text-ink-soft',
-  soon: 'bg-amber-100 text-amber-700',
-  critical: 'bg-red-50 text-redline',
-  expired: 'bg-gray-100 text-ink-soft/60',
-  none: 'bg-gray-100 text-ink-soft/60',
-} as const;
+import ChangePlanModal from './ChangePlanModal';
 
 export default function ProjectDetail({ projectId }: { projectId: string }) {
   const { token, user } = useAuth();
@@ -66,6 +58,15 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
     }
   }
 
+  // Hooks must run unconditionally on every render, so this is computed
+  // before the loading/error early returns below rather than after them.
+  const nearestExpiresAt =
+    project?.documents
+      .map((d) => d.expiresAt)
+      .filter((d): d is string => d !== null)
+      .sort()[0] ?? null;
+  const countdown = useCountdown(nearestExpiresAt);
+
   if (isLoading) {
     return <div className="mx-auto max-w-5xl px-8 py-10 text-sm text-ink-soft">Loading…</div>;
   }
@@ -82,12 +83,6 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
   }
 
   const accent = user?.segment ? CATEGORY_ACCENT[user.segment] : '#0F2340';
-  const nearestExpiresAt =
-    project.documents
-      .map((d) => d.expiresAt)
-      .filter((d): d is string => d !== null)
-      .sort()[0] ?? null;
-  const countdown = formatCountdown(nearestExpiresAt);
 
   return (
     <div className="mx-auto max-w-5xl px-8 py-10">
@@ -136,38 +131,20 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
           <span className="text-sm text-ink-soft">Add files to this project</span>
         </button>
 
-        {project.documents.map((doc) => {
-          const fileCountdown = formatCountdown(doc.expiresAt);
-          return (
-            <div key={doc.id} className="shadow-level-1 flex flex-col rounded-lg border border-gray-200 bg-white p-4">
-              <div className="flex items-start justify-between gap-2">
-                <button onClick={() => router.push(`/workspace?doc=${doc.id}`)} className="min-w-0 text-left">
-                  <p className="truncate font-mono text-sm text-ink hover:text-emerald">{doc.filename}</p>
-                </button>
-                <FileOptionsMenu
-                  doc={doc}
-                  onRenamed={(updated) =>
-                    setProject((prev) =>
-                      prev ? { ...prev, documents: prev.documents.map((d) => (d.id === updated.id ? { ...d, ...updated } : d)) } : prev
-                    )
-                  }
-                  onDeleted={(id) =>
-                    setProject((prev) => (prev ? { ...prev, documents: prev.documents.filter((d) => d.id !== id) } : prev))
-                  }
-                  onUpgradeNeeded={() => setUpgradeModalOpen(true)}
-                />
-              </div>
-              <div className="mt-3 flex items-center justify-between gap-2">
-                <span className="text-xs text-ink-soft">{new Date(doc.createdAt).toLocaleDateString()}</span>
-                <span
-                  className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${COUNTDOWN_BADGE_CLASS[fileCountdown.urgency]}`}
-                >
-                  {fileCountdown.label}
-                </span>
-              </div>
-            </div>
-          );
-        })}
+        {project.documents.map((doc) => (
+          <ProjectDocumentCard
+            key={doc.id}
+            doc={doc}
+            onOpen={() => router.push(`/workspace?doc=${doc.id}`)}
+            onRenamed={(updated) =>
+              setProject((prev) =>
+                prev ? { ...prev, documents: prev.documents.map((d) => (d.id === updated.id ? { ...d, ...updated } : d)) } : prev
+              )
+            }
+            onDeleted={(id) => setProject((prev) => (prev ? { ...prev, documents: prev.documents.filter((d) => d.id !== id) } : prev))}
+            onUpgradeNeeded={() => setUpgradeModalOpen(true)}
+          />
+        ))}
       </div>
 
       <AddFilesToProjectDialog
@@ -177,7 +154,42 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
         onClose={() => setAddFilesOpen(false)}
         onUploaded={() => token && load(token)}
       />
-      <SwitchWorkspaceModal open={upgradeModalOpen} initialStep="cycle" onClose={() => setUpgradeModalOpen(false)} />
+      <ChangePlanModal open={upgradeModalOpen} onClose={() => setUpgradeModalOpen(false)} />
+    </div>
+  );
+}
+
+function ProjectDocumentCard({
+  doc,
+  onOpen,
+  onRenamed,
+  onDeleted,
+  onUpgradeNeeded,
+}: {
+  doc: LibraryDocumentSummary;
+  onOpen: () => void;
+  onRenamed: (updated: LibraryDocumentSummary) => void;
+  onDeleted: (id: string) => void;
+  onUpgradeNeeded: () => void;
+}) {
+  const countdown = useCountdown(doc.expiresAt);
+
+  return (
+    <div className="shadow-level-1 flex flex-col rounded-lg border border-gray-200 bg-white p-4">
+      <div className="flex items-start justify-between gap-2">
+        <button onClick={onOpen} className="min-w-0 text-left">
+          <p className="truncate font-mono text-sm text-ink hover:text-emerald">{doc.filename}</p>
+        </button>
+        <FileOptionsMenu doc={doc} onRenamed={onRenamed} onDeleted={onDeleted} onUpgradeNeeded={onUpgradeNeeded} />
+      </div>
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <span className="text-xs text-ink-soft">{new Date(doc.createdAt).toLocaleDateString()}</span>
+        <span
+          className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${COUNTDOWN_BADGE_CLASS[countdown.urgency]}`}
+        >
+          {countdown.label}
+        </span>
+      </div>
     </div>
   );
 }

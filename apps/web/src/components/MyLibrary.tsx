@@ -18,10 +18,11 @@ import {
   type ProjectSummary,
 } from '@/lib/libraryApi';
 import { showError, showSuccess, showLoading, updateLoading, resolveLoading, failLoading } from '@/lib/toast';
+import { COUNTDOWN_BADGE_CLASS, useCountdown } from '@/lib/retentionCountdown';
 import ProjectCard from './ProjectCard';
 import NewProjectUploadDialog from './NewProjectUploadDialog';
 import FileOptionsMenu from './FileOptionsMenu';
-import SwitchWorkspaceModal from './SwitchWorkspaceModal';
+import ChangePlanModal from './ChangePlanModal';
 
 export default function MyLibrary() {
   const { token, user } = useAuth();
@@ -219,25 +220,13 @@ export default function MyLibrary() {
           ) : (
             <div className={cardGridClass}>
               {results.map((doc) => (
-                <div key={doc.id} className="shadow-level-1 flex flex-col rounded-lg border border-gray-200 bg-white p-4">
-                  <button onClick={() => router.push(`/workspace?doc=${doc.id}`)} className="text-left">
-                    <p className="truncate font-mono text-sm text-ink hover:text-emerald">{doc.filename}</p>
-                  </button>
-                  <p className="mt-1 text-xs text-ink-soft">
-                    {doc.snippet}… <span className="text-ink-soft/70">(match {(doc.score * 100).toFixed(0)}%)</span>
-                  </p>
-                  <div className="mt-3 flex items-center justify-between">
-                    <span className="text-xs text-ink-soft">{new Date(doc.createdAt).toLocaleDateString()}</span>
-                    <div className="flex gap-3 text-xs">
-                      <button onClick={() => handleDownload(doc.id, doc.filename)} className="font-medium text-navy hover:text-emerald">
-                        Download
-                      </button>
-                      <button onClick={() => handleDelete(doc.id)} className="font-medium text-ink-soft hover:text-redline">
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <SearchResultCard
+                  key={doc.id}
+                  doc={doc}
+                  onOpen={() => router.push(`/workspace?doc=${doc.id}`)}
+                  onDownload={() => handleDownload(doc.id, doc.filename)}
+                  onDelete={() => handleDelete(doc.id)}
+                />
               ))}
             </div>
           )}
@@ -274,20 +263,14 @@ export default function MyLibrary() {
               <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-ink-soft">Unsorted</h2>
               <div className={cardGridClass}>
                 {unsorted.map((doc) => (
-                  <div key={doc.id} className="shadow-level-1 flex flex-col rounded-lg border border-gray-200 bg-white p-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <button onClick={() => router.push(`/workspace?doc=${doc.id}`)} className="min-w-0 text-left">
-                        <p className="truncate font-mono text-sm text-ink hover:text-emerald">{doc.filename}</p>
-                      </button>
-                      <FileOptionsMenu
-                        doc={doc}
-                        onRenamed={(updated) => setUnsorted((prev) => prev.map((d) => (d.id === updated.id ? updated : d)))}
-                        onDeleted={(id) => setUnsorted((prev) => prev.filter((d) => d.id !== id))}
-                        onUpgradeNeeded={() => setUpgradeModalOpen(true)}
-                      />
-                    </div>
-                    <span className="mt-3 text-xs text-ink-soft">{new Date(doc.createdAt).toLocaleDateString()}</span>
-                  </div>
+                  <UnsortedDocumentCard
+                    key={doc.id}
+                    doc={doc}
+                    onOpen={() => router.push(`/workspace?doc=${doc.id}`)}
+                    onRenamed={(updated) => setUnsorted((prev) => prev.map((d) => (d.id === updated.id ? updated : d)))}
+                    onDeleted={(id) => setUnsorted((prev) => prev.filter((d) => d.id !== id))}
+                    onUpgradeNeeded={() => setUpgradeModalOpen(true)}
+                  />
                 ))}
               </div>
             </div>
@@ -302,7 +285,83 @@ export default function MyLibrary() {
         onCancel={() => setPendingFiles(null)}
         onStart={handleStartUpload}
       />
-      <SwitchWorkspaceModal open={upgradeModalOpen} initialStep="cycle" onClose={() => setUpgradeModalOpen(false)} />
+      <ChangePlanModal open={upgradeModalOpen} onClose={() => setUpgradeModalOpen(false)} />
+    </div>
+  );
+}
+
+function UnsortedDocumentCard({
+  doc,
+  onOpen,
+  onRenamed,
+  onDeleted,
+  onUpgradeNeeded,
+}: {
+  doc: LibraryDocumentSummary;
+  onOpen: () => void;
+  onRenamed: (updated: LibraryDocumentSummary) => void;
+  onDeleted: (id: string) => void;
+  onUpgradeNeeded: () => void;
+}) {
+  const countdown = useCountdown(doc.expiresAt);
+
+  return (
+    <div className="shadow-level-1 flex flex-col rounded-lg border border-gray-200 bg-white p-4">
+      <div className="flex items-start justify-between gap-2">
+        <button onClick={onOpen} className="min-w-0 text-left">
+          <p className="truncate font-mono text-sm text-ink hover:text-emerald">{doc.filename}</p>
+        </button>
+        <FileOptionsMenu doc={doc} onRenamed={onRenamed} onDeleted={onDeleted} onUpgradeNeeded={onUpgradeNeeded} />
+      </div>
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <span className="text-xs text-ink-soft">{new Date(doc.createdAt).toLocaleDateString()}</span>
+        <span
+          className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${COUNTDOWN_BADGE_CLASS[countdown.urgency]}`}
+        >
+          {countdown.label}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function SearchResultCard({
+  doc,
+  onOpen,
+  onDownload,
+  onDelete,
+}: {
+  doc: LibrarySearchResult;
+  onOpen: () => void;
+  onDownload: () => void;
+  onDelete: () => void;
+}) {
+  const countdown = useCountdown(doc.expiresAt);
+
+  return (
+    <div className="shadow-level-1 flex flex-col rounded-lg border border-gray-200 bg-white p-4">
+      <button onClick={onOpen} className="text-left">
+        <p className="truncate font-mono text-sm text-ink hover:text-emerald">{doc.filename}</p>
+      </button>
+      <p className="mt-1 text-xs text-ink-soft">
+        {doc.snippet}… <span className="text-ink-soft/70">(match {(doc.score * 100).toFixed(0)}%)</span>
+      </p>
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <span className="text-xs text-ink-soft">{new Date(doc.createdAt).toLocaleDateString()}</span>
+        <span
+          className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${COUNTDOWN_BADGE_CLASS[countdown.urgency]}`}
+        >
+          {countdown.label}
+        </span>
+      </div>
+      <div className="mt-2 flex gap-3 text-xs">
+        <button onClick={onDownload} className="font-medium text-navy hover:text-emerald">
+          Download
+        </button>
+        <button onClick={onDelete} className="font-medium text-ink-soft hover:text-redline">
+          Delete
+        </button>
+      </div>
     </div>
   );
 }
