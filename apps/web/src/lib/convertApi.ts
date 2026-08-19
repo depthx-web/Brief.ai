@@ -1,4 +1,5 @@
 import { isTauri } from './platform';
+import { startJob, completeJob, failJob } from './activityStore';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -28,22 +29,29 @@ async function invokeLocalFileOp(
   const { writeFile, readFile, remove } = await import('@tauri-apps/plugin-fs');
   const { tempDir, join } = await import('@tauri-apps/api/path');
 
-  const dir = await tempDir();
-  const inputPath = await join(dir, `brief-ai-input-${crypto.randomUUID()}.${inputExtension}`);
-  await writeFile(inputPath, new Uint8Array(await file.arrayBuffer()));
-
-  let outputPath: string;
+  const jobId = startJob(outputFilename);
   try {
-    outputPath = await invoke<string>(command, { inputPath, ...args });
-  } finally {
-    await remove(inputPath).catch(() => {});
+    const dir = await tempDir();
+    const inputPath = await join(dir, `brief-ai-input-${crypto.randomUUID()}.${inputExtension}`);
+    await writeFile(inputPath, new Uint8Array(await file.arrayBuffer()));
+
+    let outputPath: string;
+    try {
+      outputPath = await invoke<string>(command, { inputPath, ...args });
+    } finally {
+      await remove(inputPath).catch(() => {});
+    }
+
+    const outputBytes = await readFile(outputPath);
+    await remove(outputPath).catch(() => {});
+
+    completeJob(jobId);
+    const mime = MIME_TYPE[outputExtension] ?? 'application/octet-stream';
+    return { blob: new Blob([outputBytes], { type: mime }), filename: outputFilename };
+  } catch (err) {
+    failJob(jobId, err instanceof Error ? err.message : 'Operation failed.');
+    throw err;
   }
-
-  const outputBytes = await readFile(outputPath);
-  await remove(outputPath).catch(() => {});
-
-  const mime = MIME_TYPE[outputExtension] ?? 'application/octet-stream';
-  return { blob: new Blob([outputBytes], { type: mime }), filename: outputFilename };
 }
 
 async function postForm(

@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { fetchCmsPage } from '@/lib/cmsApi';
 import { listDocuments, type LibraryDocumentSummary } from '@/lib/libraryApi';
 import DesktopSidebar from './DesktopSidebar';
+import ActivityBall from './ActivityBall';
 
 interface Announcement {
   badge: string;
@@ -249,6 +250,7 @@ function DesktopHomeInner() {
           ))}
         </div>
       </main>
+      <ActivityBall />
     </div>
   );
 }

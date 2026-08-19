@@ -1,4 +1,5 @@
 import DesktopSidebar from './DesktopSidebar';
+import ActivityBall from './ActivityBall';
 import type { DesktopNavKey } from '@/lib/desktopNav';
 
 export default function DesktopShell({ active, children }: { active: DesktopNavKey; children: React.ReactNode }) {
@@ -6,6 +7,7 @@ export default function DesktopShell({ active, children }: { active: DesktopNavK
     <div className="flex h-screen w-screen overflow-hidden bg-surface">
       <DesktopSidebar active={active} />
       <main className="min-w-0 flex-1 overflow-y-auto">{children}</main>
+      <ActivityBall />
     </div>
   );
 }
