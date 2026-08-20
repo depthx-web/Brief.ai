@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { notifyJobComplete } from './notify';
 
 export interface ActivityJob {
   id: string;
@@ -46,13 +47,17 @@ export function startJob(filename: string): string {
 }
 
 export function completeJob(id: string) {
+  const job = jobs.find((j) => j.id === id);
   jobs = jobs.map((j) => (j.id === id ? { ...j, status: 'done' } : j));
   emit();
+  if (job) notifyJobComplete(job.filename, true);
 }
 
 export function failJob(id: string, error: string) {
+  const job = jobs.find((j) => j.id === id);
   jobs = jobs.map((j) => (j.id === id ? { ...j, status: 'failed', error } : j));
   emit();
+  if (job) notifyJobComplete(job.filename, false, error);
 }
 
 export function clearFinished() {
