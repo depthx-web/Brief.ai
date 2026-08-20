@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { useAuth } from '@/lib/AuthContext';
+import GoogleSignInButton from './GoogleSignInButton';
 
 interface Props {
   open: boolean;
@@ -13,9 +14,7 @@ interface Props {
 // current panel — stays visible and dimmed behind it), unlike the web app's
 // dedicated /login route. Follows the same Radix Dialog + overlay-dim +
 // animate-modal-in pattern as GuestSignupModal, just narrower (a plain
-// email/password form, not a multi-card chooser) and with no Google button
-// (desktop hides Google Sign-In everywhere — see GoogleSignInButton's
-// other call sites).
+// email/password form, not a multi-card chooser).
 export default function LoginModal({ open, onClose }: Props) {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
@@ -49,7 +48,16 @@ export default function LoginModal({ open, onClose }: Props) {
             Sign in to sync your library and use AI tools.
           </Dialog.Description>
 
-          <form onSubmit={handleSubmit} className="mt-5 space-y-3">
+          <div className="mt-5">
+            <GoogleSignInButton />
+          </div>
+          <div className="my-4 flex items-center gap-3 text-xs text-ink-soft">
+            <span className="h-px flex-1 bg-gray-200" />
+            or
+            <span className="h-px flex-1 bg-gray-200" />
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-3">
             <input
               type="email"
               required

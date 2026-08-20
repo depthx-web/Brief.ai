@@ -1,4 +1,21 @@
+'use client';
+
+import { isTauri } from '@/lib/platform';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+
+// Desktop OAuth security best practice: hand off to the system's default
+// browser for the Google consent screen rather than embedding the login
+// form in our own webview (avoids credential-phishing risk of an app
+// controlling the page that asks for a Google password). The API's
+// callback then redirects to a briefai:// deep link instead of a web URL
+// — see AuthContext.tsx's listener and auth.controller.ts's `state=desktop`
+// round-trip.
+async function openDesktopGoogleAuth(e: React.MouseEvent) {
+  e.preventDefault();
+  const { open } = await import('@tauri-apps/plugin-shell');
+  await open(`${API_URL}/auth/google?desktop=1`);
+}
 
 // Follows Google's official "Sign in with Google" branding guidelines
 // exactly (shape, colors, the multicolor G, spacing) — per the spec, this
@@ -6,9 +23,12 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 // would violate Google's brand policy. Integrated only through the layout
 // around it, never its own styling.
 export default function GoogleSignInButton({ label = 'Sign in with Google' }: { label?: string }) {
+  const desktop = isTauri();
+
   return (
     <a
-      href={`${API_URL}/auth/google`}
+      href={desktop ? '#' : `${API_URL}/auth/google`}
+      onClick={desktop ? openDesktopGoogleAuth : undefined}
       className="flex w-full items-center justify-center gap-3 rounded border border-[#747775] bg-white px-4 py-2.5 text-sm font-medium text-[#1F1F1F] transition-colors hover:bg-[#F8F9FA] active:bg-[#F1F3F4]"
     >
       <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">

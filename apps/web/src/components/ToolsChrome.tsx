@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import HeaderAuthLinks from '@/components/HeaderAuthLinks';
 import HomeLogoLink from '@/components/HomeLogoLink';
 import DesktopShell from '@/components/DesktopShell';
+import ToolSeoSections from '@/components/ToolSeoSections';
 import { isTauri } from '@/lib/platform';
 import { getDesktopNavKeyForPath } from '@/lib/desktopNav';
 
@@ -34,6 +35,7 @@ export default function ToolsChrome({ children }: { children: React.ReactNode })
         </div>
       </header>
       <main>{children}</main>
+      <ToolSeoSections slug={pathname.replace(/^\//, '')} />
     </>
   );
 }

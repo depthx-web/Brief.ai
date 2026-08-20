@@ -382,6 +382,7 @@ function SectionEditor({
   if (sectionKey === 'intro') return <IntroEditor fields={fields as IntroFields} onChange={onChange} />;
   if (sectionKey === 'workspaces') return <WorkspacesEditor fields={fields as { items: WorkspaceItem[] }} onChange={onChange} />;
   if (sectionKey === 'faq') return <FaqEditor fields={fields as { items: FaqItem[] }} onChange={onChange} />;
+  if (sectionKey === 'features') return <BulletListEditor fields={fields as { items: string[] }} onChange={onChange} />;
   if (sectionKey === 'body') return <LegalSectionsEditor fields={fields as { items: LegalSectionItem[] }} onChange={onChange} />;
   if (sectionKey.startsWith('announcement')) return <AnnouncementEditor fields={fields as AnnouncementFields} onChange={onChange} />;
   return <p className="text-sm text-ink-soft">No editor available for this section yet.</p>;
@@ -498,6 +499,26 @@ function FaqEditor({ fields, onChange }: { fields: { items: FaqItem[] }; onChang
       <button onClick={addItem} className="text-sm font-medium text-emerald hover:underline">
         + Add item
       </button>
+    </div>
+  );
+}
+
+// Reused by any section whose content is just a flat list of strings (tool
+// page "Features" bullets) — a newline-joined textarea, same string[]<->
+// textarea pattern WorkspacesEditor's per-item "Features" field already
+// uses, lifted out since this is now a section in its own right.
+function BulletListEditor({ fields, onChange }: { fields: { items: string[] }; onChange: (f: { items: string[] }) => void }) {
+  return (
+    <div>
+      <label className="block text-xs font-medium uppercase tracking-wide text-ink-soft">
+        Bullets (one per line)
+      </label>
+      <textarea
+        value={fields.items.join('\n')}
+        onChange={(e) => onChange({ items: e.target.value.split('\n') })}
+        rows={6}
+        className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+      />
     </div>
   );
 }

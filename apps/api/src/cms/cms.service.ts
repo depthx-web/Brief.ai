@@ -2,6 +2,49 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import type { Prisma } from '@prisma/client';
 
+// Every individual tool page (route slug -> display name), each getting its
+// own `tools-<slug>` CMS page with Features/FAQ sections (SEO template,
+// ToolSeoSections.tsx). Kept as its own list since the seed migration
+// (20260820150000_tool_page_seo_content) generates matching Page/
+// ContentSection rows from this same set of slugs.
+const TOOL_PAGE_SLUGS: [string, string][] = [
+  ['pdf-to-images', 'PDF to Images'],
+  ['images-to-pdf', 'Images to PDF'],
+  ['word-to-pdf', 'Word to PDF'],
+  ['pdf-to-word', 'PDF to Word'],
+  ['excel-to-pdf', 'Excel to PDF'],
+  ['pdf-to-excel', 'PDF to Excel'],
+  ['powerpoint-to-pdf', 'PowerPoint to PDF'],
+  ['pdf-to-powerpoint', 'PDF to PowerPoint'],
+  ['pdf-to-text', 'PDF to Text'],
+  ['pdf-to-html', 'PDF to Web Page'],
+  ['merge', 'Merge'],
+  ['split', 'Split'],
+  ['organize', 'Organize'],
+  ['rotate', 'Rotate'],
+  ['page-numbers', 'Page Numbers'],
+  ['compress', 'Compress'],
+  ['compress-high-ratio', 'Compress (High Ratio)'],
+  ['ocr', 'OCR'],
+  ['sign', 'Sign'],
+  ['protect', 'Protect'],
+  ['remove-password', 'Remove Password'],
+  ['watermark', 'Watermark'],
+  ['batch-invoices', 'Batch Invoice Export'],
+  ['contract-compare', 'Contract Compare'],
+  ['high-risk-clauses', 'High-Risk Clause Detector'],
+  ['plain-summary', 'Plain-Language Summary Generator'],
+  ['nda-audit', 'Quick NDA Auditor'],
+  ['redaction-detector', 'Auto-Redaction of Sensitive Data'],
+  ['duplicate-payments', 'Duplicate Payment Detector'],
+  ['financial-ratios', 'Financial Ratio Analyzer'],
+  ['bank-reconciliation', 'Bank Reconciliation Assistant'],
+  ['tax-deductible', 'Tax-Deductible Expense Flagger'],
+  ['multi-paper-compare', 'Multi-Paper Compare'],
+  ['methodology-extractor', 'Methodology Extractor'],
+  ['presentation-outline', 'Presentation Outline Generator'],
+];
+
 // Every CMS-editable page, in the fixed order its sections actually appear
 // in on the live site (Part 9 §1.1: "an editor that reflects literally what
 // the visitor sees", not an alphabetical or arbitrary list). Adding a page
@@ -51,6 +94,14 @@ const CMS_PAGES: { slug: string; label: string; sections: { key: string; label: 
       { key: 'announcement_researcher', label: 'News / promo card — Research' },
     ],
   },
+  ...TOOL_PAGE_SLUGS.map(([slug, label]) => ({
+    slug: `tools-${slug}`,
+    label: `Tool page — ${label}`,
+    sections: [
+      { key: 'features', label: 'Features' },
+      { key: 'faq', label: 'FAQ' },
+    ],
+  })),
 ];
 
 @Injectable()

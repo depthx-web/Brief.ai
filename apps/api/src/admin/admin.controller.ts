@@ -71,6 +71,7 @@ interface UpdateSettingsBody {
   dunningAutoRetryEnabled?: boolean;
   dunningMaxAttempts?: number;
   dunningIntervalDays?: number;
+  tokensPerDollar?: number;
 }
 
 interface CancelSubscriptionBody {
@@ -254,6 +255,23 @@ export class AdminController {
   @Patch('settings')
   async updateSettings(@Body() body: UpdateSettingsBody) {
     return this.platformSettings.update(body);
+  }
+
+  // No AI provider (Anthropic/OpenAI/Gemini/DeepSeek) integrated here
+  // exposes a queryable remaining-balance API — only LiteLLM's own
+  // per-user spend cap, which isn't the same thing. Honest "not available"
+  // rather than a fabricated number.
+  @Get('token-economics')
+  async tokenEconomics() {
+    const [settings, usage] = await Promise.all([this.platformSettings.get(), this.creditsService.getTokenEconomicsSummary()]);
+    return {
+      tokensPerDollar: settings.tokensPerDollar,
+      todayUsage: usage.todayUsage,
+      totalCreditsSold: usage.totalCreditsSold,
+      totalCreditsOutstanding: usage.totalCreditsOutstanding,
+      providerBalance: null as number | null,
+      providerBalanceAvailable: false,
+    };
   }
 
   @Get('credit-packs')

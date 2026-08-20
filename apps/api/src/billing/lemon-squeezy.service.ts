@@ -213,6 +213,10 @@ export class LemonSqueezyService {
     const { status, customer_id, renews_at, ends_at } = payload.data.attributes;
 
     if (event_name === 'subscription_created' || event_name === 'subscription_updated') {
+      const previousCycle =
+        event_name === 'subscription_updated'
+          ? (await this.prisma.user.findUnique({ where: { id: userId }, select: { billingCycle: true } }))?.billingCycle
+          : null;
       const user = await this.prisma.user.update({
         where: { id: userId },
         data: {
@@ -236,6 +240,12 @@ export class LemonSqueezyService {
       if (event_name === 'subscription_created' && cycle) {
         await this.emailCampaigns.sendUpgradeConfirmation(user.email, user.name, CYCLE_LABELS[cycle]);
       }
+      // Only a real cycle change (weekly<->monthly<->quarterly<->yearly on
+      // an existing subscription), not the initial subscribe above, which
+      // already gets its own upgrade-confirmation email.
+      if (event_name === 'subscription_updated' && cycle && previousCycle && previousCycle !== cycle) {
+        await this.emailCampaigns.sendPlanChanged(user.email, user.name, CYCLE_LABELS[cycle]);
+      }
     } else if (event_name === 'order_created') {
       const creditAmount = Number(payload.meta.custom_data?.creditAmount ?? 0);
       if (creditAmount > 0) {
@@ -245,7 +255,7 @@ export class LemonSqueezyService {
         this.logger.warn(`order_created webhook for user ${userId} had no creditAmount in custom_data.`);
       }
     } else if (event_name === 'subscription_expired' || event_name === 'subscription_cancelled') {
-      await this.prisma.user.update({
+      const user = await this.prisma.user.update({
         where: { id: userId },
         data: {
           plan: event_name === 'subscription_expired' ? 'FREE' : undefined,
@@ -254,9 +264,20 @@ export class LemonSqueezyService {
           subscriptionCancelledAt: new Date(),
         },
       });
+      // Only the explicit cancellation, not a natural expiry — a
+      // cancellation is a deliberate action worth confirming by email; an
+      // expiry (e.g. a payment method that stopped working) already gets
+      // the dunning flow's own communication.
+      if (event_name === 'subscription_cancelled') {
+        await this.emailCampaigns.sendCancellationConfirmation(user.email, user.name);
+      }
     } else if (event_name === 'subscription_payment_success') {
       const amountCents = payload.data.attributes.total ?? 0;
       await this.recordTransaction(userId, 'SUBSCRIPTION_PAYMENT', 'SUCCEEDED', amountCents, payload.data.id);
+      {
+        const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { email: true, name: true } });
+        if (user) await this.emailCampaigns.sendPaymentReceipt(user.email, user.name, `$${(amountCents / 100).toFixed(2)}`);
+      }
       // Recovers the account from dunning — a successful payment (whether
       // on schedule or via Lemon Squeezy's own retry) clears the clock.
       await this.prisma.user.update({

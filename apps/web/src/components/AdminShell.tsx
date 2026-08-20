@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { href: '/admin/discounts', label: 'Discount codes' },
   { href: '/admin/users', label: 'Users' },
   { href: '/admin/ai-providers', label: 'AI providers' },
+  { href: '/admin/token-economics', label: 'Token Economics' },
   { href: '/admin/emails', label: 'Email campaigns' },
 ];
 

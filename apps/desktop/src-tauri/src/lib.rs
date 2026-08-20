@@ -9,6 +9,7 @@ pub fn run() {
     .plugin(tauri_plugin_shell::init())
     .plugin(tauri_plugin_fs::init())
     .plugin(tauri_plugin_notification::init())
+    .plugin(tauri_plugin_deep_link::init())
     .manage(OfficeWorker::new())
     .setup(|app| {
       if cfg!(debug_assertions) {

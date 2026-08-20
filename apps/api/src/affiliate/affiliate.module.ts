@@ -4,9 +4,10 @@ import { AffiliateController } from './affiliate.controller';
 import { AffiliateAdminController } from './affiliate-admin.controller';
 import { PrismaService } from '../prisma/prisma.service';
 import { PlatformSettingsModule } from '../platform-settings/platform-settings.module';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
-  imports: [PlatformSettingsModule],
+  imports: [PlatformSettingsModule, MailModule],
   controllers: [AffiliateController, AffiliateAdminController],
   providers: [AffiliateService, PrismaService],
   exports: [AffiliateService],

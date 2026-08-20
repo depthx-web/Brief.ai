@@ -91,7 +91,7 @@ export class AuthController {
   }
 
   @Get('google')
-  googleStart(@Res() res: Response) {
+  googleStart(@Query('desktop') desktop: string | undefined, @Res() res: Response) {
     const clientId = process.env.GOOGLE_CLIENT_ID;
     if (!clientId) throw new ServiceUnavailableException('Google sign-in is not configured yet.');
 
@@ -102,17 +102,30 @@ export class AuthController {
     url.searchParams.set('scope', 'openid email profile');
     url.searchParams.set('access_type', 'online');
     url.searchParams.set('prompt', 'select_account');
+    // Round-tripped through Google verbatim (it never inspects `state`) so
+    // the callback below knows whether to hand the token back to the
+    // desktop app (via a briefai:// deep link) or the web app.
+    if (desktop === '1') url.searchParams.set('state', 'desktop');
     res.redirect(url.toString());
   }
 
   @Get('google/callback')
-  async googleCallback(@Query('code') code: string | undefined, @Res() res: Response) {
-    if (!code) return res.redirect(`${APP_URL}/login?error=google_failed`);
+  async googleCallback(
+    @Query('code') code: string | undefined,
+    @Query('state') state: string | undefined,
+    @Res() res: Response
+  ) {
+    const isDesktop = state === 'desktop';
+    const failureUrl = isDesktop ? 'briefai://google/failed' : `${APP_URL}/login?error=google_failed`;
+    if (!code) return res.redirect(failureUrl);
     try {
       const { token } = await this.authService.completeGoogleLogin(code);
-      res.redirect(`${APP_URL}/google/complete?token=${encodeURIComponent(token)}`);
+      const successUrl = isDesktop
+        ? `briefai://google/complete?token=${encodeURIComponent(token)}`
+        : `${APP_URL}/google/complete?token=${encodeURIComponent(token)}`;
+      res.redirect(successUrl);
     } catch {
-      res.redirect(`${APP_URL}/login?error=google_failed`);
+      res.redirect(failureUrl);
     }
   }
 

@@ -28,6 +28,7 @@ export class PlatformSettingsService {
     dunningAutoRetryEnabled?: boolean;
     dunningMaxAttempts?: number;
     dunningIntervalDays?: number;
+    tokensPerDollar?: number;
   }) {
     await this.get();
     return this.prisma.platformSettings.update({ where: { id: SETTINGS_ID }, data });

@@ -50,6 +50,52 @@ export class EmailCampaignService {
     });
   }
 
+  async sendRetentionWarning(email: string, name: string | null, filename: string): Promise<void> {
+    await this.sendIfEnabled('RETENTION_WARNING', email, {
+      NAME: name || 'there',
+      FILENAME: filename,
+      LIBRARY_URL: `${APP_URL}/library`,
+    });
+  }
+
+  async sendSignupConfirmation(email: string, name: string | null, confirmUrl: string): Promise<void> {
+    await this.sendIfEnabled('SIGNUP_CONFIRMATION', email, {
+      NAME: name || 'there',
+      CONFIRM_URL: confirmUrl,
+    });
+  }
+
+  async sendPaymentReceipt(email: string, name: string | null, amount: string): Promise<void> {
+    await this.sendIfEnabled('PAYMENT_RECEIPT', email, {
+      NAME: name || 'there',
+      AMOUNT: amount,
+      DASHBOARD_URL: `${APP_URL}/dashboard`,
+    });
+  }
+
+  async sendPlanChanged(email: string, name: string | null, cycle: string): Promise<void> {
+    await this.sendIfEnabled('PLAN_CHANGED', email, {
+      NAME: name || 'there',
+      PLAN_CYCLE: cycle,
+      DASHBOARD_URL: `${APP_URL}/dashboard`,
+    });
+  }
+
+  async sendCancellationConfirmation(email: string, name: string | null): Promise<void> {
+    await this.sendIfEnabled('CANCELLATION_CONFIRMATION', email, {
+      NAME: name || 'there',
+      PRICING_URL: `${APP_URL}/pricing`,
+    });
+  }
+
+  async sendReferralSuccess(email: string, name: string | null, amount: string): Promise<void> {
+    await this.sendIfEnabled('REFERRAL_SUCCESS', email, {
+      NAME: name || 'there',
+      AMOUNT: amount,
+      REFERRALS_URL: `${APP_URL}/referrals`,
+    });
+  }
+
   private async sendIfEnabled(key: EmailCampaignKey, to: string, vars: Record<string, string>): Promise<void> {
     const campaign = await this.prisma.emailCampaign.findUnique({ where: { key } });
     if (!campaign?.enabled) return;

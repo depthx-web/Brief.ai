@@ -13,6 +13,7 @@ import {
   type Segment,
 } from './authApi';
 import { getStoredReferralCode } from '@/components/ReferralCapture';
+import { isTauri } from './platform';
 
 const TOKEN_KEY = 'brief-ai-token';
 
@@ -67,6 +68,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(newToken);
     setUser(authedUser);
   }
+
+  // Desktop Google Sign-In: the API redirects the system browser to a
+  // briefai://google/complete?token=... deep link once OAuth completes —
+  // GoogleSignInButton.tsx opens that flow, this listener catches the
+  // return trip and finishes the login the same way GoogleCompleteHandler
+  // does for the web /google/complete page.
+  useEffect(() => {
+    if (!isTauri()) return;
+    let unlisten: (() => void) | undefined;
+    (async () => {
+      const { onOpenUrl } = await import('@tauri-apps/plugin-deep-link');
+      unlisten = await onOpenUrl((urls) => {
+        for (const raw of urls) {
+          try {
+            const url = new URL(raw);
+            if (url.host !== 'google' || url.pathname !== '/complete') continue;
+            const token = url.searchParams.get('token');
+            if (token) loginWithToken(token);
+          } catch {
+            // Not a URL we recognize — ignore.
+          }
+        }
+      });
+    })();
+    return () => unlisten?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function signup(email: string, password: string, name?: string, segment?: Segment) {
     const { token: newToken, user: newUser } = await apiSignup(email, password, name, segment, getStoredReferralCode());

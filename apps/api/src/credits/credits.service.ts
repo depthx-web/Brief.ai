@@ -100,6 +100,40 @@ export class CreditsService {
 
   // --- Admin: global transaction log (Analytics tab) ---------------------
 
+  // Admin "Token Economics" panel — the three stat cards.
+  async getTokenEconomicsSummary(): Promise<{
+    todayUsage: number;
+    totalCreditsSold: number;
+    totalCreditsOutstanding: number;
+  }> {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const [todayUsageResult, purchasedResult, outstandingResult] = await Promise.all([
+      this.prisma.creditTransaction.aggregate({
+        where: { reason: 'AI_USAGE', createdAt: { gte: startOfToday } },
+        _sum: { delta: true },
+      }),
+      this.prisma.creditTransaction.aggregate({
+        where: { reason: 'PURCHASE' },
+        _sum: { delta: true },
+      }),
+      // Purchased minus consumed, platform-wide (excludes manual admin
+      // adjustments — those aren't "sold" credits).
+      this.prisma.creditTransaction.aggregate({
+        where: { reason: { in: ['PURCHASE', 'AI_USAGE'] } },
+        _sum: { delta: true },
+      }),
+    ]);
+
+    return {
+      // AI_USAGE deltas are negative (credits spent) — report as a positive count.
+      todayUsage: Math.abs(todayUsageResult._sum.delta ?? 0),
+      totalCreditsSold: purchasedResult._sum.delta ?? 0,
+      totalCreditsOutstanding: Math.max(0, outstandingResult._sum.delta ?? 0),
+    };
+  }
+
   async listAllTransactions(filters: { userId?: string; reason?: CreditTransactionReason; take?: number }) {
     return this.prisma.creditTransaction.findMany({
       where: { userId: filters.userId, reason: filters.reason },

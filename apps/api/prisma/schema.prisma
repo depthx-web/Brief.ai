@@ -259,6 +259,12 @@ enum EmailCampaignKey {
   UPGRADE
   WINBACK
   SECURITY
+  RETENTION_WARNING
+  SIGNUP_CONFIRMATION
+  PAYMENT_RECEIPT
+  PLAN_CHANGED
+  CANCELLATION_CONFIRMATION
+  REFERRAL_SUCCESS
 }
 
 // Admin-editable email automations. body is a template with a small set of
@@ -331,6 +337,9 @@ model LibraryDocument {
   // project shouldn't be wiped out because one old file in it expired while
   // the rest are recent. Null for documents with no project (never expire).
   expiresAt    DateTime?
+  // Set once the "1 hour left" retention-warning email has gone out for
+  // this file, so the scheduled job never sends it twice.
+  retentionWarningSent Boolean @default(false)
 
   @@index([userId])
   @@index([projectId])
@@ -492,6 +501,11 @@ model PlatformSettings {
   dunningAutoRetryEnabled  Boolean  @default(true)
   dunningMaxAttempts       Int      @default(3)
   dunningIntervalDays      Int      @default(3)
+
+  // Token Economics (admin panel): how AI-usage credit deductions/pack
+  // pricing are expressed in real-money terms. Changing this is forward-only
+  // — it doesn't retroactively alter past transactions.
+  tokensPerDollar          Int      @default(500)
 
   updatedAt                DateTime @updatedAt
 }

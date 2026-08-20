@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { randomBytes } from 'node:crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { PlatformSettingsService } from '../platform-settings/platform-settings.service';
+import { EmailCampaignService } from '../mail/email-campaign.service';
 import type { PayoutMethod } from '@prisma/client';
 
 const APP_URL = process.env.APP_URL ?? 'http://localhost:3000';
@@ -14,7 +15,8 @@ function generateCode(): string {
 export class AffiliateService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly platformSettings: PlatformSettingsService
+    private readonly platformSettings: PlatformSettingsService,
+    private readonly emailCampaigns: EmailCampaignService
   ) {}
 
   async getOrCreateLink(userId: string) {
@@ -75,6 +77,13 @@ export class AffiliateService {
     await this.prisma.commission.create({
       data: { referrerUserId: referred.referredByUserId, referredUserId, type, amountCents },
     });
+
+    if (type === 'SIGNUP') {
+      const referrer = await this.prisma.user.findUnique({ where: { id: referred.referredByUserId } });
+      if (referrer) {
+        await this.emailCampaigns.sendReferralSuccess(referrer.email, referrer.name, `$${(amountCents / 100).toFixed(2)}`);
+      }
+    }
   }
 
   async hasEarnedSignupCommission(referredUserId: string): Promise<boolean> {

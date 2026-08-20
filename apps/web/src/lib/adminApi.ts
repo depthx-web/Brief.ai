@@ -260,7 +260,17 @@ export async function updateAdminRoutingRule(
   await adminFetch(token, `/admin/ai-providers/routing/${alias}`, { method: 'PATCH', body: { model } });
 }
 
-export type AdminEmailCampaignKey = 'WELCOME' | 'UPGRADE' | 'WINBACK' | 'SECURITY';
+export type AdminEmailCampaignKey =
+  | 'WELCOME'
+  | 'UPGRADE'
+  | 'WINBACK'
+  | 'SECURITY'
+  | 'RETENTION_WARNING'
+  | 'SIGNUP_CONFIRMATION'
+  | 'PAYMENT_RECEIPT'
+  | 'PLAN_CHANGED'
+  | 'CANCELLATION_CONFIRMATION'
+  | 'REFERRAL_SUCCESS';
 
 export interface AdminEmailCampaign {
   id: string;
@@ -294,6 +304,7 @@ export interface AdminPlatformSettings {
   dunningAutoRetryEnabled: boolean;
   dunningMaxAttempts: number;
   dunningIntervalDays: number;
+  tokensPerDollar: number;
 }
 
 export async function fetchAdminSettings(token: string): Promise<AdminPlatformSettings> {
@@ -305,6 +316,21 @@ export async function updateAdminSettings(
   data: Partial<AdminPlatformSettings>
 ): Promise<void> {
   await adminFetch(token, '/admin/settings', { method: 'PATCH', body: data });
+}
+
+// --- Token Economics ----------------------------------------------------
+
+export interface AdminTokenEconomics {
+  tokensPerDollar: number;
+  todayUsage: number;
+  totalCreditsSold: number;
+  totalCreditsOutstanding: number;
+  providerBalance: number | null;
+  providerBalanceAvailable: boolean;
+}
+
+export async function fetchTokenEconomics(token: string): Promise<AdminTokenEconomics> {
+  return adminFetch<AdminTokenEconomics>(token, '/admin/token-economics');
 }
 
 // --- Pay-as-you-go credit packs ---

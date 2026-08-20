@@ -26,6 +26,36 @@ const CAMPAIGN_META: Record<AdminEmailCampaignKey, { icon: string; title: string
     title: 'Security change notification',
     description: 'Sent automatically whenever a password or email address is changed.',
   },
+  RETENTION_WARNING: {
+    icon: '⏱️',
+    title: 'Retention warning',
+    description: 'Sent automatically about 1 hour before a file is scheduled for auto-deletion.',
+  },
+  SIGNUP_CONFIRMATION: {
+    icon: '✉️',
+    title: 'Signup confirmation',
+    description: 'For an email-verification flow, if/when one is added — not yet wired to a trigger.',
+  },
+  PAYMENT_RECEIPT: {
+    icon: '🧾',
+    title: 'Payment receipt',
+    description: 'Sent automatically after a successful subscription payment.',
+  },
+  PLAN_CHANGED: {
+    icon: '🔁',
+    title: 'Plan changed',
+    description: 'Sent automatically when an existing subscriber changes their billing cycle.',
+  },
+  CANCELLATION_CONFIRMATION: {
+    icon: '🛑',
+    title: 'Cancellation confirmation',
+    description: 'Sent automatically when a subscription is cancelled.',
+  },
+  REFERRAL_SUCCESS: {
+    icon: '🎉',
+    title: 'Referral success',
+    description: 'Sent automatically to a referrer when their referral earns a signup commission.',
+  },
 };
 
 function EditorModal({
@@ -75,7 +105,8 @@ function EditorModal({
             />
             <label className="mt-4 text-sm font-medium text-ink">
               Body (HTML — {'{{NAME}}'}, {'{{DASHBOARD_URL}}'}, {'{{PLAN_CYCLE}}'}, {'{{DISCOUNT_CODE}}'},{' '}
-              {'{{PRICING_URL}}'}, {'{{CHANGE_TYPE}}'} available depending on the email)
+              {'{{PRICING_URL}}'}, {'{{CHANGE_TYPE}}'}, {'{{FILENAME}}'}, {'{{LIBRARY_URL}}'}, {'{{CONFIRM_URL}}'},{' '}
+              {'{{AMOUNT}}'}, {'{{REFERRALS_URL}}'} available depending on the email)
             </label>
             <textarea
               value={body}
