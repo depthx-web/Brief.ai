@@ -99,6 +99,18 @@ export class LibraryController {
     return { success: true };
   }
 
+  @Patch('projects/:id/visibility')
+  async setProjectVisibility(
+    @Param('id') id: string,
+    @Body('visibility') visibility: string | undefined,
+    @CurrentUser() user: SafeUser
+  ) {
+    if (visibility !== 'PRIVATE' && visibility !== 'SHARED_WITH_TEAM') {
+      throw new BadRequestException('Visibility must be PRIVATE or SHARED_WITH_TEAM.');
+    }
+    return this.libraryService.setProjectVisibility(user.id, id, visibility);
+  }
+
   @Get('documents')
   async list(@CurrentUser() user: SafeUser) {
     return this.libraryService.list(user.id);

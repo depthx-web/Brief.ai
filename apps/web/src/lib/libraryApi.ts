@@ -23,6 +23,8 @@ export interface ProjectSummary {
   // carries a retention window. Drives the countdown badge.
   nearestExpiresAt: string | null;
   documentCount: number;
+  teamId: string | null;
+  visibility: 'PRIVATE' | 'SHARED_WITH_TEAM';
 }
 
 export interface ProjectDetail {
@@ -31,6 +33,10 @@ export interface ProjectDetail {
   category: string | null;
   createdAt: string;
   documents: LibraryDocumentSummary[];
+  // Only set when this project belongs to a team (see teamApi.ts) — drives
+  // whether the "Share with team" toggle shows at all on the detail page.
+  teamId: string | null;
+  visibility: 'PRIVATE' | 'SHARED_WITH_TEAM';
 }
 
 async function handleResponse<T>(response: Response): Promise<T> {

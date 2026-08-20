@@ -9,6 +9,7 @@ import type { Segment } from '@/lib/authApi';
 import { fetchMyActivity, type AiActivity } from '@/lib/aiApi';
 import { getBillingPortalUrl } from '@/lib/billingApi';
 import { showError, showSuccess } from '@/lib/toast';
+import TeamSettings from './TeamSettings';
 
 const SEGMENTS: { value: Segment; label: string }[] = [
   { value: 'LAWYER', label: 'Lawyer' },
@@ -224,6 +225,8 @@ export default function Settings() {
           </>
         )}
       </section>
+
+      <TeamSettings />
 
       <DeleteAccountSection />
     </div>

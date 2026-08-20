@@ -270,7 +270,8 @@ export type AdminEmailCampaignKey =
   | 'PAYMENT_RECEIPT'
   | 'PLAN_CHANGED'
   | 'CANCELLATION_CONFIRMATION'
-  | 'REFERRAL_SUCCESS';
+  | 'REFERRAL_SUCCESS'
+  | 'TEAM_INVITATION';
 
 export interface AdminEmailCampaign {
   id: string;

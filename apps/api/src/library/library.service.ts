@@ -86,7 +86,11 @@ export class LibraryService {
   // --- Projects (Batch 3, Section 2; per-file retention fix in Batch 5) ----
 
   async createProject(userId: string, name: string, category: string | undefined) {
-    return this.prisma.project.create({ data: { userId, name, category } });
+    // Auto-tags with the member's team (if any) so it shows up in the
+    // owner's member-project list to toggle — visibility still defaults
+    // to PRIVATE, so tagging alone grants no content access.
+    const membership = await this.prisma.teamMember.findFirst({ where: { userId, status: 'ACTIVE' } });
+    return this.prisma.project.create({ data: { userId, name, category, teamId: membership?.teamId } });
   }
 
   async renameProject(userId: string, projectId: string, name: string) {
@@ -112,11 +116,13 @@ export class LibraryService {
       // project with no files yet (or none carrying an expiry) shows none.
       nearestExpiresAt: p.documents[0]?.expiresAt ?? null,
       documentCount: p._count.documents,
+      teamId: p.teamId,
+      visibility: p.visibility,
     }));
   }
 
   async getProject(userId: string, projectId: string) {
-    const project = await this.findOwnedProject(userId, projectId);
+    const project = await this.findAccessibleProject(userId, projectId);
     const documents = await this.prisma.libraryDocument.findMany({
       where: { projectId },
       select: { id: true, filename: true, docType: true, projectId: true, expiresAt: true, createdAt: true },
@@ -137,6 +143,40 @@ export class LibraryService {
     return { expiresAt };
   }
 
+  // Backs both the member's own "Share with team" toggle on their Project
+  // detail page, and the team owner's override from the Team Settings
+  // drawer — same rule either way: the acting user must be the project's
+  // own owner (respecting their canShareProjects setting when turning
+  // sharing ON) or the team's owner (always allowed, can also turn it
+  // back OFF regardless of the member's own setting).
+  async setProjectVisibility(
+    actingUserId: string,
+    projectId: string,
+    visibility: 'PRIVATE' | 'SHARED_WITH_TEAM'
+  ) {
+    const project = await this.prisma.project.findUnique({ where: { id: projectId } });
+    if (!project) throw new NotFoundException('Project not found.');
+    if (!project.teamId) throw new BadRequestException('This project is not part of a team.');
+
+    const isProjectOwner = project.userId === actingUserId;
+    const team = await this.prisma.team.findUnique({ where: { id: project.teamId } });
+    const isTeamOwner = team?.ownerUserId === actingUserId;
+    if (!isProjectOwner && !isTeamOwner) {
+      throw new ForbiddenException('You do not have permission to change this project.');
+    }
+
+    if (isProjectOwner && !isTeamOwner && visibility === 'SHARED_WITH_TEAM') {
+      const settings = await this.prisma.teamMemberSettings.findUnique({
+        where: { teamId_userId: { teamId: project.teamId, userId: actingUserId } },
+      });
+      if (settings && !settings.canShareProjects) {
+        throw new ForbiddenException('The team owner has disabled sharing for your projects.');
+      }
+    }
+
+    return this.prisma.project.update({ where: { id: projectId }, data: { visibility } });
+  }
+
   async removeProject(userId: string, projectId: string) {
     await this.findOwnedProject(userId, projectId);
     const documents = await this.prisma.libraryDocument.findMany({
@@ -155,8 +195,21 @@ export class LibraryService {
     return project;
   }
 
+  // Read access only (getProject) — the actual owner, or a team owner
+  // viewing a teammate's project that's been explicitly marked
+  // SHARED_WITH_TEAM. A PRIVATE project (the default, even inside a team)
+  // stays invisible to the team owner — no covert access path. Never used
+  // to gate a write (rename/delete/extend/move stay strictly owner-only).
+  private async findAccessibleProject(userId: string, projectId: string) {
+    const project = await this.prisma.project.findUnique({ where: { id: projectId }, include: { team: true } });
+    if (!project) throw new NotFoundException('Project not found.');
+    if (project.userId === userId) return project;
+    if (project.team?.ownerUserId === userId && project.visibility === 'SHARED_WITH_TEAM') return project;
+    throw new ForbiddenException('You do not have access to this project.');
+  }
+
   async getFile(userId: string, documentId: string) {
-    const doc = await this.findOwned(userId, documentId);
+    const doc = await this.findAccessibleDocument(userId, documentId);
     if (doc.expiresAt && doc.expiresAt <= new Date()) {
       this.logger.warn(`getFile: document ${documentId} has expired (expiresAt=${doc.expiresAt.toISOString()}).`);
       throw new NotFoundException('This file has expired and is no longer available.');
@@ -293,5 +346,20 @@ export class LibraryService {
     if (!doc) throw new NotFoundException('Document not found.');
     if (doc.userId !== userId) throw new ForbiddenException('You do not own this document.');
     return doc;
+  }
+
+  // Read access only (getFile) — sharing lives at the project level, so a
+  // document is visible to a team owner exactly when its parent project is
+  // SHARED_WITH_TEAM. A document with no project (Unsorted) can never be
+  // shared. Never used to gate a write.
+  private async findAccessibleDocument(userId: string, documentId: string) {
+    const doc = await this.prisma.libraryDocument.findUnique({
+      where: { id: documentId },
+      include: { project: { include: { team: true } } },
+    });
+    if (!doc) throw new NotFoundException('Document not found.');
+    if (doc.userId === userId) return doc;
+    if (doc.project?.team?.ownerUserId === userId && doc.project.visibility === 'SHARED_WITH_TEAM') return doc;
+    throw new ForbiddenException('You do not have access to this document.');
   }
 }

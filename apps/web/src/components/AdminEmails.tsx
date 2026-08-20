@@ -56,6 +56,11 @@ const CAMPAIGN_META: Record<AdminEmailCampaignKey, { icon: string; title: string
     title: 'Referral success',
     description: 'Sent automatically to a referrer when their referral earns a signup commission.',
   },
+  TEAM_INVITATION: {
+    icon: '🤝',
+    title: 'Team invitation',
+    description: 'Sent automatically when a team owner invites someone by email.',
+  },
 };
 
 function EditorModal({
@@ -106,7 +111,8 @@ function EditorModal({
             <label className="mt-4 text-sm font-medium text-ink">
               Body (HTML — {'{{NAME}}'}, {'{{DASHBOARD_URL}}'}, {'{{PLAN_CYCLE}}'}, {'{{DISCOUNT_CODE}}'},{' '}
               {'{{PRICING_URL}}'}, {'{{CHANGE_TYPE}}'}, {'{{FILENAME}}'}, {'{{LIBRARY_URL}}'}, {'{{CONFIRM_URL}}'},{' '}
-              {'{{AMOUNT}}'}, {'{{REFERRALS_URL}}'} available depending on the email)
+              {'{{AMOUNT}}'}, {'{{REFERRALS_URL}}'}, {'{{TEAM_NAME}}'}, {'{{INVITER_NAME}}'}, {'{{INVITE_URL}}'} available
+              depending on the email)
             </label>
             <textarea
               value={body}

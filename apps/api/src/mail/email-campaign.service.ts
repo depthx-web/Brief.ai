@@ -96,6 +96,14 @@ export class EmailCampaignService {
     });
   }
 
+  async sendTeamInvitation(email: string, teamName: string, inviterName: string | null, inviteUrl: string): Promise<void> {
+    await this.sendIfEnabled('TEAM_INVITATION', email, {
+      TEAM_NAME: teamName,
+      INVITER_NAME: inviterName || 'A teammate',
+      INVITE_URL: inviteUrl,
+    });
+  }
+
   private async sendIfEnabled(key: EmailCampaignKey, to: string, vars: Record<string, string>): Promise<void> {
     const campaign = await this.prisma.emailCampaign.findUnique({ where: { key } });
     if (!campaign?.enabled) return;

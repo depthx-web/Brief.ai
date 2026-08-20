@@ -18,6 +18,7 @@ import { PlatformSettingsModule } from './platform-settings/platform-settings.mo
 import { CmsModule } from './cms/cms.module';
 import { AffiliateModule } from './affiliate/affiliate.module';
 import { CompressionModule } from './compression/compression.module';
+import { TeamModule } from './team/team.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { CompressionModule } from './compression/compression.module';
     CmsModule,
     AffiliateModule,
     CompressionModule,
+    TeamModule,
   ],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

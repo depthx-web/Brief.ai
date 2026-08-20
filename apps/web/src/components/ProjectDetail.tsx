@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { getProject, renameProject, type ProjectDetail as ProjectDetailData, type LibraryDocumentSummary } from '@/lib/libraryApi';
 import { COUNTDOWN_BADGE_CLASS, useCountdown } from '@/lib/retentionCountdown';
 import { CATEGORY_ACCENT } from '@/lib/docTypes';
+import { setProjectVisibility } from '@/lib/teamApi';
 import { showError, showSuccess } from '@/lib/toast';
 import FileOptionsMenu from './FileOptionsMenu';
 import AddFilesToProjectDialog from './AddFilesToProjectDialog';
@@ -39,6 +40,18 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
       setError(err instanceof Error ? err.message : 'Could not load this project.');
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function handleToggleVisibility() {
+    if (!token || !project?.teamId) return;
+    const next = project.visibility === 'PRIVATE' ? 'SHARED_WITH_TEAM' : 'PRIVATE';
+    try {
+      await setProjectVisibility(token, project.id, next);
+      setProject((prev) => (prev ? { ...prev, visibility: next } : prev));
+      showSuccess(next === 'SHARED_WITH_TEAM' ? 'Shared with your team' : 'Made private');
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Could not update sharing for this project.');
     }
   }
 
@@ -113,6 +126,17 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
           >
             {project.category}
           </span>
+        )}
+
+        {project.teamId && (
+          <button
+            onClick={handleToggleVisibility}
+            className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
+              project.visibility === 'SHARED_WITH_TEAM' ? 'bg-emerald-soft text-emerald' : 'bg-gray-100 text-ink-soft'
+            }`}
+          >
+            {project.visibility === 'SHARED_WITH_TEAM' ? 'Shared with team' : 'Private — Share with team'}
+          </button>
         )}
 
         <span

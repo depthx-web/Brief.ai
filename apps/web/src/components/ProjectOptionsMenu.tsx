@@ -13,6 +13,7 @@ import {
   type LibraryDocumentSummary,
   type ProjectSummary,
 } from '@/lib/libraryApi';
+import { setProjectVisibility } from '@/lib/teamApi';
 import { showError, showSuccess } from '@/lib/toast';
 
 const BILLING_ENFORCED = process.env.NEXT_PUBLIC_BILLING_ENFORCED === 'true';
@@ -70,6 +71,18 @@ export default function ProjectOptionsMenu({ project, onExtended, onDeleted, onU
       showSuccess('File deleted');
     } catch (err) {
       showError(err instanceof Error ? err.message : 'Could not delete this file.');
+    }
+  }
+
+  async function handleToggleVisibility() {
+    if (!token || !project.teamId) return;
+    const next = project.visibility === 'PRIVATE' ? 'SHARED_WITH_TEAM' : 'PRIVATE';
+    try {
+      await setProjectVisibility(token, project.id, next);
+      onExtended({ ...project, visibility: next });
+      showSuccess(next === 'SHARED_WITH_TEAM' ? 'Shared with your team' : 'Made private');
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Could not update sharing for this project.');
     }
   }
 
@@ -199,6 +212,21 @@ export default function ProjectOptionsMenu({ project, onExtended, onDeleted, onU
                 </DropdownMenu.SubContent>
               </DropdownMenu.Portal>
             </DropdownMenu.Sub>
+
+            {project.teamId && (
+              <>
+                <DropdownMenu.Separator className="my-1 h-px bg-gray-100" />
+                <DropdownMenu.Item
+                  onSelect={(e) => {
+                    e.preventDefault();
+                    handleToggleVisibility();
+                  }}
+                  className="cursor-pointer select-none rounded-md px-2.5 py-2 text-[13px] text-ink outline-none transition-colors data-[highlighted]:bg-emerald-soft"
+                >
+                  {project.visibility === 'SHARED_WITH_TEAM' ? 'Unshare from team' : 'Share with team'}
+                </DropdownMenu.Item>
+              </>
+            )}
 
             <DropdownMenu.Separator className="my-1 h-px bg-gray-100" />
             <DropdownMenu.Item

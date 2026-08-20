@@ -26,6 +26,18 @@ export class CreditsService {
     return result._sum.delta ?? 0;
   }
 
+  // Team Settings' member list "current token usage this month" column.
+  async getMonthlyUsage(userId: string): Promise<number> {
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+    const result = await this.prisma.creditTransaction.aggregate({
+      where: { userId, reason: 'AI_USAGE', createdAt: { gte: startOfMonth } },
+      _sum: { delta: true },
+    });
+    return Math.abs(result._sum.delta ?? 0);
+  }
+
   async listTransactions(userId: string, take = 50) {
     return this.prisma.creditTransaction.findMany({
       where: { userId },

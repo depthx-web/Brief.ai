@@ -167,6 +167,14 @@ model User {
   commissionsEarned   Commission[]    @relation("ReferrerCommissions")
   commissionsFromMe   Commission[]    @relation("ReferredCommissions")
   payoutRequests      PayoutRequest[]
+
+  // --- Team accounts (Batch: Team Settings) -------------------------------
+  // Included with an existing paid plan, not a separately purchased add-on
+  // — TeamController gates team creation on plan === 'PAID', nothing more.
+  ownedTeams          Team[]              @relation("TeamOwner")
+  teamMemberships     TeamMember[]
+  sentInvitations     TeamInvitation[]    @relation("InvitationsSent")
+  teamMemberSettings  TeamMemberSettings[]
 }
 
 enum AffiliateLinkStatus {
@@ -265,6 +273,7 @@ enum EmailCampaignKey {
   PLAN_CHANGED
   CANCELLATION_CONFIRMATION
   REFERRAL_SUCCESS
+  TEAM_INVITATION
 }
 
 // Admin-editable email automations. body is a template with a small set of
@@ -293,7 +302,104 @@ model Project {
   createdAt DateTime          @default(now())
   documents LibraryDocument[]
 
+  // --- Team sharing (Batch: Team Permissions) -----------------------------
+  // Null teamId = not part of a team (the vast majority of projects).
+  // Every project defaults to PRIVATE even inside a team — sharing is an
+  // explicit opt-in per project, never automatic just from team membership.
+  teamId     String?
+  team       Team?             @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  visibility ProjectVisibility @default(PRIVATE)
+
   @@index([userId])
+  @@index([teamId])
+}
+
+enum TeamMemberRole {
+  OWNER
+  MEMBER
+}
+
+enum TeamMemberStatus {
+  ACTIVE
+  INVITED
+}
+
+enum TeamInvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+}
+
+enum ProjectVisibility {
+  PRIVATE
+  SHARED_WITH_TEAM
+}
+
+// A team is created by (and always has exactly one) paid-plan owner —
+// TeamController enforces that at creation time, not a DB constraint,
+// since Prisma has no "role = OWNER implies plan = PAID" check.
+model Team {
+  id          String   @id @default(uuid())
+  name        String
+  ownerUserId String
+  owner       User     @relation("TeamOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  members        TeamMember[]
+  invitations    TeamInvitation[]
+  memberSettings TeamMemberSettings[]
+  projects       Project[]
+
+  @@index([ownerUserId])
+}
+
+// One row per person actually in the team (owner included, role OWNER,
+// status ACTIVE from creation) — TeamInvitation is the separate pending-
+// invite record; a row here only exists once an invite is accepted (or
+// for the owner, from the start).
+model TeamMember {
+  id       String           @id @default(uuid())
+  teamId   String
+  team     Team             @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role     TeamMemberRole   @default(MEMBER)
+  status   TeamMemberStatus @default(ACTIVE)
+  joinedAt DateTime         @default(now())
+
+  @@unique([teamId, userId])
+  @@index([userId])
+}
+
+model TeamInvitation {
+  id              String               @id @default(uuid())
+  teamId          String
+  team            Team                 @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  email           String
+  invitedByUserId String
+  invitedBy       User                 @relation("InvitationsSent", fields: [invitedByUserId], references: [id], onDelete: Cascade)
+  token           String               @unique
+  status          TeamInvitationStatus @default(PENDING)
+  createdAt       DateTime             @default(now())
+  expiresAt       DateTime
+
+  @@index([teamId])
+  @@index([email])
+}
+
+// Owner-set overrides for one member — created lazily (only once an owner
+// actually sets something), defaults (no cap, sharing allowed) apply to
+// any member with no row here.
+model TeamMemberSettings {
+  id                  String  @id @default(uuid())
+  teamId              String
+  team                Team    @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId              String
+  user                User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenBudgetOverride Int?
+  canShareProjects    Boolean @default(true)
+
+  @@unique([teamId, userId])
 }
 
 // Small enough (a canvas drawing or a compact uploaded image) to store as a
