@@ -22,6 +22,8 @@ const APP_URL = process.env.APP_URL ?? 'http://localhost:3000';
 const API_PUBLIC_URL = process.env.API_PUBLIC_URL ?? 'http://localhost:3001';
 
 const VALID_SEGMENTS: Segment[] = ['LAWYER', 'ACCOUNTANT', 'RESEARCHER'];
+// 24h / 7 days / 30 days / Never — the only options Settings exposes.
+const VALID_RETENTION_HOURS = [0, 24, 24 * 7, 24 * 30];
 
 interface SignupBody {
   email?: string;
@@ -39,6 +41,7 @@ interface LoginBody {
 interface UpdateProfileBody {
   name?: string;
   segment?: string;
+  defaultRetentionHours?: number | null;
 }
 
 interface ChangePasswordBody {
@@ -126,9 +129,16 @@ export class AuthController {
       body.segment && VALID_SEGMENTS.includes(body.segment as Segment)
         ? (body.segment as Segment)
         : undefined;
+    const defaultRetentionHours =
+      body.defaultRetentionHours === null
+        ? null
+        : body.defaultRetentionHours !== undefined && VALID_RETENTION_HOURS.includes(body.defaultRetentionHours)
+          ? body.defaultRetentionHours
+          : undefined;
     return this.authService.updateProfile(user.id, {
       name: body.name?.trim() || undefined,
       segment,
+      defaultRetentionHours,
     });
   }
 

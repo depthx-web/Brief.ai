@@ -338,8 +338,8 @@ function PricingPageInner() {
                     >
                       {(c.value === 'QUARTERLY' || c.value === 'YEARLY') && (
                         <span
-                          className="absolute -top-2 right-1 rounded px-1 py-0.5 font-mono text-[9px] font-semibold"
-                          style={{ background: 'rgba(212,160,84,0.18)', color: '#8A6423' }}
+                          className="absolute -top-2 -right-2 rounded px-1 py-0.5 font-mono text-[9px] font-semibold"
+                          style={{ background: '#D4A054', color: '#3D2806' }}
                         >
                           Save {c.value === 'QUARTERLY' ? '10%' : '20%'}
                         </span>
@@ -500,10 +500,18 @@ function ComparePlansModal({
                   <button
                     key={c.value}
                     onClick={() => setCycle(c.value)}
-                    className={`rounded-md border px-1 py-1.5 text-center text-[10px] font-medium transition-colors ${
+                    className={`relative rounded-md border px-1 py-1.5 text-center text-[10px] font-medium transition-colors ${
                       cycle === c.value ? 'border-emerald bg-emerald text-white' : 'border-gray-200 text-ink-soft hover:border-gray-300'
                     }`}
                   >
+                    {(c.value === 'QUARTERLY' || c.value === 'YEARLY') && (
+                      <span
+                        className="absolute -top-2 -right-2 rounded px-1 py-0.5 font-mono text-[9px] font-semibold"
+                        style={{ background: '#D4A054', color: '#3D2806' }}
+                      >
+                        Save {c.value === 'QUARTERLY' ? '10%' : '20%'}
+                      </span>
+                    )}
                     {c.label}
                   </button>
                 ))}

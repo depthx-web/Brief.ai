@@ -26,6 +26,8 @@ export interface SafeUser {
   segment: Segment | null;
   plan: Plan;
   billingCycle: BillingCycle | null;
+  // Null = platform default (24h). 0 = "Never" (paid plans only).
+  defaultRetentionHours: number | null;
 }
 
 @Injectable()
@@ -79,11 +81,22 @@ export class AuthService {
   // Segment (professional workspace) is chosen once at signup and is
   // permanent from then on — only set it here if the account doesn't
   // already have one. Plan/billing changes go through a separate flow.
-  async updateProfile(id: string, data: { name?: string; segment?: Segment }): Promise<SafeUser> {
+  async updateProfile(
+    id: string,
+    data: { name?: string; segment?: Segment; defaultRetentionHours?: number | null }
+  ): Promise<SafeUser> {
     const current = await this.prisma.user.findUniqueOrThrow({ where: { id } });
+    // "Never" (0) is a paid-plan-only option — silently ignore the request
+    // rather than error, same fail-safe posture as the segment-lock above.
+    const defaultRetentionHours =
+      data.defaultRetentionHours === undefined
+        ? undefined
+        : data.defaultRetentionHours === 0 && current.plan !== 'PAID'
+          ? undefined
+          : data.defaultRetentionHours;
     const user = await this.prisma.user.update({
       where: { id },
-      data: { name: data.name, segment: current.segment ? undefined : data.segment },
+      data: { name: data.name, segment: current.segment ? undefined : data.segment, defaultRetentionHours },
     });
     return this.toSafeUser(user);
   }
@@ -178,6 +191,7 @@ export class AuthService {
     segment: Segment | null;
     plan: Plan;
     billingCycle: BillingCycle | null;
+    defaultRetentionHours?: number | null;
   }) {
     const safeUser = this.toSafeUser(user);
     const token = this.jwtService.sign({ sub: user.id, email: user.email });
@@ -191,6 +205,7 @@ export class AuthService {
     segment: Segment | null;
     plan: Plan;
     billingCycle: BillingCycle | null;
+    defaultRetentionHours?: number | null;
   }): SafeUser {
     return {
       id: user.id,
@@ -199,6 +214,7 @@ export class AuthService {
       segment: user.segment,
       plan: user.plan,
       billingCycle: user.billingCycle,
+      defaultRetentionHours: user.defaultRetentionHours ?? null,
     };
   }
 }

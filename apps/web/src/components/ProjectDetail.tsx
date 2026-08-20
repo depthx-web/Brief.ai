@@ -142,6 +142,7 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
               )
             }
             onDeleted={(id) => setProject((prev) => (prev ? { ...prev, documents: prev.documents.filter((d) => d.id !== id) } : prev))}
+            onDuplicated={(copy) => setProject((prev) => (prev ? { ...prev, documents: [copy, ...prev.documents] } : prev))}
             onUpgradeNeeded={() => setUpgradeModalOpen(true)}
           />
         ))}
@@ -151,6 +152,7 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
         open={addFilesOpen}
         projectId={project.id}
         category={project.category}
+        defaultRetentionHours={user?.defaultRetentionHours}
         onClose={() => setAddFilesOpen(false)}
         onUploaded={() => token && load(token)}
       />
@@ -164,12 +166,14 @@ function ProjectDocumentCard({
   onOpen,
   onRenamed,
   onDeleted,
+  onDuplicated,
   onUpgradeNeeded,
 }: {
   doc: LibraryDocumentSummary;
   onOpen: () => void;
   onRenamed: (updated: LibraryDocumentSummary) => void;
   onDeleted: (id: string) => void;
+  onDuplicated: (doc: LibraryDocumentSummary) => void;
   onUpgradeNeeded: () => void;
 }) {
   const countdown = useCountdown(doc.expiresAt);
@@ -180,7 +184,13 @@ function ProjectDocumentCard({
         <button onClick={onOpen} className="min-w-0 text-left">
           <p className="truncate font-mono text-sm text-ink hover:text-emerald">{doc.filename}</p>
         </button>
-        <FileOptionsMenu doc={doc} onRenamed={onRenamed} onDeleted={onDeleted} onUpgradeNeeded={onUpgradeNeeded} />
+        <FileOptionsMenu
+          doc={doc}
+          onRenamed={onRenamed}
+          onDeleted={onDeleted}
+          onDuplicated={onDuplicated}
+          onUpgradeNeeded={onUpgradeNeeded}
+        />
       </div>
       <div className="mt-3 flex items-center justify-between gap-2">
         <span className="text-xs text-ink-soft">{new Date(doc.createdAt).toLocaleDateString()}</span>

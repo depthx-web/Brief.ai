@@ -22,6 +22,7 @@ export default function GuestSignupModal({ open, onClose, toolName }: Props) {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [consented, setConsented] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -88,9 +89,29 @@ export default function GuestSignupModal({ open, onClose, toolName }: Props) {
               className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
             />
             {error && <p className="text-sm text-redline">{error}</p>}
+
+            <label className="flex items-start gap-2.5 text-xs text-ink-soft">
+              <input
+                type="checkbox"
+                checked={consented}
+                onChange={(e) => setConsented(e.target.checked)}
+                className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-emerald focus:ring-emerald"
+              />
+              <span>
+                I agree to the{' '}
+                <a href="/privacy" target="_blank" rel="noopener noreferrer" className="font-medium text-navy hover:text-emerald">
+                  Privacy Policy
+                </a>{' '}
+                and{' '}
+                <a href="/terms" target="_blank" rel="noopener noreferrer" className="font-medium text-navy hover:text-emerald">
+                  Terms of Service
+                </a>
+              </span>
+            </label>
+
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={!consented || isSubmitting}
               className="w-full rounded-lg bg-emerald px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
             >
               {isSubmitting ? 'Creating account…' : 'Create account'}

@@ -93,6 +93,32 @@ export async function renameDocument(token: string, id: string, filename: string
   return handleResponse<LibraryDocumentSummary>(response);
 }
 
+export async function duplicateDocument(token: string, id: string): Promise<LibraryDocumentSummary> {
+  const response = await fetch(`${API_URL}/library/documents/${id}/duplicate`, {
+    method: 'POST',
+    headers: authHeaders(token),
+  });
+  return handleResponse<LibraryDocumentSummary>(response);
+}
+
+export async function moveDocument(token: string, id: string, projectId: string | null): Promise<LibraryDocumentSummary> {
+  const response = await fetch(`${API_URL}/library/documents/${id}/move`, {
+    method: 'PATCH',
+    headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ projectId }),
+  });
+  return handleResponse<LibraryDocumentSummary>(response);
+}
+
+export async function extendDocumentRetention(token: string, id: string, days: 7 | 30): Promise<{ expiresAt: string }> {
+  const response = await fetch(`${API_URL}/library/documents/${id}/retention`, {
+    method: 'PATCH',
+    headers: { ...authHeaders(token), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ days }),
+  });
+  return handleResponse<{ expiresAt: string }>(response);
+}
+
 export async function deleteDocument(token: string, id: string): Promise<void> {
   const response = await fetch(`${API_URL}/library/documents/${id}`, {
     method: 'DELETE',

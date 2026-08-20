@@ -16,15 +16,25 @@ interface Props {
   open: boolean;
   projectId: string;
   category: string | null;
+  // The account's configured default (Settings -> Privacy). Null/undefined
+  // = platform default (24h); 0 = "Never". Drives the intro copy below.
+  defaultRetentionHours?: number | null;
   onClose: () => void;
   onUploaded: () => void;
+}
+
+function defaultRetentionCopy(hours: number | null | undefined): string {
+  if (hours === 0) return 'This file will be kept until you delete it — no automatic deletion.';
+  if (hours === 24 * 30) return 'This file will be kept for 30 days then automatically deleted to protect your privacy.';
+  if (hours === 24 * 7) return 'This file will be kept for 7 days then automatically deleted to protect your privacy.';
+  return 'This file will be kept for 24 hours then automatically deleted to protect your privacy.';
 }
 
 // Adding files to an existing project skips the "What is this file?" step
 // entirely (Part 8, Section 3) — the category is already set by the
 // project itself, so only the retention choice is asked again, since every
 // file added later carries its own independent clock.
-export default function AddFilesToProjectDialog({ open, projectId, category, onClose, onUploaded }: Props) {
+export default function AddFilesToProjectDialog({ open, projectId, category, defaultRetentionHours, onClose, onUploaded }: Props) {
   const { token } = useAuth();
   const [files, setFiles] = useState<File[]>([]);
   const [extend, setExtend] = useState(false);
@@ -42,7 +52,7 @@ export default function AddFilesToProjectDialog({ open, projectId, category, onC
   async function handleUpload() {
     if (!token || files.length === 0) return;
     setIsUploading(true);
-    const retentionDays = extend ? extendDays : 1;
+    const retentionDays = extend ? extendDays : undefined;
     const toastId = showLoading(
       files.length > 1 ? `Uploading 1 of ${files.length} files…` : `Uploading ${files[0].name}…`
     );
@@ -98,9 +108,7 @@ export default function AddFilesToProjectDialog({ open, projectId, category, onC
               <span aria-hidden className="text-lg">
                 ⏱
               </span>
-              <p className="text-sm text-ink">
-                This file will be kept for 24 hours then automatically deleted to protect your privacy.
-              </p>
+              <p className="text-sm text-ink">{defaultRetentionCopy(defaultRetentionHours)}</p>
             </div>
 
             <label className="mt-4 flex items-center justify-between gap-3 border-t border-emerald/20 pt-4">

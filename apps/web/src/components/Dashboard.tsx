@@ -9,6 +9,7 @@ import type { Segment } from '@/lib/authApi';
 import { showLoading, resolveLoading, failLoading } from '@/lib/toast';
 import { DOC_TYPES } from '@/lib/docTypes';
 import { useGreeting } from '@/lib/greeting';
+import { COUNTDOWN_BADGE_CLASS, useCountdown } from '@/lib/retentionCountdown';
 import FileOptionsMenu from './FileOptionsMenu';
 import ChangePlanModal from './ChangePlanModal';
 import GuestSignupModal from './GuestSignupModal';
@@ -214,39 +215,16 @@ export default function Dashboard() {
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {recent.map((doc) => (
-              <div
+              <RecentFileCard
                 key={doc.id}
-                role="button"
-                tabIndex={0}
-                onClick={() => router.push(`/workspace?doc=${doc.id}`)}
-                onKeyDown={(e) => e.key === 'Enter' && router.push(`/workspace?doc=${doc.id}`)}
-                className="shadow-level-1 cursor-pointer rounded-lg border border-gray-200 bg-white p-4 text-left transition-colors hover:border-emerald"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <p className="truncate font-mono text-sm text-ink">{doc.filename}</p>
-                  <FileOptionsMenu
-                    doc={doc}
-                    onRenamed={(updated) =>
-                      setRecent((prev) => prev.map((d) => (d.id === updated.id ? updated : d)))
-                    }
-                    onDeleted={(id) => setRecent((prev) => prev.filter((d) => d.id !== id))}
-                    onUpgradeNeeded={() => setUpgradeModalOpen(true)}
-                  />
-                </div>
-                <div className="mt-2 flex items-center justify-between gap-2">
-                  <span className="text-xs text-ink-soft">
-                    {new Date(doc.createdAt).toLocaleDateString()}
-                  </span>
-                  {statusBadge && (
-                    <span
-                      key={user?.segment}
-                      className={`fade-in-200 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${statusBadge.className}`}
-                    >
-                      {statusBadge.text}
-                    </span>
-                  )}
-                </div>
-              </div>
+                doc={doc}
+                statusBadge={statusBadge}
+                statusBadgeKey={user?.segment}
+                onOpen={() => router.push(`/workspace?doc=${doc.id}`)}
+                onRenamed={(updated) => setRecent((prev) => prev.map((d) => (d.id === updated.id ? updated : d)))}
+                onDeleted={(id) => setRecent((prev) => prev.filter((d) => d.id !== id))}
+                onUpgradeNeeded={() => setUpgradeModalOpen(true)}
+              />
             ))}
           </div>
         )}
@@ -254,6 +232,59 @@ export default function Dashboard() {
 
       <ChangePlanModal open={upgradeModalOpen} onClose={() => setUpgradeModalOpen(false)} />
       <GuestSignupModal open={guestSignupOpen} onClose={() => setGuestSignupOpen(false)} />
+    </div>
+  );
+}
+
+function RecentFileCard({
+  doc,
+  statusBadge,
+  statusBadgeKey,
+  onOpen,
+  onRenamed,
+  onDeleted,
+  onUpgradeNeeded,
+}: {
+  doc: LibraryDocumentSummary;
+  statusBadge: { text: string; className: string } | null;
+  statusBadgeKey: string | null | undefined;
+  onOpen: () => void;
+  onRenamed: (updated: LibraryDocumentSummary) => void;
+  onDeleted: (id: string) => void;
+  onUpgradeNeeded: () => void;
+}) {
+  const countdown = useCountdown(doc.expiresAt);
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(e) => e.key === 'Enter' && onOpen()}
+      className="shadow-level-1 cursor-pointer rounded-lg border border-gray-200 bg-white p-4 text-left transition-colors hover:border-emerald"
+    >
+      <div className="flex items-start justify-between gap-2">
+        <p className="truncate font-mono text-sm text-ink">{doc.filename}</p>
+        <FileOptionsMenu doc={doc} onRenamed={onRenamed} onDeleted={onDeleted} onUpgradeNeeded={onUpgradeNeeded} />
+      </div>
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <span className="text-xs text-ink-soft">{new Date(doc.createdAt).toLocaleDateString()}</span>
+        <span className="flex items-center gap-1.5">
+          <span
+            className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${COUNTDOWN_BADGE_CLASS[countdown.urgency]}`}
+          >
+            {countdown.label}
+          </span>
+          {statusBadge && (
+            <span
+              key={statusBadgeKey}
+              className={`fade-in-200 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${statusBadge.className}`}
+            >
+              {statusBadge.text}
+            </span>
+          )}
+        </span>
+      </div>
     </div>
   );
 }

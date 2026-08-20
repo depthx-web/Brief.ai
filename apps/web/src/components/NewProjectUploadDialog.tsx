@@ -14,8 +14,11 @@ interface Props {
   open: boolean;
   files: File[];
   segment: Segment | null;
+  // The account's configured default (Settings -> Privacy). Null/undefined
+  // = platform default (24h); 0 = "Never". Drives the intro copy below.
+  defaultRetentionHours?: number | null;
   onCancel: () => void;
-  onStart: (details: { name: string; category?: string; retentionDays: number }) => void;
+  onStart: (details: { name: string; category?: string; retentionDays?: number }) => void;
 }
 
 function suggestName(files: File[]): string {
@@ -23,7 +26,14 @@ function suggestName(files: File[]): string {
   return files[0].name.replace(/\.pdf$/i, '');
 }
 
-export default function NewProjectUploadDialog({ open, files, segment, onCancel, onStart }: Props) {
+function defaultRetentionCopy(hours: number | null | undefined): string {
+  if (hours === 0) return 'Your files will be kept until you delete them — no automatic deletion.';
+  if (hours === 24 * 30) return 'Your files will be kept for 30 days then automatically deleted to protect your privacy.';
+  if (hours === 24 * 7) return 'Your files will be kept for 7 days then automatically deleted to protect your privacy.';
+  return 'Your files will be kept for 24 hours then automatically deleted to protect your privacy.';
+}
+
+export default function NewProjectUploadDialog({ open, files, segment, defaultRetentionHours, onCancel, onStart }: Props) {
   const [step, setStep] = useState<'classify' | 'retention'>('classify');
   const [category, setCategory] = useState<string | null>(null);
   const [name, setName] = useState('');
@@ -46,7 +56,7 @@ export default function NewProjectUploadDialog({ open, files, segment, onCancel,
     onStart({
       name: name.trim() || suggestName(files),
       category: category ?? undefined,
-      retentionDays: extend ? extendDays : 1,
+      retentionDays: extend ? extendDays : undefined,
     });
   }
 
@@ -116,10 +126,7 @@ export default function NewProjectUploadDialog({ open, files, segment, onCancel,
                   <span aria-hidden className="text-lg">
                     ⏱
                   </span>
-                  <p className="text-sm text-ink">
-                    Your files will be kept for 24 hours then automatically deleted to protect your
-                    privacy.
-                  </p>
+                  <p className="text-sm text-ink">{defaultRetentionCopy(defaultRetentionHours)}</p>
                 </div>
 
                 <label className="mt-4 flex items-center justify-between gap-3 border-t border-emerald/20 pt-4">

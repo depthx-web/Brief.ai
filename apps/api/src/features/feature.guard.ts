@@ -38,7 +38,8 @@ export class FeatureGuard implements CanActivate {
     const key = this.reflector.get<string>(FEATURE_KEY_METADATA, context.getHandler());
     if (key && (await this.featureService.isFreeEnabled(user.segment ?? null, key))) return true;
 
-    if (await this.creditsService.consumeCreditIfAvailable(user.id)) return true;
+    const operationLabel = key ? await this.featureService.findLabel(user.segment ?? null, key) : null;
+    if (await this.creditsService.consumeCreditIfAvailable(user.id, operationLabel ?? undefined)) return true;
 
     throw new ForbiddenException(deniedMessage);
   }

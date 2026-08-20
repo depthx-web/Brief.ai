@@ -19,7 +19,7 @@ const WORKSPACE_PARAM_TO_SEGMENT: Record<string, Segment> = {
   research: 'RESEARCHER',
 };
 
-interface Tool {
+export interface Tool {
   href: string;
   name: string;
   stamp: string;
@@ -61,7 +61,7 @@ function isNew(launchedAt: string | undefined): boolean {
 }
 
 const TABS = ['Convert', 'Organize', 'Protect', 'AI tools'] as const;
-type Tab = (typeof TABS)[number];
+export type Tab = (typeof TABS)[number];
 
 // Lets the desktop sidebar (and any other external link) land directly on a
 // tab via `/tools?tab=ai-tools` without needing the display-string casing.
@@ -72,7 +72,10 @@ const TAB_SLUG_TO_TAB: Record<string, Tab> = {
   'ai-tools': 'AI tools',
 };
 
-const TOOLS_BY_TAB: Record<Tab, Tool[]> = {
+// Exported so the desktop sidebar can compute its own workspace-filtered
+// tool counts from this same catalog instead of hardcoding them (see
+// DesktopSidebar.tsx) — a single source of truth for the tool list.
+export const TOOLS_BY_TAB: Record<Tab, Tool[]> = {
   Convert: [
     { href: '/pdf-to-images', name: 'PDF to Images', stamp: 'PDF→IMG', description: 'Export every page as a JPG or PNG.', singleFileSource: true },
     { href: '/images-to-pdf', name: 'Images to PDF', stamp: 'IMG→PDF', description: 'Combine JPG or PNG images into a PDF.' },
@@ -382,9 +385,13 @@ function ToolsIndexInner() {
     const cardClass = `group relative flex aspect-square flex-col items-center justify-center rounded-[20px] border-2 outline outline-2 outline-offset-2 ${cardBg} p-4 text-center shadow-level-1 transition-all duration-200 hover:-rotate-2 hover:shadow-level-2 ${stampColorClass}`;
     const inner = (
       <>
-        {isProTool(tool) && (
+        {isProTool(tool) ? (
           <span className="absolute right-2 top-2 rounded bg-navy-light px-1.5 py-0.5 font-mono text-[9px] font-semibold text-white">
             PRO
+          </span>
+        ) : (
+          <span className="absolute right-2 top-2 rounded bg-emerald-soft px-1.5 py-0.5 font-mono text-[9px] font-semibold text-emerald">
+            FREE
           </span>
         )}
         {isNew(tool.launchedAt) && (

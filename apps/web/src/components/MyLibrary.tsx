@@ -69,7 +69,7 @@ export default function MyLibrary() {
     setPendingFiles(files);
   }
 
-  async function handleStartUpload(details: { name: string; category?: string; retentionDays: number }) {
+  async function handleStartUpload(details: { name: string; category?: string; retentionDays?: number }) {
     if (!token) return;
     const files = pendingFiles ?? [];
     setPendingFiles(null);
@@ -269,6 +269,7 @@ export default function MyLibrary() {
                     onOpen={() => router.push(`/workspace?doc=${doc.id}`)}
                     onRenamed={(updated) => setUnsorted((prev) => prev.map((d) => (d.id === updated.id ? updated : d)))}
                     onDeleted={(id) => setUnsorted((prev) => prev.filter((d) => d.id !== id))}
+                    onDuplicated={(copy) => setUnsorted((prev) => [copy, ...prev])}
                     onUpgradeNeeded={() => setUpgradeModalOpen(true)}
                   />
                 ))}
@@ -282,6 +283,7 @@ export default function MyLibrary() {
         open={pendingFiles !== null}
         files={pendingFiles ?? []}
         segment={user?.segment ?? null}
+        defaultRetentionHours={user?.defaultRetentionHours}
         onCancel={() => setPendingFiles(null)}
         onStart={handleStartUpload}
       />
@@ -295,12 +297,14 @@ function UnsortedDocumentCard({
   onOpen,
   onRenamed,
   onDeleted,
+  onDuplicated,
   onUpgradeNeeded,
 }: {
   doc: LibraryDocumentSummary;
   onOpen: () => void;
   onRenamed: (updated: LibraryDocumentSummary) => void;
   onDeleted: (id: string) => void;
+  onDuplicated: (doc: LibraryDocumentSummary) => void;
   onUpgradeNeeded: () => void;
 }) {
   const countdown = useCountdown(doc.expiresAt);
@@ -311,7 +315,13 @@ function UnsortedDocumentCard({
         <button onClick={onOpen} className="min-w-0 text-left">
           <p className="truncate font-mono text-sm text-ink hover:text-emerald">{doc.filename}</p>
         </button>
-        <FileOptionsMenu doc={doc} onRenamed={onRenamed} onDeleted={onDeleted} onUpgradeNeeded={onUpgradeNeeded} />
+        <FileOptionsMenu
+          doc={doc}
+          onRenamed={onRenamed}
+          onDeleted={onDeleted}
+          onDuplicated={onDuplicated}
+          onUpgradeNeeded={onUpgradeNeeded}
+        />
       </div>
       <div className="mt-3 flex items-center justify-between gap-2">
         <span className="text-xs text-ink-soft">{new Date(doc.createdAt).toLocaleDateString()}</span>

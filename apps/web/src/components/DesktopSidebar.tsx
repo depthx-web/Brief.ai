@@ -5,6 +5,8 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/AuthContext';
 import { getCreditBalance } from '@/lib/creditsApi';
 import type { DesktopNavKey } from '@/lib/desktopNav';
+import type { Segment } from '@/lib/authApi';
+import { TOOLS_BY_TAB, type Tab } from './ToolsIndex';
 import LoginModal from './LoginModal';
 
 const SEGMENT_LABEL: Record<string, string> = {
@@ -13,15 +15,29 @@ const SEGMENT_LABEL: Record<string, string> = {
   RESEARCHER: 'Research',
 };
 
-// Real counts from ToolsIndex.tsx's TOOLS_BY_TAB — keep in sync if that
-// catalog changes.
-const WORKSPACE_ITEMS: { navKey: DesktopNavKey; href: string; icon: (color: string) => React.ReactNode; label: string; count?: string }[] = [
-  { navKey: 'home', href: '/desktop-home', icon: HomeIcon, label: 'Home' },
-  { navKey: 'convert', href: '/tools?tab=convert', icon: ConvertIcon, label: 'Convert', count: '10' },
-  { navKey: 'organize', href: '/tools?tab=organize', icon: OrganizeIcon, label: 'Organize', count: '9' },
-  { navKey: 'protect', href: '/tools?tab=protect', icon: ProtectIcon, label: 'Protect', count: '4' },
-  { navKey: 'ai-tools', href: '/tools?tab=ai-tools', icon: AiIcon, label: 'AI Tools', count: '14' },
+const TOOLS_EXPANDED_KEY = 'brief-ai-desktop-tools-expanded';
+
+const HOME_ITEM: { navKey: DesktopNavKey; href: string; icon: (color: string) => React.ReactNode; label: string } = {
+  navKey: 'home',
+  href: '/desktop-home',
+  icon: HomeIcon,
+  label: 'Home',
+};
+
+const TOOL_SUB_ITEMS: { navKey: DesktopNavKey; href: string; icon: (color: string) => React.ReactNode; label: string; tab: Tab }[] = [
+  { navKey: 'convert', href: '/tools?tab=convert', icon: ConvertIcon, label: 'Convert', tab: 'Convert' },
+  { navKey: 'organize', href: '/tools?tab=organize', icon: OrganizeIcon, label: 'Organize', tab: 'Organize' },
+  { navKey: 'protect', href: '/tools?tab=protect', icon: ProtectIcon, label: 'Protect', tab: 'Protect' },
+  { navKey: 'ai-tools', href: '/tools?tab=ai-tools', icon: AiIcon, label: 'AI Tools', tab: 'AI tools' },
 ];
+
+// Live count for the currently active workspace, not a global total — a
+// Researcher only has 4 relevant AI tools, not the full catalog's 14, and
+// this must react to a tool being toggled Free/PRO or per-workspace since
+// it reads the same TOOLS_BY_TAB/segment filter the /tools page itself uses.
+function countForTab(tab: Tab, segment: Segment | null): number {
+  return TOOLS_BY_TAB[tab].filter((tool) => !tool.segments || !segment || tool.segments.includes(segment)).length;
+}
 
 const FILE_ITEMS: { navKey: DesktopNavKey; href: string; icon: (color: string) => React.ReactNode; label: string }[] = [
   { navKey: 'library', href: '/library', icon: LibraryIcon, label: 'Library' },
@@ -92,6 +108,10 @@ export default function DesktopSidebar({ active }: { active: DesktopNavKey }) {
   const { label, dot, body } = CONNECTION_COPY[connection];
   const [balance, setBalance] = useState<number | null>(null);
   const [loginOpen, setLoginOpen] = useState(false);
+  // Collapsed by default; a stored preference (if any) overrides this after
+  // mount — read in an effect, not the initializer, to avoid an SSR/client
+  // hydration mismatch on first paint.
+  const [toolsExpanded, setToolsExpanded] = useState(false);
 
   useEffect(() => {
     if (!token) {
@@ -100,6 +120,23 @@ export default function DesktopSidebar({ active }: { active: DesktopNavKey }) {
     }
     getCreditBalance(token).then(setBalance).catch(() => {});
   }, [token]);
+
+  useEffect(() => {
+    const stored = localStorage.getItem(TOOLS_EXPANDED_KEY);
+    if (stored !== null) setToolsExpanded(stored === 'true');
+  }, []);
+
+  function toggleTools() {
+    setToolsExpanded((prev) => {
+      const next = !prev;
+      localStorage.setItem(TOOLS_EXPANDED_KEY, String(next));
+      return next;
+    });
+  }
+
+  const segment = user?.segment ?? null;
+  const anyToolActive = TOOL_SUB_ITEMS.some((item) => item.navKey === active);
+  const toolsSectionOpen = toolsExpanded || anyToolActive;
 
   return (
     <aside className="flex h-full w-60 shrink-0 flex-col bg-navy py-[22px] text-white">
@@ -117,9 +154,38 @@ export default function DesktopSidebar({ active }: { active: DesktopNavKey }) {
           Workspace
         </div>
         <nav className="flex flex-col gap-0.5">
-          {WORKSPACE_ITEMS.map((item) => (
-            <NavRow key={item.navKey} {...item} isActive={active === item.navKey} />
-          ))}
+          <NavRow {...HOME_ITEM} isActive={active === HOME_ITEM.navKey} />
+          <button
+            onClick={toggleTools}
+            className="flex items-center justify-between rounded-lg px-2.5 py-2 hover:bg-white/[0.06]"
+            style={anyToolActive ? { background: 'rgba(255,255,255,0.08)' } : undefined}
+            aria-expanded={toolsSectionOpen}
+          >
+            <div className="flex items-center gap-2.5">
+              {ToolsGroupIcon(anyToolActive ? '#1E9D75' : NAV_INACTIVE)}
+              <span
+                className={`text-[14px] ${anyToolActive ? 'font-semibold text-white' : ''}`}
+                style={anyToolActive ? undefined : { color: NAV_INACTIVE }}
+              >
+                Tools
+              </span>
+            </div>
+            <ChevronIcon color={MUTED} expanded={toolsSectionOpen} />
+          </button>
+          {toolsSectionOpen && (
+            <div className="flex flex-col gap-0.5 pl-4">
+              {TOOL_SUB_ITEMS.map((item) => (
+                <NavRow
+                  key={item.navKey}
+                  href={item.href}
+                  icon={item.icon}
+                  label={item.label}
+                  count={String(countForTab(item.tab, segment))}
+                  isActive={active === item.navKey}
+                />
+              ))}
+            </div>
+          )}
         </nav>
 
         <div className="mt-5 px-2 pb-2 font-mono text-[10px] font-semibold uppercase tracking-wider" style={{ color: MUTED, letterSpacing: '1px' }}>
@@ -269,6 +335,34 @@ function ProtectIcon(color: string) {
   return (
     <svg {...iconProps(color)}>
       <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" />
+    </svg>
+  );
+}
+function ToolsGroupIcon(color: string) {
+  return (
+    <svg {...iconProps(color)}>
+      <rect x="4" y="4" width="7" height="7" rx="1.5" />
+      <rect x="13" y="4" width="7" height="7" rx="1.5" />
+      <path d="M13 17.5l2 2 4.5-4.5" />
+      <path d="M4 17.5l2 2 4.5-4.5" />
+    </svg>
+  );
+}
+function ChevronIcon({ color, expanded }: { color: string; expanded: boolean }) {
+  return (
+    <svg
+      width={12}
+      height={12}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="transition-transform duration-150"
+      style={{ transform: expanded ? 'rotate(90deg)' : undefined }}
+    >
+      <path d="M9 6l6 6-6 6" />
     </svg>
   );
 }

@@ -114,6 +114,12 @@ model User {
   segment      Segment?
   status       UserStatus @default(ACTIVE)
   createdAt    DateTime  @default(now())
+
+  // Default retention applied to new uploads when the client doesn't pass
+  // an explicit retentionDays (Settings -> Privacy -> "Default file
+  // retention"). Null falls back to the platform default of 24h. 0 means
+  // "Never" (paid plans only, enforced in the service layer).
+  defaultRetentionHours Int?
   documents    LibraryDocument[]
   projects     Project[]
   signatures   SavedSignature[]

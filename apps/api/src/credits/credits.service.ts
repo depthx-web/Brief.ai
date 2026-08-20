@@ -37,11 +37,14 @@ export class CreditsService {
   // Used by FeatureGuard: a FREE-plan user with no seat-based access to a
   // feature can still use it once per credit, consumed atomically here so
   // two concurrent requests can't both pass a balance-of-1 check.
-  async consumeCreditIfAvailable(userId: string): Promise<boolean> {
+  async consumeCreditIfAvailable(userId: string, operationLabel?: string): Promise<boolean> {
     const balance = await this.getBalance(userId);
     if (balance <= 0) return false;
     await this.prisma.creditTransaction.create({
-      data: { userId, delta: -1, reason: 'AI_USAGE' },
+      // adminNote doubles as the Wallet's per-transaction operation label —
+      // it's only DB-required (service-layer, not schema) for
+      // MANUAL_ADMIN_ADJUSTMENT, so reusing it here for AI_USAGE is safe.
+      data: { userId, delta: -1, reason: 'AI_USAGE', adminNote: operationLabel },
     });
     return true;
   }

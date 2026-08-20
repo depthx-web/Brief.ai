@@ -122,6 +122,30 @@ export class LibraryController {
     return this.libraryService.rename(user.id, id, filename.trim());
   }
 
+  @Post('documents/:id/duplicate')
+  async duplicate(@Param('id') id: string, @CurrentUser() user: SafeUser) {
+    return this.libraryService.duplicate(user.id, id);
+  }
+
+  @Patch('documents/:id/move')
+  async move(
+    @Param('id') id: string,
+    @Body('projectId') projectId: string | null | undefined,
+    @CurrentUser() user: SafeUser
+  ) {
+    return this.libraryService.move(user.id, id, projectId ?? null);
+  }
+
+  @Patch('documents/:id/retention')
+  async extendDocumentRetention(
+    @Param('id') id: string,
+    @Body('days') days: number | undefined,
+    @CurrentUser() user: SafeUser
+  ) {
+    if (!days) throw new BadRequestException('A retention length (7 or 30 days) is required.');
+    return this.libraryService.extendDocumentRetention(user.id, id, days);
+  }
+
   @Delete('documents/:id')
   async remove(@Param('id') id: string, @CurrentUser() user: SafeUser) {
     await this.libraryService.remove(user.id, id);

@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { fetchCmsPage } from '@/lib/cmsApi';
 import { listDocuments, type LibraryDocumentSummary } from '@/lib/libraryApi';
 import { useGreeting } from '@/lib/greeting';
+import { COUNTDOWN_BADGE_CLASS, useCountdown } from '@/lib/retentionCountdown';
 import DesktopSidebar from './DesktopSidebar';
 import ActivityBall from './ActivityBall';
 
@@ -227,25 +228,33 @@ function DesktopHomeInner() {
             </div>
           )}
           {recentFiles?.map((doc, i) => (
-            <div
-              key={doc.id}
-              className={`flex items-center gap-3.5 px-[18px] py-3.5 ${
-                i < recentFiles.length - 1 ? 'border-b border-paper-line' : ''
-              }`}
-            >
-              <FileIcon />
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-[13.5px] font-semibold text-navy">{doc.filename}</div>
-                <div className="mt-0.5 text-[11.5px] text-ink-soft">{doc.docType ?? 'Document'}</div>
-              </div>
-              <span className="w-[74px] shrink-0 text-right text-[11.5px] text-ink-soft">
-                {formatDistanceToNow(new Date(doc.createdAt), { addSuffix: true })}
-              </span>
-            </div>
+            <RecentFileRow key={doc.id} doc={doc} isLast={i === recentFiles.length - 1} />
           ))}
         </div>
       </main>
       <ActivityBall />
+    </div>
+  );
+}
+
+function RecentFileRow({ doc, isLast }: { doc: LibraryDocumentSummary; isLast: boolean }) {
+  const countdown = useCountdown(doc.expiresAt);
+
+  return (
+    <div className={`flex items-center gap-3.5 px-[18px] py-3.5 ${isLast ? '' : 'border-b border-paper-line'}`}>
+      <FileIcon />
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-[13.5px] font-semibold text-navy">{doc.filename}</div>
+        <div className="mt-0.5 text-[11.5px] text-ink-soft">{doc.docType ?? 'Document'}</div>
+      </div>
+      <span
+        className={`shrink-0 rounded-full px-2 py-0.5 text-[10.5px] font-medium uppercase tracking-wide ${COUNTDOWN_BADGE_CLASS[countdown.urgency]}`}
+      >
+        {countdown.label}
+      </span>
+      <span className="w-[74px] shrink-0 text-right text-[11.5px] text-ink-soft">
+        {formatDistanceToNow(new Date(doc.createdAt), { addSuffix: true })}
+      </span>
     </div>
   );
 }

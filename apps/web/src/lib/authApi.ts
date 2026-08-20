@@ -11,6 +11,8 @@ export interface AuthUser {
   segment: Segment | null;
   plan: Plan;
   billingCycle: BillingCycle | null;
+  // Null = platform default (24h). 0 = "Never" (paid plans only).
+  defaultRetentionHours: number | null;
 }
 
 export interface AuthResponse {
@@ -74,7 +76,7 @@ export async function fetchMe(token: string): Promise<AuthUser> {
 
 export async function updateProfile(
   token: string,
-  data: { name?: string; segment?: Segment }
+  data: { name?: string; segment?: Segment; defaultRetentionHours?: number | null }
 ): Promise<AuthUser> {
   let response: Response;
   try {

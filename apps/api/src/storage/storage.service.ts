@@ -24,6 +24,16 @@ export class StorageService {
     return readFile(join(STORAGE_DIR, key));
   }
 
+  // Used by "Duplicate" (Library file options menu) — copies the physical
+  // file under a fresh key so the two documents don't share storage.
+  async copy(key: string): Promise<string> {
+    const ext = key.match(/\.([a-zA-Z0-9]+)$/)?.[1] ?? 'bin';
+    const newKey = `${randomUUID()}.${ext}`;
+    const buffer = await readFile(join(STORAGE_DIR, key));
+    await writeFile(join(STORAGE_DIR, newKey), buffer);
+    return newKey;
+  }
+
   async delete(key: string): Promise<void> {
     await rm(join(STORAGE_DIR, key), { force: true });
   }

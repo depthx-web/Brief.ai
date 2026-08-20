@@ -41,6 +41,7 @@ export default function SignupForm() {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [segment, setSegment] = useState<Segment | null>(null);
+  const [consented, setConsented] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -109,10 +110,29 @@ export default function SignupForm() {
 
           {error && <p className="mt-6 text-center text-sm text-redline">{error}</p>}
 
+          <label className="mt-6 flex items-start gap-2.5 text-sm text-ink-soft">
+            <input
+              type="checkbox"
+              checked={consented}
+              onChange={(e) => setConsented(e.target.checked)}
+              className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-emerald focus:ring-emerald"
+            />
+            <span>
+              I agree to the{' '}
+              <a href="/privacy" target="_blank" rel="noopener noreferrer" className="font-medium text-navy hover:text-emerald">
+                Privacy Policy
+              </a>{' '}
+              and{' '}
+              <a href="/terms" target="_blank" rel="noopener noreferrer" className="font-medium text-navy hover:text-emerald">
+                Terms of Service
+              </a>
+            </span>
+          </label>
+
           <button
             onClick={handleFinish}
-            disabled={!segment || isSubmitting}
-            className="mt-8 w-full rounded-lg bg-emerald px-6 py-3 font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
+            disabled={!segment || !consented || isSubmitting}
+            className="mt-4 w-full rounded-lg bg-emerald px-6 py-3 font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
           >
             {isSubmitting ? 'Creating account…' : 'Continue to Dashboard'}
           </button>

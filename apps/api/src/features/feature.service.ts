@@ -29,4 +29,14 @@ export class FeatureService {
     });
     return feature?.freeEnabled ?? false;
   }
+
+  // Human-readable name for a Feature.key, so a credit-spend transaction can
+  // record which operation actually consumed it (Wallet's transaction list)
+  // instead of a generic "AI operation" label.
+  async findLabel(segment: Segment | null, key: string): Promise<string | null> {
+    const feature = await this.prisma.feature.findFirst({
+      where: { key, OR: [{ segment: null }, ...(segment ? [{ segment }] : [])] },
+    });
+    return feature?.label ?? null;
+  }
 }

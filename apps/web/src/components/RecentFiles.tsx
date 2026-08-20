@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '@/lib/AuthContext';
 import { listDocuments, type LibraryDocumentSummary } from '@/lib/libraryApi';
+import { COUNTDOWN_BADGE_CLASS, useCountdown } from '@/lib/retentionCountdown';
 
 // A fast, flat "what did I just touch" list — deliberately no project
 // grouping, unlike the Library panel's project cards. See the Recent Panel
@@ -40,22 +41,37 @@ export default function RecentFiles() {
           </div>
         )}
         {docs?.map((doc, i) => (
-          <button
+          <RecentFileRow
             key={doc.id}
-            onClick={() => router.push(`/workspace?doc=${doc.id}`)}
-            className={`flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-surface ${
-              i < docs.length - 1 ? 'border-b border-paper-line' : ''
-            }`}
-          >
-            <FileIcon />
-            <span className="min-w-0 flex-1 truncate font-mono text-[13px] text-ink">{doc.filename}</span>
-            <span className="shrink-0 font-mono text-xs text-ink-soft">
-              {formatDistanceToNow(new Date(doc.createdAt), { addSuffix: true })}
-            </span>
-          </button>
+            doc={doc}
+            isLast={i === docs.length - 1}
+            onOpen={() => router.push(`/workspace?doc=${doc.id}`)}
+          />
         ))}
       </div>
     </div>
+  );
+}
+
+function RecentFileRow({ doc, isLast, onOpen }: { doc: LibraryDocumentSummary; isLast: boolean; onOpen: () => void }) {
+  const countdown = useCountdown(doc.expiresAt);
+
+  return (
+    <button
+      onClick={onOpen}
+      className={`flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-surface ${isLast ? '' : 'border-b border-paper-line'}`}
+    >
+      <FileIcon />
+      <span className="min-w-0 flex-1 truncate font-mono text-[13px] text-ink">{doc.filename}</span>
+      <span
+        className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wide ${COUNTDOWN_BADGE_CLASS[countdown.urgency]}`}
+      >
+        {countdown.label}
+      </span>
+      <span className="shrink-0 font-mono text-xs text-ink-soft">
+        {formatDistanceToNow(new Date(doc.createdAt), { addSuffix: true })}
+      </span>
+    </button>
   );
 }
 

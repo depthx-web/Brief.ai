@@ -373,13 +373,21 @@ function ChangePasswordSection() {
   );
 }
 
+const RETENTION_OPTIONS: { value: number; label: string; proOnly?: boolean }[] = [
+  { value: 24, label: '24 hours' },
+  { value: 24 * 7, label: '7 days' },
+  { value: 24 * 30, label: '30 days' },
+  { value: 0, label: 'Never', proOnly: true },
+];
+
 function DeleteAccountSection() {
-  const { deleteAccount } = useAuth();
+  const { user, deleteAccount, updateProfile } = useAuth();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [confirmText, setConfirmText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSavingRetention, setIsSavingRetention] = useState(false);
 
   async function handleConfirmDelete() {
     setIsDeleting(true);
@@ -393,10 +401,63 @@ function DeleteAccountSection() {
     }
   }
 
+  async function handleRetentionChange(value: number) {
+    setIsSavingRetention(true);
+    try {
+      await updateProfile({ defaultRetentionHours: value });
+      showSuccess('Saved successfully');
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Could not save your default retention.');
+    } finally {
+      setIsSavingRetention(false);
+    }
+  }
+
+  const currentRetention = user?.defaultRetentionHours ?? 24;
+  const isPaid = user?.plan === 'PAID';
+
   return (
     <section className="mt-8 border-t border-[#EEF1F4] pt-8">
       <h2 className="font-serif text-lg font-semibold text-navy">Privacy</h2>
-      <p className="mt-1 text-sm text-ink-soft">
+
+      <div className="mt-4">
+        <p className="text-sm font-medium text-ink">Default file retention</p>
+        <p className="mt-1 text-sm text-ink-soft">
+          How long a newly uploaded file is kept before it&apos;s automatically deleted. You can still
+          override this for an individual upload.
+        </p>
+        <div className="mt-3 grid grid-cols-4 gap-2">
+          {RETENTION_OPTIONS.map((opt) => {
+            const locked = opt.proOnly && !isPaid;
+            const active = currentRetention === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                disabled={locked || isSavingRetention}
+                onClick={() => handleRetentionChange(opt.value)}
+                title={locked ? 'Available on paid plans' : undefined}
+                className={`relative rounded-lg border-2 px-3 py-2.5 text-center text-xs font-medium transition-colors ${
+                  active
+                    ? 'border-emerald bg-emerald-soft text-navy'
+                    : locked
+                      ? 'cursor-not-allowed border-gray-200 text-ink-soft/40'
+                      : 'border-gray-200 text-ink-soft hover:border-gray-300'
+                }`}
+              >
+                {locked && (
+                  <span className="absolute -top-2 -right-2 rounded bg-navy-light px-1 py-0.5 font-mono text-[8px] font-semibold text-white">
+                    PRO
+                  </span>
+                )}
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <p className="mt-8 text-sm text-ink-soft">
         Permanently delete your account and every document in your library.
       </p>
       <button

@@ -6,7 +6,20 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import * as Dialog from '@radix-ui/react-dialog';
 import { useAuth } from '@/lib/AuthContext';
 import type { Segment } from '@/lib/authApi';
-import { renameDocument, deleteDocument, downloadDocument, type LibraryDocumentSummary } from '@/lib/libraryApi';
+import {
+  renameDocument,
+  deleteDocument,
+  downloadDocument,
+  duplicateDocument,
+  moveDocument,
+  extendDocumentRetention,
+  fetchDocumentFile,
+  listProjects,
+  type LibraryDocumentSummary,
+  type ProjectSummary,
+} from '@/lib/libraryApi';
+import { setPendingToolFile } from '@/lib/pendingToolFile';
+import { TOOLS_BY_TAB, type Tool } from './ToolsIndex';
 import { showError, showSuccess } from '@/lib/toast';
 
 const BILLING_ENFORCED = process.env.NEXT_PUBLIC_BILLING_ENFORCED === 'true';
@@ -17,18 +30,31 @@ const AI_ACTION_LABEL: Record<Segment, string> = {
   RESEARCHER: 'Extract references',
 };
 
+// Extra per-segment AI tools beyond the two generic Workspace actions above
+// — only tools that take exactly one existing file (singleFileSource) fit
+// a single-document context menu; two-file compare tools and batch/multi
+// tools need their own page and aren't offered here.
+function extraAiTools(segment: Segment | null): Tool[] {
+  if (!segment) return [];
+  return TOOLS_BY_TAB['AI tools'].filter((tool) => tool.singleFileSource && tool.segments?.includes(segment));
+}
+
 interface Props {
   doc: LibraryDocumentSummary;
   onRenamed: (doc: LibraryDocumentSummary) => void;
   onDeleted: (id: string) => void;
+  onDuplicated?: (doc: LibraryDocumentSummary) => void;
   onUpgradeNeeded: () => void;
 }
 
-export default function FileOptionsMenu({ doc, onRenamed, onDeleted, onUpgradeNeeded }: Props) {
+export default function FileOptionsMenu({ doc, onRenamed, onDeleted, onDuplicated, onUpgradeNeeded }: Props) {
   const { token, user } = useAuth();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
+  const [moveSubOpen, setMoveSubOpen] = useState(false);
+  const [projects, setProjects] = useState<ProjectSummary[] | null>(null);
+  const [isBusy, setIsBusy] = useState(false);
 
   const locked = BILLING_ENFORCED && user?.plan !== 'PAID';
 
@@ -54,7 +80,72 @@ export default function FileOptionsMenu({ doc, onRenamed, onDeleted, onUpgradeNe
     }
   }
 
-  function handleAiAction(e: Event) {
+  async function handleDuplicate(e: Event) {
+    e.preventDefault();
+    if (!token) return;
+    try {
+      const copy = await duplicateDocument(token, doc.id);
+      onDuplicated?.(copy);
+      showSuccess('File duplicated');
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Could not duplicate this file.');
+    }
+  }
+
+  async function handleExtend(days: 7 | 30) {
+    if (!token) return;
+    try {
+      const { expiresAt } = await extendDocumentRetention(token, doc.id, days);
+      onRenamed({ ...doc, expiresAt });
+      showSuccess(`Retention extended to ${days} days`);
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Could not extend retention.');
+    }
+  }
+
+  async function loadProjects() {
+    if (!token || projects) return;
+    try {
+      setProjects(await listProjects(token));
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Could not load your projects.');
+    }
+  }
+
+  // A successful move means this file no longer belongs in whichever list
+  // is currently showing it (Unsorted, a project's file grid, Recent) — the
+  // same "remove from this list" contract onDeleted already provides, so it
+  // reuses that instead of a new callback every call site would need too.
+  async function handleMove(projectId: string | null) {
+    if (!token || isBusy) return;
+    setIsBusy(true);
+    try {
+      await moveDocument(token, doc.id, projectId);
+      onDeleted(doc.id);
+      showSuccess(projectId ? 'File moved' : 'File moved to Unsorted');
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Could not move this file.');
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  async function handleToolAction(tool: Tool) {
+    if (locked) {
+      onUpgradeNeeded();
+      return;
+    }
+    if (!token) return;
+    try {
+      const file = await fetchDocumentFile(token, doc.id, doc.filename);
+      setPendingToolFile(file);
+      router.push(tool.href);
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Could not open this file.');
+    }
+  }
+
+  function handleWorkspaceAction(e: Event) {
     e.preventDefault();
     if (locked) {
       onUpgradeNeeded();
@@ -62,6 +153,8 @@ export default function FileOptionsMenu({ doc, onRenamed, onDeleted, onUpgradeNe
     }
     router.push(`/workspace?doc=${doc.id}`);
   }
+
+  const aiTools = extraAiTools(user?.segment ?? null);
 
   return (
     <>
@@ -83,48 +176,119 @@ export default function FileOptionsMenu({ doc, onRenamed, onDeleted, onUpgradeNe
           <DropdownMenu.Content
             align="end"
             sideOffset={6}
-            className="animate-dropdown-in z-20 w-[220px] rounded-[10px] bg-white p-1.5 shadow-level-2"
+            className="animate-dropdown-in z-20 w-[240px] rounded-[10px] bg-white p-1.5 shadow-level-2"
             onClick={(e) => e.stopPropagation()}
           >
-            <DropdownMenu.Item
-              onSelect={handleDownload}
-              className="cursor-pointer select-none rounded-md px-2.5 py-2 text-[13px] text-ink outline-none transition-colors data-[highlighted]:bg-emerald-soft"
-            >
-              Download
-            </DropdownMenu.Item>
-            <DropdownMenu.Item
-              onSelect={(e) => {
-                e.preventDefault();
-                setRenameOpen(true);
-              }}
-              className="cursor-pointer select-none rounded-md px-2.5 py-2 text-[13px] text-ink outline-none transition-colors data-[highlighted]:bg-emerald-soft"
-            >
-              Rename
-            </DropdownMenu.Item>
+            {/* Scrolls once the non-destructive items exceed ~8-9 rows;
+                Delete stays pinned below, outside this container. */}
+            <div className="max-h-[340px] overflow-y-auto">
+              {user?.segment && (
+                <>
+                  <MenuItem onSelect={handleWorkspaceAction} locked={locked}>
+                    Summarize
+                  </MenuItem>
+                  <MenuItem onSelect={handleWorkspaceAction} locked={locked}>
+                    {AI_ACTION_LABEL[user.segment]}
+                  </MenuItem>
+                  {aiTools.map((tool) => (
+                    <MenuItem key={tool.href + tool.name} onSelect={(e) => { e.preventDefault(); handleToolAction(tool); }} locked={locked}>
+                      {tool.name}
+                    </MenuItem>
+                  ))}
+                  <DropdownMenu.Separator className="my-1 h-px bg-gray-100" />
+                </>
+              )}
 
-            {user?.segment && (
-              <>
-                <DropdownMenu.Separator className="my-1 h-px bg-gray-100" />
-                <DropdownMenu.Item
-                  onSelect={handleAiAction}
-                  className={`flex cursor-pointer select-none items-center justify-between rounded-md px-2.5 py-2 text-[13px] outline-none transition-colors ${
-                    locked ? 'text-ink opacity-45' : 'text-ink data-[highlighted]:bg-emerald-soft'
-                  }`}
-                >
-                  <span>Summarize</span>
-                  {locked && <LockBadge />}
-                </DropdownMenu.Item>
-                <DropdownMenu.Item
-                  onSelect={handleAiAction}
-                  className={`flex cursor-pointer select-none items-center justify-between rounded-md px-2.5 py-2 text-[13px] outline-none transition-colors ${
-                    locked ? 'text-ink opacity-45' : 'text-ink data-[highlighted]:bg-emerald-soft'
-                  }`}
-                >
-                  <span>{AI_ACTION_LABEL[user.segment]}</span>
-                  {locked && <LockBadge />}
-                </DropdownMenu.Item>
-              </>
-            )}
+              <MenuItem onSelect={handleDownload}>Download</MenuItem>
+              <MenuItem
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setRenameOpen(true);
+                }}
+              >
+                Rename
+              </MenuItem>
+              <MenuItem onSelect={handleDuplicate}>Duplicate</MenuItem>
+
+              <DropdownMenu.Sub
+                open={moveSubOpen}
+                onOpenChange={(next) => {
+                  setMoveSubOpen(next);
+                  if (next) loadProjects();
+                }}
+              >
+                <DropdownMenu.SubTrigger className="flex cursor-pointer select-none items-center justify-between rounded-md px-2.5 py-2 text-[13px] text-ink outline-none transition-colors data-[highlighted]:bg-emerald-soft data-[state=open]:bg-emerald-soft">
+                  Move to Project
+                  <span aria-hidden>›</span>
+                </DropdownMenu.SubTrigger>
+                <DropdownMenu.Portal>
+                  <DropdownMenu.SubContent
+                    sideOffset={4}
+                    className="animate-dropdown-in z-20 max-h-64 w-[220px] overflow-y-auto rounded-[10px] bg-white p-1.5 shadow-level-2"
+                  >
+                    {doc.projectId && (
+                      <DropdownMenu.Item
+                        onSelect={(e) => {
+                          e.preventDefault();
+                          handleMove(null);
+                        }}
+                        className="cursor-pointer select-none rounded-md px-2.5 py-2 text-[12px] text-ink outline-none transition-colors data-[highlighted]:bg-emerald-soft"
+                      >
+                        Unsorted
+                      </DropdownMenu.Item>
+                    )}
+                    {!projects ? (
+                      <p className="px-2.5 py-2 text-[12px] text-ink-soft">Loading…</p>
+                    ) : projects.filter((p) => p.id !== doc.projectId).length === 0 ? (
+                      <p className="px-2.5 py-2 text-[12px] text-ink-soft">No other projects.</p>
+                    ) : (
+                      projects
+                        .filter((p) => p.id !== doc.projectId)
+                        .map((p) => (
+                          <DropdownMenu.Item
+                            key={p.id}
+                            onSelect={(e) => {
+                              e.preventDefault();
+                              handleMove(p.id);
+                            }}
+                            className="cursor-pointer select-none truncate rounded-md px-2.5 py-2 text-[12px] text-ink outline-none transition-colors data-[highlighted]:bg-emerald-soft"
+                          >
+                            {p.name}
+                          </DropdownMenu.Item>
+                        ))
+                    )}
+                  </DropdownMenu.SubContent>
+                </DropdownMenu.Portal>
+              </DropdownMenu.Sub>
+
+              <DropdownMenu.Sub>
+                <DropdownMenu.SubTrigger className="flex cursor-pointer select-none items-center justify-between rounded-md px-2.5 py-2 text-[13px] text-ink outline-none transition-colors data-[highlighted]:bg-emerald-soft data-[state=open]:bg-emerald-soft">
+                  Extend Retention
+                  <span aria-hidden>›</span>
+                </DropdownMenu.SubTrigger>
+                <DropdownMenu.Portal>
+                  <DropdownMenu.SubContent
+                    sideOffset={4}
+                    className="animate-dropdown-in z-20 w-[180px] rounded-[10px] bg-white p-1.5 shadow-level-2"
+                  >
+                    <DropdownMenu.Item
+                      onSelect={(e) => e.preventDefault()}
+                      onClick={() => handleExtend(7)}
+                      className="cursor-pointer select-none rounded-md px-2.5 py-2 text-[12px] text-ink outline-none transition-colors data-[highlighted]:bg-emerald-soft"
+                    >
+                      7 days
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Item
+                      onSelect={(e) => e.preventDefault()}
+                      onClick={() => handleExtend(30)}
+                      className="cursor-pointer select-none rounded-md px-2.5 py-2 text-[12px] text-ink outline-none transition-colors data-[highlighted]:bg-emerald-soft"
+                    >
+                      30 days
+                    </DropdownMenu.Item>
+                  </DropdownMenu.SubContent>
+                </DropdownMenu.Portal>
+              </DropdownMenu.Sub>
+            </div>
 
             <DropdownMenu.Separator className="my-1 h-px bg-gray-100" />
             <DropdownMenu.Item
@@ -137,13 +301,30 @@ export default function FileOptionsMenu({ doc, onRenamed, onDeleted, onUpgradeNe
         </DropdownMenu.Portal>
       </DropdownMenu.Root>
 
-      <RenameDialog
-        open={renameOpen}
-        onOpenChange={setRenameOpen}
-        doc={doc}
-        onRenamed={onRenamed}
-      />
+      <RenameDialog open={renameOpen} onOpenChange={setRenameOpen} doc={doc} onRenamed={onRenamed} />
     </>
+  );
+}
+
+function MenuItem({
+  onSelect,
+  locked,
+  children,
+}: {
+  onSelect: (e: Event) => void;
+  locked?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <DropdownMenu.Item
+      onSelect={onSelect}
+      className={`flex cursor-pointer select-none items-center justify-between rounded-md px-2.5 py-2 text-[13px] outline-none transition-colors ${
+        locked ? 'text-ink opacity-45' : 'text-ink data-[highlighted]:bg-emerald-soft'
+      }`}
+    >
+      <span>{children}</span>
+      {locked && <LockBadge />}
+    </DropdownMenu.Item>
   );
 }
 

@@ -24,7 +24,7 @@ interface AuthContextValue {
   loginWithToken: (newToken: string) => Promise<void>;
   signup: (email: string, password: string, name?: string, segment?: Segment) => Promise<void>;
   logout: () => void;
-  updateProfile: (data: { name?: string; segment?: Segment }) => Promise<void>;
+  updateProfile: (data: { name?: string; segment?: Segment; defaultRetentionHours?: number | null }) => Promise<void>;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   changeEmail: (newEmail: string, currentPassword: string) => Promise<void>;
   deleteAccount: () => Promise<void>;
@@ -81,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }
 
-  async function updateProfile(data: { name?: string; segment?: Segment }) {
+  async function updateProfile(data: { name?: string; segment?: Segment; defaultRetentionHours?: number | null }) {
     if (!token) return;
     setUser(await apiUpdateProfile(token, data));
   }

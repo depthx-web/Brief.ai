@@ -37,8 +37,10 @@ export function formatCountdown(expiresAt: string | Date | null): Countdown {
   if (hoursLeft >= 1) {
     return { label: `${Math.ceil(hoursLeft)}h left`, urgency };
   }
-  const minutes = Math.max(1, Math.ceil(msLeft / (60 * 1000)));
-  return { label: `${minutes}m left`, urgency };
+  const totalMinutes = Math.max(1, Math.ceil(msLeft / (60 * 1000)));
+  const hh = String(Math.floor(totalMinutes / 60)).padStart(2, '0');
+  const mm = String(totalMinutes % 60).padStart(2, '0');
+  return { label: `${hh}:${mm}`, urgency };
 }
 
 // Live-ticking version of formatCountdown — without this, a badge computed
