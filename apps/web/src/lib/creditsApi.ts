@@ -63,6 +63,4 @@ export async function startCreditCheckout(token: string, packId: string): Promis
   return url;
 }
 
-export function formatCents(cents: number): string {
-  return `$${(cents / 100).toFixed(2)}`;
-}
+export { formatCents } from './format';

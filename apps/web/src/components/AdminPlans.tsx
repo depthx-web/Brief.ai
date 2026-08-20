@@ -58,6 +58,24 @@ function formatDollars(cents: number): string {
   return (cents / 100).toFixed(2);
 }
 
+// The public Pricing page always shows a fixed "Save 10%/20%" badge on
+// Quarterly/Yearly (apps/api/src/billing/pricing.service.ts's
+// CYCLE_DISCOUNT_LABEL) rather than computing it from the actual saved
+// price — a deliberate choice so an admin-edited price never makes the
+// badge disappear, but it means a price that ISN'T actually a 10%/20%
+// discount off Monthly will silently show a badge that lies. This warns
+// in the one place that can catch it before it goes live.
+const CYCLE_MONTHS: Partial<Record<AdminBillingCycle, number>> = { QUARTERLY: 3, YEARLY: 12 };
+const CYCLE_DISCOUNT_PERCENT: Partial<Record<AdminBillingCycle, number>> = { QUARTERLY: 10, YEARLY: 20 };
+
+function discountMismatch(monthlyCents: number, cycle: AdminBillingCycle, actualCents: number): boolean {
+  const months = CYCLE_MONTHS[cycle];
+  const discountPercent = CYCLE_DISCOUNT_PERCENT[cycle];
+  if (!months || !discountPercent || !monthlyCents) return false;
+  const expected = Math.round(monthlyCents * months * (1 - discountPercent / 100));
+  return Math.abs(actualCents - expected) > 1;
+}
+
 function FeatureTableHead() {
   return (
     <div className="grid grid-cols-3 border-b border-gray-200 bg-surface px-4 py-2 text-xs font-semibold uppercase text-ink-soft">
@@ -253,6 +271,7 @@ export default function AdminPlans() {
                 {SEGMENTS.map((segment) => {
                   const cellKey = `${segment}:${cycle}`;
                   const isEditing = editingCell === cellKey;
+                  const mismatch = discountMismatch(priceFor(segment, 'MONTHLY'), cycle, priceFor(segment, cycle));
                   return (
                     <td key={segment} className="px-4 py-2.5">
                       {isEditing ? (
@@ -273,9 +292,19 @@ export default function AdminPlans() {
                       ) : (
                         <button
                           onClick={() => setEditingCell(cellKey)}
-                          className="rounded-md px-2 py-1 font-mono text-sm text-ink hover:bg-surface"
+                          title={
+                            mismatch
+                              ? `The public page always shows "Save ${CYCLE_DISCOUNT_PERCENT[cycle]}%" here regardless of the actual price — this price isn't really a ${CYCLE_DISCOUNT_PERCENT[cycle]}% discount off Monthly.`
+                              : undefined
+                          }
+                          className="flex items-center gap-1.5 rounded-md px-2 py-1 font-mono text-sm text-ink hover:bg-surface"
                         >
                           ${formatDollars(priceFor(segment, cycle))}
+                          {mismatch && (
+                            <span className="rounded bg-amber-100 px-1 py-0.5 font-sans text-[9px] font-semibold uppercase text-amber-700">
+                              Badge mismatch
+                            </span>
+                          )}
                         </button>
                       )}
                     </td>

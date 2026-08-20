@@ -7,6 +7,7 @@ import { getCreditBalance } from '@/lib/creditsApi';
 import type { DesktopNavKey } from '@/lib/desktopNav';
 import type { Segment } from '@/lib/authApi';
 import { TOOLS_BY_TAB, type Tab } from './ToolsIndex';
+import { ConvertIcon, ProtectIcon, AiIcon } from '@/lib/icons';
 import LoginModal from './LoginModal';
 
 const SEGMENT_LABEL: Record<string, string> = {
@@ -39,16 +40,21 @@ function countForTab(tab: Tab, segment: Segment | null): number {
   return TOOLS_BY_TAB[tab].filter((tool) => !tool.segments || !segment || tool.segments.includes(segment)).length;
 }
 
-const FILE_ITEMS: { navKey: DesktopNavKey; href: string; icon: (color: string) => React.ReactNode; label: string }[] = [
-  { navKey: 'library', href: '/library', icon: LibraryIcon, label: 'Library' },
-  { navKey: 'recent', href: '/recent', icon: RecentIcon, label: 'Recent' },
+// requiresAuth: AppShell redirects an unauthenticated visit to these routes
+// to the plain web /login route (no desktop chrome at all) — clicking here
+// while logged out instead opens LoginModal, the same as the profile
+// block's "Log in for AI tools" button, so a logged-out desktop user never
+// lands on the unshelled page.
+const FILE_ITEMS: { navKey: DesktopNavKey; href: string; icon: (color: string) => React.ReactNode; label: string; requiresAuth?: boolean }[] = [
+  { navKey: 'library', href: '/library', icon: LibraryIcon, label: 'Library', requiresAuth: true },
+  { navKey: 'recent', href: '/recent', icon: RecentIcon, label: 'Recent', requiresAuth: true },
 ];
 
 // Account-level pages — separate from workspace tools and file management.
-const ACCOUNT_ITEMS: { navKey: DesktopNavKey; href: string; icon: (color: string) => React.ReactNode; label: string }[] = [
-  { navKey: 'wallet', href: '/wallet', icon: WalletIcon, label: 'Wallet' },
-  { navKey: 'referrals', href: '/referrals', icon: ReferralIcon, label: 'Referral Program' },
-  { navKey: 'settings', href: '/settings', icon: SettingsIcon, label: 'Settings' },
+const ACCOUNT_ITEMS: { navKey: DesktopNavKey; href: string; icon: (color: string) => React.ReactNode; label: string; requiresAuth?: boolean }[] = [
+  { navKey: 'wallet', href: '/wallet', icon: WalletIcon, label: 'Wallet', requiresAuth: true },
+  { navKey: 'referrals', href: '/referrals', icon: ReferralIcon, label: 'Referral Program', requiresAuth: true },
+  { navKey: 'settings', href: '/settings', icon: SettingsIcon, label: 'Settings', requiresAuth: true },
 ];
 
 // Muted navy-gray for secondary text on the dark sidebar — not the same as
@@ -193,7 +199,13 @@ export default function DesktopSidebar({ active }: { active: DesktopNavKey }) {
         </div>
         <nav className="flex flex-col gap-0.5">
           {FILE_ITEMS.map((item) => (
-            <NavRow key={item.navKey} {...item} isActive={active === item.navKey} />
+            <NavRow
+              key={item.navKey}
+              {...item}
+              isActive={active === item.navKey}
+              isLoggedIn={!!user}
+              onRequireLogin={() => setLoginOpen(true)}
+            />
           ))}
         </nav>
 
@@ -202,7 +214,13 @@ export default function DesktopSidebar({ active }: { active: DesktopNavKey }) {
         </div>
         <nav className="flex flex-col gap-0.5">
           {ACCOUNT_ITEMS.map((item) => (
-            <NavRow key={item.navKey} {...item} isActive={active === item.navKey} />
+            <NavRow
+              key={item.navKey}
+              {...item}
+              isActive={active === item.navKey}
+              isLoggedIn={!!user}
+              onRequireLogin={() => setLoginOpen(true)}
+            />
           ))}
         </nav>
       </div>
@@ -265,19 +283,21 @@ function NavRow({
   label,
   count,
   isActive,
+  requiresAuth,
+  isLoggedIn,
+  onRequireLogin,
 }: {
   href: string;
   icon: (color: string) => React.ReactNode;
   label: string;
   count?: string;
   isActive: boolean;
+  requiresAuth?: boolean;
+  isLoggedIn?: boolean;
+  onRequireLogin?: () => void;
 }) {
-  return (
-    <Link
-      href={href}
-      className="flex items-center justify-between rounded-lg px-2.5 py-2 hover:bg-white/[0.06]"
-      style={isActive ? { background: 'rgba(255,255,255,0.08)' } : undefined}
-    >
+  const content = (
+    <>
       <div className="flex items-center gap-2.5">
         {icon(isActive ? '#1E9D75' : NAV_INACTIVE)}
         <span className={`text-[14px] ${isActive ? 'font-semibold text-white' : ''}`} style={isActive ? undefined : { color: NAV_INACTIVE }}>
@@ -289,6 +309,27 @@ function NavRow({
           {count}
         </span>
       )}
+    </>
+  );
+
+  if (requiresAuth && !isLoggedIn) {
+    return (
+      <button
+        onClick={onRequireLogin}
+        className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left hover:bg-white/[0.06]"
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <Link
+      href={href}
+      className="flex items-center justify-between rounded-lg px-2.5 py-2 hover:bg-white/[0.06]"
+      style={isActive ? { background: 'rgba(255,255,255,0.08)' } : undefined}
+    >
+      {content}
     </Link>
   );
 }
@@ -313,14 +354,6 @@ function HomeIcon(color: string) {
     </svg>
   );
 }
-function ConvertIcon(color: string) {
-  return (
-    <svg {...iconProps(color)}>
-      <path d="M7 7h10M7 7l3-3M7 7l3 3" />
-      <path d="M17 17H7M17 17l-3-3M17 17l-3 3" />
-    </svg>
-  );
-}
 function OrganizeIcon(color: string) {
   return (
     <svg {...iconProps(color)}>
@@ -328,13 +361,6 @@ function OrganizeIcon(color: string) {
       <rect x="13" y="4" width="7" height="7" rx="1.5" />
       <rect x="4" y="13" width="7" height="7" rx="1.5" />
       <rect x="13" y="13" width="7" height="7" rx="1.5" />
-    </svg>
-  );
-}
-function ProtectIcon(color: string) {
-  return (
-    <svg {...iconProps(color)}>
-      <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" />
     </svg>
   );
 }
@@ -363,13 +389,6 @@ function ChevronIcon({ color, expanded }: { color: string; expanded: boolean }) 
       style={{ transform: expanded ? 'rotate(90deg)' : undefined }}
     >
       <path d="M9 6l6 6-6 6" />
-    </svg>
-  );
-}
-function AiIcon(color: string) {
-  return (
-    <svg {...iconProps(color)}>
-      <path d="M12 3l1.8 5.5L19 10l-5.2 1.5L12 17l-1.8-5.5L5 10l5.2-1.5L12 3z" />
     </svg>
   );
 }

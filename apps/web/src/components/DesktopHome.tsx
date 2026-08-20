@@ -9,6 +9,7 @@ import { fetchCmsPage } from '@/lib/cmsApi';
 import { listDocuments, type LibraryDocumentSummary } from '@/lib/libraryApi';
 import { useGreeting } from '@/lib/greeting';
 import { COUNTDOWN_BADGE_CLASS, useCountdown } from '@/lib/retentionCountdown';
+import { ConvertIcon, ProtectIcon, AiIcon, CloseIcon, FileIcon } from '@/lib/icons';
 import DesktopSidebar from './DesktopSidebar';
 import ActivityBall from './ActivityBall';
 
@@ -142,7 +143,7 @@ function DesktopHomeInner() {
               aria-label="Dismiss"
               className="absolute right-5 top-[18px] flex h-[26px] w-[26px] items-center justify-center rounded-md text-[#8FA1BC] hover:text-white"
             >
-              <CloseIcon />
+              <CloseIcon size={13} />
             </button>
             <div className="relative flex items-center gap-[26px]">
               <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[14px] bg-white/[0.08]">
@@ -187,11 +188,11 @@ function DesktopHomeInner() {
               className="rounded-xl border border-[#E4E8ED] bg-white p-6 shadow-level-1 transition-shadow hover:shadow-level-2"
             >
               <div className="mb-3.5 flex h-10 w-10 items-center justify-center rounded-[10px] bg-emerald-soft">
-                {item.name === 'Convert' && <ConvertIcon color="#1E9D75" />}
-                {item.name === 'Organize & Protect' && <ProtectIcon color="#1E9D75" />}
+                {item.name === 'Convert' && ConvertIcon('#1E9D75')}
+                {item.name === 'Organize & Protect' && ProtectIcon('#1E9D75')}
                 {/* AI-context icons are always --emerald, never a substitute
                     color — see brief-ai-desktop-design-details.md. */}
-                {item.name === 'AI Tools' && <AiIcon color="#1E9D75" />}
+                {item.name === 'AI Tools' && AiIcon('#1E9D75')}
               </div>
               <div className="mb-1 font-serif text-lg font-semibold text-navy">{item.name}</div>
               <div className="text-[13.5px] leading-relaxed text-ink-soft">{item.description}</div>
@@ -259,47 +260,6 @@ function RecentFileRow({ doc, isLast }: { doc: LibraryDocumentSummary; isLast: b
   );
 }
 
-// Stroke-based icons on a 24px viewBox, matching weight/style across the set.
-const iconProps = (color: string) => ({
-  width: 16,
-  height: 16,
-  viewBox: '0 0 24 24',
-  fill: 'none',
-  stroke: color,
-  strokeWidth: 2,
-  strokeLinecap: 'round' as const,
-  strokeLinejoin: 'round' as const,
-});
-
-function ConvertIcon({ color = 'rgba(255,255,255,0.62)' }: { color?: string }) {
-  return (
-    <svg {...iconProps(color)}>
-      <path d="M7 7h10M7 7l3-3M7 7l3 3" />
-      <path d="M17 17H7M17 17l-3-3M17 17l-3 3" />
-    </svg>
-  );
-}
-function ProtectIcon({ color = 'rgba(255,255,255,0.62)' }: { color?: string }) {
-  return (
-    <svg {...iconProps(color)}>
-      <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" />
-    </svg>
-  );
-}
-function AiIcon({ color = 'rgba(255,255,255,0.62)' }: { color?: string }) {
-  return (
-    <svg {...iconProps(color)}>
-      <path d="M12 3l1.8 5.5L19 10l-5.2 1.5L12 17l-1.8-5.5L5 10l5.2-1.5L12 3z" />
-    </svg>
-  );
-}
-function CloseIcon() {
-  return (
-    <svg width={13} height={13} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M18 6L6 18M6 6l12 12" />
-    </svg>
-  );
-}
 function SparkleIcon() {
   return (
     <svg width={28} height={28} viewBox="0 0 24 24" fill="none" stroke="#1E9D75" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
@@ -312,14 +272,6 @@ function GlobeIcon() {
     <svg width={11} height={11} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="9" />
       <path d="M12 8v5M12 16h.01" />
-    </svg>
-  );
-}
-function FileIcon() {
-  return (
-    <svg width={18} height={18} viewBox="0 0 24 24" fill="none" stroke="#4B5768" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
-      <path d="M6 3h9l4 4v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" />
-      <path d="M14 3v5h5" />
     </svg>
   );
 }

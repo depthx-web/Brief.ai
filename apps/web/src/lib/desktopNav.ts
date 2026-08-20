@@ -10,23 +10,6 @@ export type DesktopNavKey =
   | 'referrals'
   | 'settings';
 
-// Slugs used in `/tools?tab=<slug>` links from the desktop sidebar — kept
-// separate from ToolsIndex's own `Tab` union (which uses display strings
-// like "AI tools") so the URL doesn't leak that display casing.
-export const TAB_SLUG_TO_TAB: Record<string, 'Convert' | 'Organize' | 'Protect' | 'AI tools'> = {
-  convert: 'Convert',
-  organize: 'Organize',
-  protect: 'Protect',
-  'ai-tools': 'AI tools',
-};
-
-export const DESKTOP_NAV_KEY_TO_TAB_SLUG: Partial<Record<DesktopNavKey, string>> = {
-  convert: 'convert',
-  organize: 'organize',
-  protect: 'protect',
-  'ai-tools': 'ai-tools',
-};
-
 // Maps each individual tool page's route (under the (tools) group) to the
 // desktop sidebar category it belongs to, mirroring ToolsIndex's
 // TOOLS_BY_TAB grouping so a tool page opened directly (e.g. /merge)

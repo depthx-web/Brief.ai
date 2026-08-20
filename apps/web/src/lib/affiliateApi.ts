@@ -74,6 +74,4 @@ export async function trackAffiliateClick(code: string): Promise<void> {
   }
 }
 
-export function formatCents(cents: number): string {
-  return `$${(cents / 100).toFixed(2)}`;
-}
+export { formatCents } from './format';

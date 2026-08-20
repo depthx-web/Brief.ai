@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useActivityJobs, clearFinished, type ActivityJob } from '@/lib/activityStore';
+import { CheckIcon, CloseIcon } from '@/lib/icons';
 
 const CHECKMARK_AUTOHIDE_MS = 4000;
 
@@ -66,7 +67,7 @@ export default function ActivityBall() {
         ) : unacknowledgedFailure ? (
           <span className="h-2.5 w-2.5 rounded-full" style={{ background: '#C24444' }} />
         ) : (
-          <CheckIcon />
+          <CheckIcon size={18} color="#1E9D75" />
         )}
         {running.length > 1 && (
           <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald font-mono text-[9px] font-bold text-white">
@@ -132,7 +133,7 @@ function JobRow({ job }: { job: ActivityJob }) {
       )}
       {job.status === 'done' && (
         <div className="mt-2 flex items-center gap-1.5 text-[11px] text-emerald">
-          <CheckIcon small />
+          <CheckIcon size={12} />
           Complete
         </div>
       )}
@@ -142,21 +143,5 @@ function JobRow({ job }: { job: ActivityJob }) {
         </p>
       )}
     </div>
-  );
-}
-
-function CheckIcon({ small }: { small?: boolean }) {
-  const size = small ? 12 : 18;
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={small ? 'currentColor' : '#1E9D75'} strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20 6L9 17l-5-5" />
-    </svg>
-  );
-}
-function CloseIcon() {
-  return (
-    <svg width={14} height={14} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M18 6L6 18M6 6l12 12" />
-    </svg>
   );
 }

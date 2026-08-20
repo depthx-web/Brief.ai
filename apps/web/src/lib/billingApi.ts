@@ -79,9 +79,7 @@ export async function getBillingPortalUrl(token: string): Promise<string> {
   return url;
 }
 
-export function formatCents(cents: number): string {
-  return `$${(cents / 100).toFixed(cents % 100 === 0 ? 0 : 2)}`;
-}
+export { formatCents } from './format';
 
 export interface PublicFeature {
   // null = applies to every workspace (Office<->PDF, Protect, Remove

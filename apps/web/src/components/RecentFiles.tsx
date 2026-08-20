@@ -6,6 +6,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '@/lib/AuthContext';
 import { listDocuments, type LibraryDocumentSummary } from '@/lib/libraryApi';
 import { COUNTDOWN_BADGE_CLASS, useCountdown } from '@/lib/retentionCountdown';
+import { FileIcon } from '@/lib/icons';
 
 // A fast, flat "what did I just touch" list — deliberately no project
 // grouping, unlike the Library panel's project cards. See the Recent Panel
@@ -61,7 +62,7 @@ function RecentFileRow({ doc, isLast, onOpen }: { doc: LibraryDocumentSummary; i
       onClick={onOpen}
       className={`flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-surface ${isLast ? '' : 'border-b border-paper-line'}`}
     >
-      <FileIcon />
+      <FileIcon size={16} />
       <span className="min-w-0 flex-1 truncate font-mono text-[13px] text-ink">{doc.filename}</span>
       <span
         className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-[10px] font-medium uppercase tracking-wide ${COUNTDOWN_BADGE_CLASS[countdown.urgency]}`}
@@ -72,14 +73,5 @@ function RecentFileRow({ doc, isLast, onOpen }: { doc: LibraryDocumentSummary; i
         {formatDistanceToNow(new Date(doc.createdAt), { addSuffix: true })}
       </span>
     </button>
-  );
-}
-
-function FileIcon() {
-  return (
-    <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="#4B5768" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
-      <path d="M6 3h9l4 4v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" />
-      <path d="M14 3v5h5" />
-    </svg>
   );
 }

@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import * as Dialog from '@radix-ui/react-dialog';
 import { useAuth } from '@/lib/AuthContext';
 import { isTauri } from '@/lib/platform';
+import { CheckIcon } from '@/lib/icons';
 import {
   fetchPlans,
   startCheckout,
@@ -576,14 +577,6 @@ function ComparePlansModal({
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>
-  );
-}
-
-function CheckIcon({ className }: { className?: string }) {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M20 6 9 17l-5-5" />
-    </svg>
   );
 }
 

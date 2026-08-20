@@ -231,9 +231,16 @@ export class LibraryService {
     const doc = await this.findOwned(userId, documentId);
     if (projectId) await this.findOwnedProject(userId, projectId);
 
-    const expiresAt = projectId
-      ? (doc.expiresAt ?? new Date(Date.now() + 24 * DEFAULT_RETENTION_MS))
-      : null;
+    let expiresAt: Date | null = null;
+    if (projectId) {
+      if (doc.expiresAt) {
+        expiresAt = doc.expiresAt;
+      } else {
+        const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { defaultRetentionHours: true } });
+        const retentionHours = user?.defaultRetentionHours === 0 ? null : (user?.defaultRetentionHours ?? 24);
+        expiresAt = retentionHours !== null ? new Date(Date.now() + retentionHours * 60 * 60 * 1000) : null;
+      }
+    }
 
     const updated = await this.prisma.libraryDocument.update({
       where: { id: doc.id },
