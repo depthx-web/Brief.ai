@@ -4,6 +4,7 @@ import {
   Controller,
   Get,
   InternalServerErrorException,
+  Logger,
   Post,
   UseGuards,
 } from '@nestjs/common';
@@ -70,6 +71,8 @@ interface ReconcileBankBody {
 @Throttle({ default: { limit: 10, ttl: 60_000 } })
 @Controller('ai')
 export class AiController {
+  private readonly logger = new Logger(AiController.name);
+
   constructor(private readonly aiService: AiService) {}
 
   @Post('summarize')
@@ -85,9 +88,8 @@ export class AiController {
       const summary = await this.aiService.summarize(body.pages, style, length, user?.id, body.docType);
       return { summary };
     } catch (err) {
-      throw new InternalServerErrorException(
-        err instanceof Error ? err.message : 'Could not summarize this document.'
-      );
+      this.logger.error(err instanceof Error ? err.message : String(err));
+      throw new InternalServerErrorException('Could not summarize this document.');
     }
   }
 
@@ -101,9 +103,8 @@ export class AiController {
     try {
       return await this.aiService.chat(body.pages, body.history ?? [], body.question, user?.id, body.docType);
     } catch (err) {
-      throw new InternalServerErrorException(
-        err instanceof Error ? err.message : 'Could not answer this question.'
-      );
+      this.logger.error(err instanceof Error ? err.message : String(err));
+      throw new InternalServerErrorException('Could not answer this question.');
     }
   }
 
@@ -117,9 +118,8 @@ export class AiController {
       const result = await this.aiService.analyzeClauses(body.pages, user?.id, body.docType);
       return result;
     } catch (err) {
-      throw new InternalServerErrorException(
-        err instanceof Error ? err.message : 'Could not analyze this contract.'
-      );
+      this.logger.error(err instanceof Error ? err.message : String(err));
+      throw new InternalServerErrorException('Could not analyze this contract.');
     }
   }
 
@@ -138,9 +138,8 @@ export class AiController {
       const references = await this.aiService.extractReferences(body.pages, format, user?.id, body.docType);
       return { references };
     } catch (err) {
-      throw new InternalServerErrorException(
-        err instanceof Error ? err.message : 'Could not extract references.'
-      );
+      this.logger.error(err instanceof Error ? err.message : String(err));
+      throw new InternalServerErrorException('Could not extract references.');
     }
   }
 
@@ -154,9 +153,8 @@ export class AiController {
       const result = await this.aiService.extractInvoiceData(body.pages, user?.id, body.docType);
       return result;
     } catch (err) {
-      throw new InternalServerErrorException(
-        err instanceof Error ? err.message : 'Could not extract invoice data.'
-      );
+      this.logger.error(err instanceof Error ? err.message : String(err));
+      throw new InternalServerErrorException('Could not extract invoice data.');
     }
   }
 
@@ -168,7 +166,8 @@ export class AiController {
     try {
       return await this.aiService.compareContracts(body.pagesA, body.pagesB, user?.id, body.docType);
     } catch (err) {
-      throw new InternalServerErrorException(err instanceof Error ? err.message : 'Could not compare these contracts.');
+      this.logger.error(err instanceof Error ? err.message : String(err));
+      throw new InternalServerErrorException('Could not compare these contracts.');
     }
   }
 
@@ -181,7 +180,8 @@ export class AiController {
       const summary = await this.aiService.summarizePlain(body.pages, user?.id, body.docType);
       return { summary };
     } catch (err) {
-      throw new InternalServerErrorException(err instanceof Error ? err.message : 'Could not summarize this document.');
+      this.logger.error(err instanceof Error ? err.message : String(err));
+      throw new InternalServerErrorException('Could not summarize this document.');
     }
   }
 
@@ -193,7 +193,8 @@ export class AiController {
     try {
       return await this.aiService.auditNda(body.pages, user?.id);
     } catch (err) {
-      throw new InternalServerErrorException(err instanceof Error ? err.message : 'Could not audit this NDA.');
+      this.logger.error(err instanceof Error ? err.message : String(err));
+      throw new InternalServerErrorException('Could not audit this NDA.');
     }
   }
 
@@ -205,7 +206,8 @@ export class AiController {
     try {
       return await this.aiService.detectSensitiveData(body.pages, user?.id);
     } catch (err) {
-      throw new InternalServerErrorException(err instanceof Error ? err.message : 'Could not scan this document.');
+      this.logger.error(err instanceof Error ? err.message : String(err));
+      throw new InternalServerErrorException('Could not scan this document.');
     }
   }
 
@@ -217,7 +219,8 @@ export class AiController {
     try {
       return await this.aiService.analyzeFinancialRatios(body.pages, user?.id);
     } catch (err) {
-      throw new InternalServerErrorException(err instanceof Error ? err.message : 'Could not analyze this statement.');
+      this.logger.error(err instanceof Error ? err.message : String(err));
+      throw new InternalServerErrorException('Could not analyze this statement.');
     }
   }
 
@@ -231,7 +234,8 @@ export class AiController {
     try {
       return await this.aiService.reconcileBank(body.pagesBank, body.pagesRecords, user?.id);
     } catch (err) {
-      throw new InternalServerErrorException(err instanceof Error ? err.message : 'Could not reconcile these records.');
+      this.logger.error(err instanceof Error ? err.message : String(err));
+      throw new InternalServerErrorException('Could not reconcile these records.');
     }
   }
 
@@ -243,7 +247,8 @@ export class AiController {
     try {
       return await this.aiService.flagDeductibleExpenses(body.pages, user?.id);
     } catch (err) {
-      throw new InternalServerErrorException(err instanceof Error ? err.message : 'Could not flag expenses.');
+      this.logger.error(err instanceof Error ? err.message : String(err));
+      throw new InternalServerErrorException('Could not flag expenses.');
     }
   }
 
@@ -255,7 +260,8 @@ export class AiController {
     try {
       return await this.aiService.detectDuplicatePayments(body.pages, user?.id);
     } catch (err) {
-      throw new InternalServerErrorException(err instanceof Error ? err.message : 'Could not scan for duplicates.');
+      this.logger.error(err instanceof Error ? err.message : String(err));
+      throw new InternalServerErrorException('Could not scan for duplicates.');
     }
   }
 
@@ -267,7 +273,8 @@ export class AiController {
     try {
       return await this.aiService.comparePapers(body.pagesA, body.pagesB, user?.id);
     } catch (err) {
-      throw new InternalServerErrorException(err instanceof Error ? err.message : 'Could not compare these papers.');
+      this.logger.error(err instanceof Error ? err.message : String(err));
+      throw new InternalServerErrorException('Could not compare these papers.');
     }
   }
 
@@ -279,7 +286,8 @@ export class AiController {
     try {
       return await this.aiService.extractMethodology(body.pages, user?.id);
     } catch (err) {
-      throw new InternalServerErrorException(err instanceof Error ? err.message : 'Could not extract methodology.');
+      this.logger.error(err instanceof Error ? err.message : String(err));
+      throw new InternalServerErrorException('Could not extract methodology.');
     }
   }
 
@@ -292,7 +300,8 @@ export class AiController {
       const outline = await this.aiService.generateOutline(body.pages, user?.id);
       return { outline };
     } catch (err) {
-      throw new InternalServerErrorException(err instanceof Error ? err.message : 'Could not generate an outline.');
+      this.logger.error(err instanceof Error ? err.message : String(err));
+      throw new InternalServerErrorException('Could not generate an outline.');
     }
   }
 

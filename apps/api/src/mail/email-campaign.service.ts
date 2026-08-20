@@ -107,6 +107,19 @@ export class EmailCampaignService {
   }
 }
 
+// Every current call site only ever substitutes a recipient's own data back
+// to themselves, so this isn't exploitable against a third party today —
+// but escaping here is what keeps it that way if a future template ever
+// substitutes one user's data into an email sent to someone else.
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function substitute(template: string, vars: Record<string, string>): string {
-  return template.replace(/\{\{(\w+)\}\}/g, (_match, key: string) => vars[key] ?? '');
+  return template.replace(/\{\{(\w+)\}\}/g, (_match, key: string) => escapeHtml(vars[key] ?? ''));
 }

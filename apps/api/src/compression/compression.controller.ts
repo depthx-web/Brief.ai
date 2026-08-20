@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   InternalServerErrorException,
+  Logger,
   Post,
   Res,
   UploadedFile,
@@ -16,6 +17,7 @@ import { OptionalJwtAuthGuard } from '../auth/optional-jwt-auth.guard';
 import { FeatureGuard } from '../features/feature.guard';
 import { RequireFeature } from '../features/require-feature.decorator';
 import { CompressionService, COMPRESSION_PRESETS, type CompressionPreset } from './compression.service';
+import { assertPdfSignature } from '../common/file-signature';
 
 const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024;
 
@@ -30,6 +32,8 @@ function isPreset(value: string | undefined): value is CompressionPreset {
 @ApiTags('compress')
 @Controller('compress')
 export class CompressionController {
+  private readonly logger = new Logger(CompressionController.name);
+
   constructor(private readonly compressionService: CompressionService) {}
 
   @Post('high-ratio')
@@ -45,15 +49,15 @@ export class CompressionController {
     if (!file.originalname.toLowerCase().endsWith('.pdf')) {
       throw new BadRequestException('Please upload a PDF file.');
     }
+    assertPdfSignature(file);
     const preset = isPreset(body.preset) ? body.preset : 'ebook';
 
     let outputBuffer: Buffer;
     try {
       outputBuffer = await this.compressionService.compress(file, preset);
     } catch (err) {
-      throw new InternalServerErrorException(
-        err instanceof Error ? err.message : 'Compression failed.'
-      );
+      this.logger.error(err instanceof Error ? err.message : String(err));
+      throw new InternalServerErrorException('Compression failed.');
     }
 
     const baseName = file.originalname.replace(/\.pdf$/i, '');

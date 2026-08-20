@@ -11,6 +11,7 @@ import {
   ServiceUnavailableException,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
 import { AuthService, Segment } from './auth.service';
@@ -60,7 +61,11 @@ interface ChangeEmailBody {
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  // Tighter than the API-wide default (60/min/IP) — auth endpoints are the
+  // ones actually worth hardening against brute-force/credential-stuffing,
+  // the same reasoning the AI endpoints already got a bespoke limit for.
   @Post('signup')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   async signup(@Body() body: SignupBody) {
     if (!body.email?.trim() || !body.password) {
       throw new BadRequestException('Email and password are required.');
@@ -83,6 +88,7 @@ export class AuthController {
   }
 
   @Post('login')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
   async login(@Body() body: LoginBody) {
     if (!body.email?.trim() || !body.password) {
       throw new BadRequestException('Email and password are required.');

@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   InternalServerErrorException,
+  Logger,
   Post,
   Res,
   UploadedFile,
@@ -16,12 +17,15 @@ import { OptionalJwtAuthGuard } from '../auth/optional-jwt-auth.guard';
 import { FeatureGuard } from '../features/feature.guard';
 import { RequireFeature } from '../features/require-feature.decorator';
 import { PasswordService } from './password.service';
+import { assertPdfSignature } from '../common/file-signature';
 
 const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024;
 
 @ApiTags('password')
 @Controller()
 export class PasswordController {
+  private readonly logger = new Logger(PasswordController.name);
+
   constructor(private readonly passwordService: PasswordService) {}
 
   // Passwords are sent as multipart form fields (not query params) so they
@@ -38,14 +42,14 @@ export class PasswordController {
   ) {
     if (!file) throw new BadRequestException('No file uploaded.');
     if (!password) throw new BadRequestException('A password is required.');
+    assertPdfSignature(file);
 
     let outputBuffer: Buffer;
     try {
       outputBuffer = await this.passwordService.protect(file, password, ownerPassword ?? '');
     } catch (err) {
-      throw new InternalServerErrorException(
-        err instanceof Error ? err.message : 'Could not protect this PDF.'
-      );
+      this.logger.error(err instanceof Error ? err.message : String(err));
+      throw new InternalServerErrorException('Could not protect this PDF.');
     }
 
     const baseName = file.originalname.replace(/\.[^.]+$/, '');
@@ -67,17 +71,18 @@ export class PasswordController {
   ) {
     if (!file) throw new BadRequestException('No file uploaded.');
     if (!password) throw new BadRequestException('A password is required.');
+    assertPdfSignature(file);
 
     let outputBuffer: Buffer;
     try {
       outputBuffer = await this.passwordService.unlock(file, password);
     } catch (err) {
-      // Most failures here are a wrong password rather than a server problem.
-      throw new BadRequestException(
-        err instanceof Error
-          ? `Could not remove the password: ${err.message}`
-          : 'Could not remove the password. It may be incorrect.'
-      );
+      // Most failures here are a wrong password rather than a server
+      // problem — the detail (which can include internal qpdf/temp-path
+      // text) is logged server-side only; the client always gets the same
+      // safe, generic message.
+      this.logger.error(err instanceof Error ? err.message : String(err));
+      throw new BadRequestException('Could not remove the password. It may be incorrect.');
     }
 
     const baseName = file.originalname.replace(/\.[^.]+$/, '');

@@ -19,6 +19,7 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import type { SafeUser } from '../auth/auth.service';
 import { LibraryService } from './library.service';
+import { assertPdfSignature } from '../common/file-signature';
 
 const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024;
 
@@ -41,6 +42,7 @@ export class LibraryController {
   ) {
     if (!file) throw new BadRequestException('No file uploaded.');
     if (!text?.trim()) throw new BadRequestException('No extracted text provided.');
+    assertPdfSignature(file);
     return this.libraryService.addDocument(
       user.id,
       file,

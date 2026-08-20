@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Controller,
   InternalServerErrorException,
+  Logger,
   Post,
   Res,
   UploadedFile,
@@ -15,6 +16,7 @@ import { OptionalJwtAuthGuard } from '../auth/optional-jwt-auth.guard';
 import { FeatureGuard } from '../features/feature.guard';
 import { RequireFeature } from '../features/require-feature.decorator';
 import { ConversionService, TargetFormat } from './conversion.service';
+import { assertPdfSignature, assertOfficeSignature } from '../common/file-signature';
 
 const MIME_TYPES: Record<TargetFormat, string> = {
   pdf: 'application/pdf',
@@ -48,6 +50,8 @@ const FAMILY_LABEL: Record<OfficeFamily, string> = {
 @ApiTags('convert')
 @Controller('convert')
 export class ConversionController {
+  private readonly logger = new Logger(ConversionController.name);
+
   constructor(private readonly conversionService: ConversionService) {}
 
   // One route per format per direction (not one generic /convert?to=) so
@@ -115,14 +119,14 @@ export class ConversionController {
     if (!file.originalname.toLowerCase().endsWith('.pdf')) {
       throw new BadRequestException('Please upload a PDF file.');
     }
+    assertPdfSignature(file);
 
     let outputBuffer: Buffer;
     try {
       outputBuffer = await this.conversionService.convertToHtml(file);
     } catch (err) {
-      throw new InternalServerErrorException(
-        err instanceof Error ? err.message : 'Conversion failed.'
-      );
+      this.logger.error(err instanceof Error ? err.message : String(err));
+      throw new InternalServerErrorException('Conversion failed.');
     }
 
     const baseName = file.originalname.replace(/\.pdf$/i, '');
@@ -141,6 +145,7 @@ export class ConversionController {
         `Please upload a ${FAMILY_LABEL[family]} file (${SOURCE_EXTENSIONS[family].map((e) => `.${e}`).join(', ')}).`
       );
     }
+    assertOfficeSignature(file);
     await this.runConversion(file, 'pdf', res);
   }
 
@@ -149,6 +154,7 @@ export class ConversionController {
     if (!file.originalname.toLowerCase().endsWith('.pdf')) {
       throw new BadRequestException('Please upload a PDF file.');
     }
+    assertPdfSignature(file);
     await this.runConversion(file, TARGET_FORMAT[family], res);
   }
 
@@ -157,9 +163,8 @@ export class ConversionController {
     try {
       outputBuffer = await this.conversionService.convert(file, to);
     } catch (err) {
-      throw new InternalServerErrorException(
-        err instanceof Error ? err.message : 'Conversion failed.'
-      );
+      this.logger.error(err instanceof Error ? err.message : String(err));
+      throw new InternalServerErrorException('Conversion failed.');
     }
 
     const baseName = file.originalname.replace(/\.[^.]+$/, '');
