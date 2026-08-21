@@ -6,6 +6,8 @@ import HeaderAuthLinks from '@/components/HeaderAuthLinks';
 import HomeLogoLink from '@/components/HomeLogoLink';
 import DesktopShell from '@/components/DesktopShell';
 import ToolSeoSections from '@/components/ToolSeoSections';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 import { isTauri } from '@/lib/platform';
 import { getDesktopNavKeyForPath } from '@/lib/desktopNav';
 
@@ -14,6 +16,7 @@ import { getDesktopNavKeyForPath } from '@/lib/desktopNav';
 // of the app instead, with the sidebar item matching the tool's category.
 export default function ToolsChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { t } = useLocale();
 
   if (isTauri()) {
     return <DesktopShell active={getDesktopNavKeyForPath(pathname)}>{children}</DesktopShell>;
@@ -28,8 +31,9 @@ export default function ToolsChrome({ children }: { children: React.ReactNode })
           </HomeLogoLink>
           <div className="flex items-center gap-6">
             <Link href="/dashboard" className="text-sm font-medium text-navy transition-colors hover:text-emerald">
-              Dashboard
+              {t('sidebar.dashboard')}
             </Link>
+            <LanguageSwitcher />
             <HeaderAuthLinks />
           </div>
         </div>

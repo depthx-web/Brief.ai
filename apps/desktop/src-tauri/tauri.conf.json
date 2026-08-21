@@ -40,6 +40,12 @@
     "copyright": "Copyright © 2026 Brief.ai",
     "shortDescription": "Local PDF and document tools",
     "longDescription": "Brief.ai desktop — protect, unlock, compress, and convert PDF and office documents locally, with no upload required.",
+    "windows": {
+      "nsis": {
+        "languages": ["English", "German", "French", "Spanish", "Italian", "Arabic"],
+        "displayLanguageSelector": true
+      }
+    },
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

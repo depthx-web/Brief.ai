@@ -3,10 +3,12 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 import GoogleSignInButton from './GoogleSignInButton';
 
 export default function LoginForm() {
   const { login } = useAuth();
+  const { t } = useLocale();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -30,10 +32,10 @@ export default function LoginForm() {
   return (
     <div className="mx-auto mt-10 w-full max-w-sm px-6">
       <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
-        <h1 className="font-serif text-2xl font-semibold text-navy">Log in</h1>
+        <h1 className="font-serif text-2xl font-semibold text-navy">{t('auth.logInTitle')}</h1>
 
         <div className="mt-6">
-          <GoogleSignInButton />
+          <GoogleSignInButton label={t('auth.continueWithGoogle')} />
         </div>
         <div className="my-5 flex items-center gap-3 text-xs text-ink-soft">
           <span className="h-px flex-1 bg-gray-200" />
@@ -43,7 +45,7 @@ export default function LoginForm() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-ink">Email</label>
+            <label className="block text-sm font-medium text-ink">{t('auth.email')}</label>
             <input
               type="email"
               required
@@ -53,7 +55,7 @@ export default function LoginForm() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-ink">Password</label>
+            <label className="block text-sm font-medium text-ink">{t('auth.password')}</label>
             <input
               type="password"
               required
@@ -70,14 +72,14 @@ export default function LoginForm() {
             disabled={isSubmitting}
             className="w-full rounded-lg bg-emerald px-6 py-3 font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
           >
-            {isSubmitting ? 'Logging in…' : 'Log in'}
+            {isSubmitting ? 'Logging in…' : t('auth.logInTitle')}
           </button>
         </form>
 
         <p className="mt-4 text-sm text-ink-soft">
           Don&apos;t have an account?{' '}
           <a href="/signup" className="font-medium text-navy hover:text-emerald">
-            Sign up
+            {t('nav.signUp')}
           </a>
         </p>
       </div>

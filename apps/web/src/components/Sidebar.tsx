@@ -3,21 +3,25 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
+import { useLocale } from '@/lib/i18n/LocaleContext';
+import type { DictionaryKey } from '@/lib/i18n/dictionaries/en';
 import HomeLogoLink from './HomeLogoLink';
+import LanguageSwitcher from './LanguageSwitcher';
 import WorkspacePlanCard from './WorkspacePlanCard';
 
-const NAV_ITEMS = [
-  { href: '/dashboard', label: 'Dashboard' },
-  { href: '/library', label: 'My Library' },
-  { href: '/wallet', label: '👛 My Wallet' },
-  { href: '/referrals', label: '🔗 Referral Program' },
-  { href: '/tools', label: 'Tools' },
-  { href: '/settings', label: 'Settings' },
+const NAV_ITEMS: { href: string; labelKey: DictionaryKey; emoji?: string }[] = [
+  { href: '/dashboard', labelKey: 'sidebar.dashboard' },
+  { href: '/library', labelKey: 'sidebar.myLibrary' },
+  { href: '/wallet', labelKey: 'sidebar.myWallet', emoji: '👛' },
+  { href: '/referrals', labelKey: 'sidebar.referrals', emoji: '🔗' },
+  { href: '/tools', labelKey: 'sidebar.tools' },
+  { href: '/settings', labelKey: 'sidebar.settings' },
 ];
 
 export default function Sidebar({ onOpenSwitchModal }: { onOpenSwitchModal: () => void }) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const { t } = useLocale();
 
   return (
     <aside className="fixed inset-y-0 left-0 z-10 flex h-screen w-60 shrink-0 flex-col overflow-y-auto bg-navy text-white">
@@ -36,7 +40,8 @@ export default function Sidebar({ onOpenSwitchModal }: { onOpenSwitchModal: () =
                 active ? 'bg-white/10 font-medium text-white' : 'text-[#C9D4E3] hover:bg-white/5 hover:text-white'
               }`}
             >
-              {item.label}
+              {item.emoji ? `${item.emoji} ` : ''}
+              {t(item.labelKey)}
             </Link>
           );
         })}
@@ -46,6 +51,10 @@ export default function Sidebar({ onOpenSwitchModal }: { onOpenSwitchModal: () =
 
       <div className="flex-1" />
 
+      <div className="border-t border-white/10 px-4 py-3">
+        <LanguageSwitcher variant="dark" />
+      </div>
+
       <div className="border-t border-white/10 px-4 py-5">
         {user ? (
           <>
@@ -54,14 +63,14 @@ export default function Sidebar({ onOpenSwitchModal }: { onOpenSwitchModal: () =
               onClick={logout}
               className="mt-2 text-xs font-medium text-[#8FA1BC] hover:text-white"
             >
-              Log out
+              {t('sidebar.logout')}
             </button>
           </>
         ) : (
           <>
-            <p className="text-xs text-[#8FA1BC]">Browsing as a guest</p>
+            <p className="text-xs text-[#8FA1BC]">{t('sidebar.browsingAsGuest')}</p>
             <Link href="/login" className="mt-2 block text-xs font-medium text-emerald hover:text-white">
-              Log in →
+              {t('sidebar.logInArrow')}
             </Link>
           </>
         )}

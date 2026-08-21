@@ -3,33 +3,36 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/AuthContext';
+import { useLocale } from '@/lib/i18n/LocaleContext';
+import type { DictionaryKey } from '@/lib/i18n/dictionaries/en';
 import { getCreditBalance } from '@/lib/creditsApi';
 import type { DesktopNavKey } from '@/lib/desktopNav';
 import type { Segment } from '@/lib/authApi';
 import { TOOLS_BY_TAB, type Tab } from './ToolsIndex';
 import { ConvertIcon, ProtectIcon, AiIcon } from '@/lib/icons';
 import LoginModal from './LoginModal';
+import LanguageSwitcher from './LanguageSwitcher';
 
-const SEGMENT_LABEL: Record<string, string> = {
-  LAWYER: 'Legal',
-  ACCOUNTANT: 'Accounting',
-  RESEARCHER: 'Research',
+const SEGMENT_LABEL_KEY: Record<string, DictionaryKey> = {
+  LAWYER: 'segment.legal',
+  ACCOUNTANT: 'segment.accounting',
+  RESEARCHER: 'segment.research',
 };
 
 const TOOLS_EXPANDED_KEY = 'brief-ai-desktop-tools-expanded';
 
-const HOME_ITEM: { navKey: DesktopNavKey; href: string; icon: (color: string) => React.ReactNode; label: string } = {
+const HOME_ITEM: { navKey: DesktopNavKey; href: string; icon: (color: string) => React.ReactNode; labelKey: DictionaryKey } = {
   navKey: 'home',
   href: '/desktop-home',
   icon: HomeIcon,
-  label: 'Home',
+  labelKey: 'sidebar.home',
 };
 
-const TOOL_SUB_ITEMS: { navKey: DesktopNavKey; href: string; icon: (color: string) => React.ReactNode; label: string; tab: Tab }[] = [
-  { navKey: 'convert', href: '/tools?tab=convert', icon: ConvertIcon, label: 'Convert', tab: 'Convert' },
-  { navKey: 'organize', href: '/tools?tab=organize', icon: OrganizeIcon, label: 'Organize', tab: 'Organize' },
-  { navKey: 'protect', href: '/tools?tab=protect', icon: ProtectIcon, label: 'Protect', tab: 'Protect' },
-  { navKey: 'ai-tools', href: '/tools?tab=ai-tools', icon: AiIcon, label: 'AI Tools', tab: 'AI tools' },
+const TOOL_SUB_ITEMS: { navKey: DesktopNavKey; href: string; icon: (color: string) => React.ReactNode; labelKey: DictionaryKey; tab: Tab }[] = [
+  { navKey: 'convert', href: '/tools?tab=convert', icon: ConvertIcon, labelKey: 'sidebar.convert', tab: 'Convert' },
+  { navKey: 'organize', href: '/tools?tab=organize', icon: OrganizeIcon, labelKey: 'sidebar.organize', tab: 'Organize' },
+  { navKey: 'protect', href: '/tools?tab=protect', icon: ProtectIcon, labelKey: 'sidebar.protect', tab: 'Protect' },
+  { navKey: 'ai-tools', href: '/tools?tab=ai-tools', icon: AiIcon, labelKey: 'sidebar.aiTools', tab: 'AI tools' },
 ];
 
 // Live count for the currently active workspace, not a global total — a
@@ -45,16 +48,16 @@ function countForTab(tab: Tab, segment: Segment | null): number {
 // while logged out instead opens LoginModal, the same as the profile
 // block's "Log in for AI tools" button, so a logged-out desktop user never
 // lands on the unshelled page.
-const FILE_ITEMS: { navKey: DesktopNavKey; href: string; icon: (color: string) => React.ReactNode; label: string; requiresAuth?: boolean }[] = [
-  { navKey: 'library', href: '/library', icon: LibraryIcon, label: 'Library', requiresAuth: true },
-  { navKey: 'recent', href: '/recent', icon: RecentIcon, label: 'Recent', requiresAuth: true },
+const FILE_ITEMS: { navKey: DesktopNavKey; href: string; icon: (color: string) => React.ReactNode; labelKey: DictionaryKey; requiresAuth?: boolean }[] = [
+  { navKey: 'library', href: '/library', icon: LibraryIcon, labelKey: 'sidebar.library', requiresAuth: true },
+  { navKey: 'recent', href: '/recent', icon: RecentIcon, labelKey: 'sidebar.recent', requiresAuth: true },
 ];
 
 // Account-level pages — separate from workspace tools and file management.
-const ACCOUNT_ITEMS: { navKey: DesktopNavKey; href: string; icon: (color: string) => React.ReactNode; label: string; requiresAuth?: boolean }[] = [
-  { navKey: 'wallet', href: '/wallet', icon: WalletIcon, label: 'Wallet', requiresAuth: true },
-  { navKey: 'referrals', href: '/referrals', icon: ReferralIcon, label: 'Referral Program', requiresAuth: true },
-  { navKey: 'settings', href: '/settings', icon: SettingsIcon, label: 'Settings', requiresAuth: true },
+const ACCOUNT_ITEMS: { navKey: DesktopNavKey; href: string; icon: (color: string) => React.ReactNode; labelKey: DictionaryKey; requiresAuth?: boolean }[] = [
+  { navKey: 'wallet', href: '/wallet', icon: WalletIcon, labelKey: 'sidebar.wallet', requiresAuth: true },
+  { navKey: 'referrals', href: '/referrals', icon: ReferralIcon, labelKey: 'sidebar.referrals', requiresAuth: true },
+  { navKey: 'settings', href: '/settings', icon: SettingsIcon, labelKey: 'sidebar.settings', requiresAuth: true },
 ];
 
 // Muted navy-gray for secondary text on the dark sidebar — not the same as
@@ -90,28 +93,17 @@ function useConnectionState(): ConnectionState {
   return state;
 }
 
-const CONNECTION_COPY: Record<ConnectionState, { label: string; dot: string; body: string }> = {
-  online: {
-    label: 'Online',
-    dot: '#1E9D75',
-    body: 'Core tools always run on this device. AI features are connected.',
-  },
-  offline: {
-    label: 'Offline',
-    dot: MUTED,
-    body: 'Core tools still work offline. AI features need a connection.',
-  },
-  reconnecting: {
-    label: 'Reconnecting',
-    dot: '#D4A054',
-    body: 'Reconnecting to AI features… core tools are unaffected.',
-  },
+const CONNECTION_COPY: Record<ConnectionState, { labelKey: DictionaryKey; dot: string; bodyKey: DictionaryKey }> = {
+  online: { labelKey: 'desktop.online', dot: '#1E9D75', bodyKey: 'desktop.onlineBody' },
+  offline: { labelKey: 'desktop.offline', dot: MUTED, bodyKey: 'desktop.offlineBody' },
+  reconnecting: { labelKey: 'desktop.reconnecting', dot: '#D4A054', bodyKey: 'desktop.reconnectingBody' },
 };
 
 export default function DesktopSidebar({ active }: { active: DesktopNavKey }) {
   const { user, token, logout } = useAuth();
+  const { t } = useLocale();
   const connection = useConnectionState();
-  const { label, dot, body } = CONNECTION_COPY[connection];
+  const { labelKey, dot, bodyKey } = CONNECTION_COPY[connection];
   const [balance, setBalance] = useState<number | null>(null);
   const [loginOpen, setLoginOpen] = useState(false);
   // Collapsed by default; a stored preference (if any) overrides this after
@@ -157,7 +149,7 @@ export default function DesktopSidebar({ active }: { active: DesktopNavKey }) {
 
       <div className="min-h-0 flex-1 overflow-y-auto px-3.5">
         <div className="px-2 pb-2 font-mono text-[10px] font-semibold uppercase tracking-wider" style={{ color: MUTED, letterSpacing: '1px' }}>
-          Workspace
+          {t('desktop.workspace')}
         </div>
         <nav className="flex flex-col gap-0.5">
           <NavRow {...HOME_ITEM} isActive={active === HOME_ITEM.navKey} />
@@ -173,7 +165,7 @@ export default function DesktopSidebar({ active }: { active: DesktopNavKey }) {
                 className={`text-[14px] ${anyToolActive ? 'font-semibold text-white' : ''}`}
                 style={anyToolActive ? undefined : { color: NAV_INACTIVE }}
               >
-                Tools
+                {t('sidebar.tools')}
               </span>
             </div>
             <ChevronIcon color={MUTED} expanded={toolsSectionOpen} />
@@ -185,7 +177,7 @@ export default function DesktopSidebar({ active }: { active: DesktopNavKey }) {
                   key={item.navKey}
                   href={item.href}
                   icon={item.icon}
-                  label={item.label}
+                  labelKey={item.labelKey}
                   count={String(countForTab(item.tab, segment))}
                   isActive={active === item.navKey}
                 />
@@ -195,7 +187,7 @@ export default function DesktopSidebar({ active }: { active: DesktopNavKey }) {
         </nav>
 
         <div className="mt-5 px-2 pb-2 font-mono text-[10px] font-semibold uppercase tracking-wider" style={{ color: MUTED, letterSpacing: '1px' }}>
-          Files
+          {t('desktop.files')}
         </div>
         <nav className="flex flex-col gap-0.5">
           {FILE_ITEMS.map((item) => (
@@ -210,7 +202,7 @@ export default function DesktopSidebar({ active }: { active: DesktopNavKey }) {
         </nav>
 
         <div className="mt-5 px-2 pb-2 font-mono text-[10px] font-semibold uppercase tracking-wider" style={{ color: MUTED, letterSpacing: '1px' }}>
-          Account
+          {t('desktop.account')}
         </div>
         <nav className="flex flex-col gap-0.5">
           {ACCOUNT_ITEMS.map((item) => (
@@ -232,9 +224,9 @@ export default function DesktopSidebar({ active }: { active: DesktopNavKey }) {
             style={{ background: dot, boxShadow: connection === 'online' ? '0 0 0 3px rgba(30,157,117,0.25)' : undefined }}
           />
           <div>
-            <div className="font-mono text-[10px] font-bold uppercase tracking-wide text-white">{label}</div>
+            <div className="font-mono text-[10px] font-bold uppercase tracking-wide text-white">{t(labelKey)}</div>
             <div className="mt-0.5 text-xs leading-normal" style={{ color: NAV_INACTIVE }}>
-              {body}
+              {t(bodyKey)}
             </div>
           </div>
         </div>
@@ -246,6 +238,10 @@ export default function DesktopSidebar({ active }: { active: DesktopNavKey }) {
           </Link>
         )}
 
+        <div className="mb-1 px-2">
+          <LanguageSwitcher variant="dark" />
+        </div>
+
         {user ? (
           <div className="flex items-center gap-2.5 px-2 py-2">
             <div className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-emerald-soft font-mono text-[11px] font-semibold text-emerald-dark">
@@ -254,12 +250,12 @@ export default function DesktopSidebar({ active }: { active: DesktopNavKey }) {
             <div className="min-w-0 flex-1">
               <div className="truncate text-[13px] font-semibold text-white">{user.name ?? user.email}</div>
               <div className="font-mono text-[10.5px]" style={{ color: MUTED }}>
-                {(user.segment && SEGMENT_LABEL[user.segment]) ?? 'No workspace'} &middot;{' '}
-                {user.plan === 'PAID' ? 'Pro' : 'Free'}
+                {(user.segment && t(SEGMENT_LABEL_KEY[user.segment])) ?? t('desktop.noWorkspace')} &middot;{' '}
+                {user.plan === 'PAID' ? t('desktop.pro') : t('desktop.free')}
               </div>
             </div>
             <button onClick={logout} className="text-[11px] hover:text-white" style={{ color: MUTED }}>
-              Log out
+              {t('sidebar.logout')}
             </button>
           </div>
         ) : (
@@ -267,7 +263,7 @@ export default function DesktopSidebar({ active }: { active: DesktopNavKey }) {
             onClick={() => setLoginOpen(true)}
             className="flex w-full items-center gap-2.5 px-2 py-2 text-left text-[13px] font-medium text-emerald hover:text-emerald-dark"
           >
-            Log in for AI tools &rarr;
+            {t('desktop.logInForAiTools')}
           </button>
         )}
       </div>
@@ -280,7 +276,7 @@ export default function DesktopSidebar({ active }: { active: DesktopNavKey }) {
 function NavRow({
   href,
   icon,
-  label,
+  labelKey,
   count,
   isActive,
   requiresAuth,
@@ -289,19 +285,20 @@ function NavRow({
 }: {
   href: string;
   icon: (color: string) => React.ReactNode;
-  label: string;
+  labelKey: DictionaryKey;
   count?: string;
   isActive: boolean;
   requiresAuth?: boolean;
   isLoggedIn?: boolean;
   onRequireLogin?: () => void;
 }) {
+  const { t } = useLocale();
   const content = (
     <>
       <div className="flex items-center gap-2.5">
         {icon(isActive ? '#1E9D75' : NAV_INACTIVE)}
         <span className={`text-[14px] ${isActive ? 'font-semibold text-white' : ''}`} style={isActive ? undefined : { color: NAV_INACTIVE }}>
-          {label}
+          {t(labelKey)}
         </span>
       </div>
       {count && (

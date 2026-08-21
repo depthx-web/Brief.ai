@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 import type { Segment } from '@/lib/authApi';
 import GoogleSignInButton from './GoogleSignInButton';
 
@@ -34,6 +35,7 @@ const ICONS: Record<Segment, JSX.Element> = {
 
 export default function SignupForm() {
   const { signup } = useAuth();
+  const { t } = useLocale();
   const router = useRouter();
   const [step, setStep] = useState<1 | 2>(1);
   const [email, setEmail] = useState('');
@@ -117,13 +119,13 @@ export default function SignupForm() {
               className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-emerald focus:ring-emerald"
             />
             <span>
-              I agree to the{' '}
+              {t('auth.consentPrefix')}{' '}
               <a href="/privacy" target="_blank" rel="noopener noreferrer" className="font-medium text-navy hover:text-emerald">
-                Privacy Policy
+                {t('auth.privacyPolicy')}
               </a>{' '}
-              and{' '}
+              {t('auth.and')}{' '}
               <a href="/terms" target="_blank" rel="noopener noreferrer" className="font-medium text-navy hover:text-emerald">
-                Terms of Service
+                {t('auth.termsOfService')}
               </a>
             </span>
           </label>
@@ -143,11 +145,11 @@ export default function SignupForm() {
   return (
     <div className="mx-auto mt-10 w-full max-w-sm px-6">
       <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
-        <h1 className="font-serif text-2xl font-semibold text-navy">Create your account</h1>
+        <h1 className="font-serif text-2xl font-semibold text-navy">{t('auth.signUpTitle')}</h1>
         <p className="mt-2 text-sm text-ink-soft">Free to start — no credit card required.</p>
 
         <div className="mt-6">
-          <GoogleSignInButton label="Continue with Google" />
+          <GoogleSignInButton label={t('auth.continueWithGoogle')} />
         </div>
         <div className="my-5 flex items-center gap-3 text-xs text-ink-soft">
           <span className="h-px flex-1 bg-gray-200" />
@@ -157,7 +159,7 @@ export default function SignupForm() {
 
         <form onSubmit={handleStep1Submit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-ink">Email</label>
+            <label className="block text-sm font-medium text-ink">{t('auth.email')}</label>
             <input
               type="email"
               required
@@ -167,7 +169,7 @@ export default function SignupForm() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-ink">Password</label>
+            <label className="block text-sm font-medium text-ink">{t('auth.password')}</label>
             <input
               type="password"
               required
@@ -194,14 +196,14 @@ export default function SignupForm() {
             type="submit"
             className="w-full rounded-lg bg-emerald px-6 py-3 font-medium text-white transition-colors hover:bg-emerald-dark"
           >
-            Continue
+            {t('common.continue')}
           </button>
         </form>
 
         <p className="mt-4 text-sm text-ink-soft">
           Already have an account?{' '}
           <a href="/login" className="font-medium text-navy hover:text-emerald">
-            Log in
+            {t('nav.logIn')}
           </a>
         </p>
       </div>
