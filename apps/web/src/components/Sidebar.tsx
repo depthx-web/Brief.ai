@@ -24,7 +24,7 @@ export default function Sidebar({ onOpenSwitchModal }: { onOpenSwitchModal: () =
   const { t } = useLocale();
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-10 flex h-screen w-60 shrink-0 flex-col overflow-y-auto bg-navy text-white">
+    <aside className="fixed inset-y-0 start-0 z-10 flex h-screen w-60 shrink-0 flex-col overflow-y-auto bg-navy text-white">
       <HomeLogoLink className="px-6 py-6 font-serif text-xl font-semibold">
         brief<span className="text-emerald">.ai</span>
       </HomeLogoLink>

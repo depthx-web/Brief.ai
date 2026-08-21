@@ -95,7 +95,7 @@ export default function ChangePlanModal({ open, onClose }: Props) {
                 >
                   {(c.value === 'QUARTERLY' || c.value === 'YEARLY') && (
                     <span
-                      className="absolute -top-2 -right-2 rounded px-1 py-0.5 font-mono text-[9px] font-semibold"
+                      className="absolute -top-2 -end-2 rounded px-1 py-0.5 font-mono text-[9px] font-semibold"
                       style={{ background: '#D4A054', color: '#3D2806' }}
                     >
                       {c.value === 'QUARTERLY' ? t('changePlan.save10') : t('changePlan.save20')}

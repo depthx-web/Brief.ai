@@ -171,7 +171,7 @@ export default function DesktopSidebar({ active }: { active: DesktopNavKey }) {
             <ChevronIcon color={MUTED} expanded={toolsSectionOpen} />
           </button>
           {toolsSectionOpen && (
-            <div className="flex flex-col gap-0.5 pl-4">
+            <div className="flex flex-col gap-0.5 ps-4">
               {TOOL_SUB_ITEMS.map((item) => (
                 <NavRow
                   key={item.navKey}
@@ -261,7 +261,7 @@ export default function DesktopSidebar({ active }: { active: DesktopNavKey }) {
         ) : (
           <button
             onClick={() => setLoginOpen(true)}
-            className="flex w-full items-center gap-2.5 px-2 py-2 text-left text-[13px] font-medium text-emerald hover:text-emerald-dark"
+            className="flex w-full items-center gap-2.5 px-2 py-2 text-start text-[13px] font-medium text-emerald hover:text-emerald-dark"
           >
             {t('desktop.logInForAiTools')}
           </button>
@@ -313,7 +313,7 @@ function NavRow({
     return (
       <button
         onClick={onRequireLogin}
-        className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-left hover:bg-white/[0.06]"
+        className="flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-start hover:bg-white/[0.06]"
       >
         {content}
       </button>

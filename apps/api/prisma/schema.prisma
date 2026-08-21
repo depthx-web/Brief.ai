@@ -120,6 +120,15 @@ model User {
   // retention"). Null falls back to the platform default of 24h. 0 means
   // "Never" (paid plans only, enforced in the service layer).
   defaultRetentionHours Int?
+
+  // Email verification (signup_confirmation trigger) — null means
+  // unverified. Existing accounts are backfilled as already verified at
+  // migration time (see the migration's UPDATE) so this never locks anyone
+  // out retroactively; only new signups start unverified.
+  emailVerifiedAt             DateTime?
+  emailVerificationToken      String?   @unique
+  emailVerificationExpiresAt  DateTime?
+
   documents    LibraryDocument[]
   projects     Project[]
   signatures   SavedSignature[]

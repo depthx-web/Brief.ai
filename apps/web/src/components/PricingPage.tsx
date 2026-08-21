@@ -228,7 +228,7 @@ function PricingPageInner() {
                     }`}
                   >
                     {pack.isBestValue && (
-                      <span className="absolute -top-3 right-4 rounded-full bg-emerald-soft px-2.5 py-1 font-mono text-[10px] font-semibold text-emerald">
+                      <span className="absolute -top-3 end-4 rounded-full bg-emerald-soft px-2.5 py-1 font-mono text-[10px] font-semibold text-emerald">
                         Best value
                       </span>
                     )}
@@ -325,7 +325,7 @@ function PricingPageInner() {
                     >
                       {(c.value === 'QUARTERLY' || c.value === 'YEARLY') && (
                         <span
-                          className="absolute -top-2 -right-2 rounded px-1 py-0.5 font-mono text-[9px] font-semibold"
+                          className="absolute -top-2 -end-2 rounded px-1 py-0.5 font-mono text-[9px] font-semibold"
                           style={{ background: '#D4A054', color: '#3D2806' }}
                         >
                           Save {c.value === 'QUARTERLY' ? '10%' : '20%'}
@@ -513,7 +513,7 @@ function ComparePlansModal({
                   >
                     {(c.value === 'QUARTERLY' || c.value === 'YEARLY') && (
                       <span
-                        className="absolute -top-2 -right-2 rounded px-1 py-0.5 font-mono text-[9px] font-semibold"
+                        className="absolute -top-2 -end-2 rounded px-1 py-0.5 font-mono text-[9px] font-semibold"
                         style={{ background: '#D4A054', color: '#3D2806' }}
                       >
                         Save {c.value === 'QUARTERLY' ? '10%' : '20%'}

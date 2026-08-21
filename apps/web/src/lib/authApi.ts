@@ -13,6 +13,7 @@ export interface AuthUser {
   billingCycle: BillingCycle | null;
   // Null = platform default (24h). 0 = "Never" (paid plans only).
   defaultRetentionHours: number | null;
+  emailVerified: boolean;
 }
 
 export interface AuthResponse {
@@ -117,6 +118,24 @@ export async function changeEmail(token: string, newEmail: string, currentPasswo
     throw new Error('Could not reach the server.');
   }
   return handleResponse<AuthUser>(response);
+}
+
+// Not an auth JWT — the one-time link token from the confirmation email.
+export async function verifyEmail(verificationToken: string): Promise<void> {
+  await post<{ success: boolean }>('/auth/verify-email', { token: verificationToken });
+}
+
+export async function resendVerification(token: string): Promise<void> {
+  let response: Response;
+  try {
+    response = await fetch(`${API_URL}/auth/me/resend-verification`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch {
+    throw new Error('Could not reach the server.');
+  }
+  await handleResponse<{ success: boolean }>(response);
 }
 
 export async function deleteAccount(token: string): Promise<void> {

@@ -29,6 +29,10 @@ interface AuthContextValue {
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
   changeEmail: (newEmail: string, currentPassword: string) => Promise<void>;
   deleteAccount: () => Promise<void>;
+  // Re-pulls /auth/me — for state that can change from outside the normal
+  // update* flows above, e.g. emailVerified flipping after the user clicks
+  // a confirmation link in another tab/the resend-verification action.
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -96,6 +100,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  async function refreshUser() {
+    if (!token) return;
+    setUser(await fetchMe(token));
+  }
+
   async function signup(email: string, password: string, name?: string, segment?: Segment) {
     const { token: newToken, user: newUser } = await apiSignup(email, password, name, segment, getStoredReferralCode());
     localStorage.setItem(TOKEN_KEY, newToken);
@@ -144,6 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         changePassword,
         changeEmail,
         deleteAccount,
+        refreshUser,
       }}
     >
       {children}

@@ -90,12 +90,12 @@ export default function SignupForm() {
                   key={s.value}
                   type="button"
                   onClick={() => setSegment(s.value)}
-                  className={`relative rounded-xl border-2 p-6 text-left transition-colors ${
+                  className={`relative rounded-xl border-2 p-6 text-start transition-colors ${
                     selected ? 'border-emerald' : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
                   {selected && (
-                    <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-emerald text-[11px] text-white">
+                    <span className="absolute end-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-emerald text-[11px] text-white">
                       ✓
                     </span>
                   )}

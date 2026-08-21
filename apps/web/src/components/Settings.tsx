@@ -8,6 +8,7 @@ import { isTauri } from '@/lib/platform';
 import type { Segment } from '@/lib/authApi';
 import { fetchMyActivity, type AiActivity } from '@/lib/aiApi';
 import { getBillingPortalUrl } from '@/lib/billingApi';
+import { resendVerification } from '@/lib/authApi';
 import { showError, showSuccess } from '@/lib/toast';
 import TeamSettings from './TeamSettings';
 
@@ -141,7 +142,7 @@ export default function Settings() {
         {isSaving ? 'Saving…' : 'Save Changes'}
       </button>
 
-      <ChangeEmailSection currentEmail={user.email} />
+      <ChangeEmailSection currentEmail={user.email} emailVerified={user.emailVerified} />
       <ChangePasswordSection />
 
       <section className="mt-8 border-t border-[#EEF1F4] pt-8">
@@ -233,12 +234,13 @@ export default function Settings() {
   );
 }
 
-function ChangeEmailSection({ currentEmail }: { currentEmail: string }) {
-  const { changeEmail } = useAuth();
+function ChangeEmailSection({ currentEmail, emailVerified }: { currentEmail: string; emailVerified: boolean }) {
+  const { changeEmail, token } = useAuth();
   const [newEmail, setNewEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isResending, setIsResending] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -258,10 +260,35 @@ function ChangeEmailSection({ currentEmail }: { currentEmail: string }) {
     }
   }
 
+  async function handleResend() {
+    if (!token) return;
+    setIsResending(true);
+    try {
+      await resendVerification(token);
+      showSuccess('Confirmation email sent');
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Could not send a new confirmation email.');
+    } finally {
+      setIsResending(false);
+    }
+  }
+
   return (
     <section className="mt-8 border-t border-[#EEF1F4] pt-8">
       <h2 className="font-serif text-lg font-semibold text-navy">Email address</h2>
       <p className="mt-1 text-sm text-ink-soft">Currently {currentEmail}.</p>
+      {!emailVerified && (
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+          <p className="text-sm text-amber-800">Your email address isn&apos;t verified yet.</p>
+          <button
+            onClick={handleResend}
+            disabled={isResending}
+            className="shrink-0 text-sm font-medium text-navy hover:text-emerald disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isResending ? 'Sending…' : 'Resend confirmation'}
+          </button>
+        </div>
+      )}
       <form onSubmit={handleSubmit} className="mt-4 space-y-3">
         <div>
           <label className="block text-sm font-medium text-ink">New email</label>
@@ -449,7 +476,7 @@ function DeleteAccountSection() {
                 }`}
               >
                 {locked && (
-                  <span className="absolute -top-2 -right-2 rounded bg-navy-light px-1 py-0.5 font-mono text-[8px] font-semibold text-white">
+                  <span className="absolute -top-2 -end-2 rounded bg-navy-light px-1 py-0.5 font-mono text-[8px] font-semibold text-white">
                     PRO
                   </span>
                 )}

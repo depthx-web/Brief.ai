@@ -51,7 +51,7 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen">
       <Sidebar onOpenSwitchModal={() => setModalOpen(true)} />
-      <div className="bg-dot-pattern ml-60 h-screen flex-1 overflow-y-auto bg-surface">
+      <div className="bg-dot-pattern ms-60 h-screen flex-1 overflow-y-auto bg-surface">
         {(!user || user.plan === 'FREE') && (
           <div className="flex items-center justify-center gap-2 bg-emerald-soft px-4 py-2 text-center text-sm text-navy">
             <span>You&apos;re on the Free plan — core tools are unlimited.</span>

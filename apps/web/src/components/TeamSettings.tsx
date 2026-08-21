@@ -277,7 +277,7 @@ function MemberDrawer({
     <Dialog.Root open onOpenChange={(next) => !next && onClose()}>
       <Dialog.Portal>
         <Dialog.Overlay className="overlay-dim fixed inset-0 z-50" />
-        <Dialog.Content className="animate-modal-in fixed right-0 top-0 z-50 h-full w-full max-w-md overflow-y-auto bg-white p-6 shadow-level-3">
+        <Dialog.Content className="animate-modal-in fixed end-0 top-0 z-50 h-full w-full max-w-md overflow-y-auto bg-white p-6 shadow-level-3">
           <Dialog.Title className="font-serif text-lg font-semibold text-navy">{member.name || member.email}</Dialog.Title>
           <Dialog.Description className="mt-1 text-sm text-ink-soft">{member.email}</Dialog.Description>
 

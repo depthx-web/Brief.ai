@@ -141,6 +141,24 @@ export class AuthController {
     return user;
   }
 
+  // Public — the link is the credential (a random 32-byte token), same
+  // trust model as the team-invitation accept flow.
+  @Post('verify-email')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  async verifyEmail(@Body('token') token: string | undefined) {
+    if (!token) throw new BadRequestException('A verification token is required.');
+    await this.authService.verifyEmail(token);
+    return { success: true };
+  }
+
+  @Post('me/resend-verification')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 3, ttl: 60_000 } })
+  async resendVerification(@CurrentUser() user: SafeUser) {
+    await this.authService.resendVerification(user.id);
+    return { success: true };
+  }
+
   @Patch('me')
   @UseGuards(JwtAuthGuard)
   async updateMe(@CurrentUser() user: SafeUser, @Body() body: UpdateProfileBody) {

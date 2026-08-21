@@ -8,6 +8,8 @@ import { EmailCampaignService } from '../mail/email-campaign.service';
 import { AffiliateService } from '../affiliate/affiliate.service';
 
 const API_PUBLIC_URL = process.env.API_PUBLIC_URL ?? 'http://localhost:3001';
+const APP_URL = process.env.APP_URL ?? 'http://localhost:3000';
+const VERIFICATION_TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 
 interface GoogleIdTokenPayload {
   email?: string;
@@ -28,6 +30,7 @@ export interface SafeUser {
   billingCycle: BillingCycle | null;
   // Null = platform default (24h). 0 = "Never" (paid plans only).
   defaultRetentionHours: number | null;
+  emailVerified: boolean;
 }
 
 @Injectable()
@@ -51,11 +54,46 @@ export class AuthService {
 
     // Fire-and-forget: a slow/failed welcome email shouldn't fail signup itself.
     this.emailCampaigns.sendWelcome(user.email, user.name).catch(() => {});
+    this.issueVerificationToken(user.id, user.email, user.name).catch(() => {});
     if (referralCode) {
       await this.affiliateService.attachReferral(user.id, referralCode).catch(() => {});
     }
 
     return this.buildAuthResponse(user);
+  }
+
+  // Shared by signup and changeEmail — a new/changed address always starts
+  // unverified and gets a fresh confirm link, regardless of the account's
+  // prior verification state.
+  private async issueVerificationToken(userId: string, email: string, name: string | null): Promise<void> {
+    const token = randomBytes(32).toString('hex');
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        emailVerifiedAt: null,
+        emailVerificationToken: token,
+        emailVerificationExpiresAt: new Date(Date.now() + VERIFICATION_TOKEN_TTL_MS),
+      },
+    });
+    await this.emailCampaigns.sendSignupConfirmation(email, name, `${APP_URL}/verify-email?token=${token}`);
+  }
+
+  async verifyEmail(token: string): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { emailVerificationToken: token } });
+    if (!user) throw new BadRequestException('This verification link is invalid or has already been used.');
+    if (!user.emailVerificationExpiresAt || user.emailVerificationExpiresAt < new Date()) {
+      throw new BadRequestException('This verification link has expired. Request a new one from Settings.');
+    }
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { emailVerifiedAt: new Date(), emailVerificationToken: null, emailVerificationExpiresAt: null },
+    });
+  }
+
+  async resendVerification(userId: string): Promise<void> {
+    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    if (user.emailVerifiedAt) throw new BadRequestException('This email is already verified.');
+    await this.issueVerificationToken(user.id, user.email, user.name);
   }
 
   async login(email: string, password: string) {
@@ -127,6 +165,9 @@ export class AuthService {
 
     // Notify the OLD address — if this change wasn't authorized, that's the inbox that needs to know.
     this.emailCampaigns.sendSecurityAlert(oldEmail, user.name, 'email').catch(() => {});
+    // The new address hasn't been confirmed yet — verifying the old one
+    // doesn't carry over, so this starts the same confirm-link flow signup uses.
+    this.issueVerificationToken(updated.id, updated.email, updated.name).catch(() => {});
 
     return this.toSafeUser(updated);
   }
@@ -164,8 +205,10 @@ export class AuthService {
     let user = await this.prisma.user.findUnique({ where: { email: payload.email } });
     if (!user) {
       const passwordHash = await bcrypt.hash(randomBytes(32).toString('hex'), 10);
+      // Google already confirmed this address (email_verified above) — no
+      // confirm-link email needed, unlike the plain signup() path.
       user = await this.prisma.user.create({
-        data: { email: payload.email, passwordHash, name: payload.name },
+        data: { email: payload.email, passwordHash, name: payload.name, emailVerifiedAt: new Date() },
       });
       this.emailCampaigns.sendWelcome(user.email, user.name).catch(() => {});
     }
@@ -192,6 +235,7 @@ export class AuthService {
     plan: Plan;
     billingCycle: BillingCycle | null;
     defaultRetentionHours?: number | null;
+    emailVerifiedAt?: Date | null;
   }) {
     const safeUser = this.toSafeUser(user);
     const token = this.jwtService.sign({ sub: user.id, email: user.email });
@@ -206,6 +250,7 @@ export class AuthService {
     plan: Plan;
     billingCycle: BillingCycle | null;
     defaultRetentionHours?: number | null;
+    emailVerifiedAt?: Date | null;
   }): SafeUser {
     return {
       id: user.id,
@@ -215,6 +260,7 @@ export class AuthService {
       plan: user.plan,
       billingCycle: user.billingCycle,
       defaultRetentionHours: user.defaultRetentionHours ?? null,
+      emailVerified: !!user.emailVerifiedAt,
     };
   }
 }
