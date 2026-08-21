@@ -1,7 +1,11 @@
 import type { Metadata } from 'next';
+import { cookies } from 'next/headers';
 import ReferralCapture from '@/components/ReferralCapture';
 import HomeContent, { type CmsSections } from '@/components/HomeContent';
 import { fetchCmsPage } from '@/lib/cmsApi';
+import { isLocale } from '@/lib/i18n/locales';
+
+const LOCALE_COOKIE_NAME = 'brief-ai-locale';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 const DEFAULT_META_TITLE = 'Dossiera — PDF Tools';
@@ -57,9 +61,18 @@ export default async function LandingPage({
   // ReferralCapture) forces Next.js's dynamic-render bailout, which static
   // export can't do. Preview mode and referral tracking are both meaningless
   // in the installed desktop app anyway.
-  const safeSearchParams = process.env.NEXT_PUBLIC_BUILD_TARGET === 'desktop' ? {} : searchParams;
+  const isDesktop = process.env.NEXT_PUBLIC_BUILD_TARGET === 'desktop';
+  const safeSearchParams = isDesktop ? {} : searchParams;
   const preview = safeSearchParams.cmsPreview === '1';
-  const sections = await fetchCmsSections(preview, safeSearchParams.locale);
+  // The admin preview iframe's ?locale=<code> takes priority (previewing a
+  // specific language regardless of this server's own cookie); a real
+  // visitor has no such param, so their locale comes from the same cookie
+  // LocaleContext reads client-side — without this, every visitor got the
+  // English-resolved CMS sections no matter their detected locale, since
+  // there was previously no server-side signal of their language at all.
+  const cookieLocale = isDesktop ? undefined : cookies().get(LOCALE_COOKIE_NAME)?.value;
+  const locale = safeSearchParams.locale ?? (isLocale(cookieLocale) ? cookieLocale : undefined);
+  const sections = await fetchCmsSections(preview, locale);
 
   return (
     <>
