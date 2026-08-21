@@ -8,6 +8,8 @@ import { listDocuments, listProjects, fetchDocumentFile, type LibraryDocumentSum
 import { setPendingToolFile } from '@/lib/pendingToolFile';
 import { showError } from '@/lib/toast';
 import { useLocale } from '@/lib/i18n/LocaleContext';
+import { isTauri } from '@/lib/platform';
+import { pickPdfFileNative } from '@/lib/nativeFilePicker';
 
 interface Props {
   open: boolean;
@@ -38,6 +40,24 @@ export default function ToolSourceModal({ open, href, onClose, onPick }: Props) 
       .then((p) => setProjectCount(p.length))
       .catch(() => setProjectCount(0));
   }, [open, token]);
+
+  // Desktop skips this modal's own "choose a source" UI entirely — a native
+  // OS file dialog opens the moment this is asked to open, with no
+  // intermediate branded screen. Library-picking (which needs an account
+  // and a network round-trip anyway) stays web-only.
+  useEffect(() => {
+    if (!open || !isTauri()) return;
+    let cancelled = false;
+    pickPdfFileNative().then((file) => {
+      if (cancelled) return;
+      if (file) handleFileChosen(file);
+      else onClose();
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
 
   function handleFileChosen(file: File) {
     if (onPick) {
@@ -75,6 +95,8 @@ export default function ToolSourceModal({ open, href, onClose, onPick }: Props) 
       setLoadingDocId(null);
     }
   }
+
+  if (isTauri()) return null;
 
   return (
     <Dialog.Root open={open} onOpenChange={(next) => !next && onClose()}>

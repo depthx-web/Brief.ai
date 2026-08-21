@@ -10,9 +10,10 @@
     "notification:default",
     "deep-link:default",
     "shell:allow-open",
+    "dialog:default",
     {
       "identifier": "fs:allow-read-file",
-      "allow": [{ "path": "$TEMP/**" }]
+      "allow": [{ "path": "$TEMP/**" }, { "path": "**" }]
     },
     {
       "identifier": "fs:allow-write-file",
