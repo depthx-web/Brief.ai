@@ -9,6 +9,7 @@ import { loadPdfForPreview, renderAllThumbnails, renderPageDataUrl } from '@/lib
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
 import { listSignatures, saveSignature, deleteSignature, type SavedSignature } from '@/lib/signaturesApi';
 import { showError, showSuccess } from '@/lib/toast';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 import PageThumbnailStrip from './PageThumbnailStrip';
 import GuestEncouragementBar from './GuestEncouragementBar';
 
@@ -43,6 +44,7 @@ function loadImage(src: string): Promise<HTMLImageElement> {
 
 export default function SignPdf() {
   const { token } = useAuth();
+  const { t } = useLocale();
   const [file, setFile] = useState<File | null>(null);
   const [pages, setPages] = useState<PageItem[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -77,7 +79,7 @@ export default function SignPdf() {
     setPlacements({});
     setCompleted(false);
     if (selected.type !== 'application/pdf' && !selected.name.toLowerCase().endsWith('.pdf')) {
-      setError('Please select a PDF file.');
+      setError(t('dashboard.selectPdfError'));
       return;
     }
     setIsLoadingThumbs(true);
@@ -97,7 +99,7 @@ export default function SignPdf() {
       if (items.length) setPreviewUrl(await renderPageDataUrl(previewDoc, items.length, PREVIEW_WIDTH));
       await previewDoc.destroy();
     } catch {
-      setError('Could not read this PDF. It may be corrupted or password-protected.');
+      setError(t('toolPage.split.couldNotRead'));
     } finally {
       setIsLoadingThumbs(false);
     }
@@ -148,7 +150,7 @@ export default function SignPdf() {
       next[p.originalIndex] = currentPlacement;
     });
     setPlacements(next);
-    showSuccess('Signature applied to every page');
+    showSuccess(t('toolPage.sign.signatureAppliedToAllPages'));
   }
 
   async function handleDownload() {
@@ -195,7 +197,7 @@ export default function SignPdf() {
       URL.revokeObjectURL(url);
       setCompleted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not sign this PDF.');
+      setError(err instanceof Error ? err.message : t('toolPage.sign.couldNotSign'));
     } finally {
       setIsProcessing(false);
     }
@@ -203,10 +205,9 @@ export default function SignPdf() {
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-16">
-      <h1 className="font-serif text-2xl font-semibold text-navy">Sign PDF</h1>
+      <h1 className="font-serif text-2xl font-semibold text-navy">{t('tool.sign.name')}</h1>
       <p className="mt-2 text-gray-600">
-        Place a signature on any page — drag to move, use the corner handles to resize. Processed
-        entirely in your browser.
+        {t('toolPage.sign.description')}
       </p>
 
       {!file ? (
@@ -214,7 +215,7 @@ export default function SignPdf() {
           onClick={() => inputRef.current?.click()}
           className="mt-6 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white px-6 py-12 text-center"
         >
-          <p className="text-gray-600">{isLoadingThumbs ? 'Reading pages…' : 'Click to choose a PDF file'}</p>
+          <p className="text-gray-600">{isLoadingThumbs ? t('toolPage.sign.readingPages') : t('aiTool.clickToChoosePdf')}</p>
         </div>
       ) : (
         <div className="mt-6 flex h-[600px] overflow-hidden rounded-lg border border-gray-200 bg-white">
@@ -234,16 +235,16 @@ export default function SignPdf() {
               {activeSignature && currentPlacement && (
                 <>
                   <button onClick={applyToAllPages} className="rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50">
-                    Apply to all pages
+                    {t('toolPage.sign.applyToAllPages')}
                   </button>
                   <button onClick={removePlacement} className="text-xs font-medium text-ink-soft hover:text-redline">
-                    Remove from this page
+                    {t('toolPage.sign.removeFromThisPage')}
                   </button>
                 </>
               )}
               <label className="ml-auto flex items-center gap-2 text-xs text-ink-soft">
                 <input type="checkbox" checked={includeDate} onChange={(e) => setIncludeDate(e.target.checked)} />
-                Stamp date
+                {t('toolPage.sign.stampDate')}
               </label>
             </div>
 
@@ -269,7 +270,7 @@ export default function SignPdf() {
               )}
               {activeSignature && !currentPlacement && (
                 <p className="pointer-events-none absolute bottom-8 rounded bg-navy/80 px-3 py-1.5 text-xs text-white">
-                  Click on the page to place your signature
+                  {t('toolPage.sign.clickToPlaceSignature')}
                 </p>
               )}
             </div>
@@ -292,7 +293,7 @@ export default function SignPdf() {
         disabled={!file || isProcessing || Object.keys(placements).length === 0}
         className="mt-6 w-full rounded-lg bg-emerald px-6 py-3 font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
       >
-        {isProcessing ? 'Signing…' : 'Sign & Download'}
+        {isProcessing ? t('toolPage.sign.signing') : t('toolPage.sign.signAndDownload')}
       </button>
 
       {completed && <GuestEncouragementBar />}
@@ -307,7 +308,7 @@ export default function SignPdf() {
           if (save && token && name) {
             saveSignature(token, name, sig.src)
               .then((saved) => setSavedSignatures((prev) => [saved, ...prev]))
-              .catch((err) => showError(err instanceof Error ? err.message : 'Could not save this signature.'));
+              .catch((err) => showError(err instanceof Error ? err.message : t('toolPage.sign.couldNotSaveSignature')));
           }
         }}
       />
@@ -326,6 +327,7 @@ function SignatureMenu({
   onCreateNew: () => void;
   onDeleteSaved: (id: string) => void;
 }) {
+  const { t } = useLocale();
   async function choose(imageData: string) {
     const img = await loadImage(imageData);
     onChoose({ src: imageData, aspectRatio: img.height / img.width });
@@ -335,13 +337,13 @@ function SignatureMenu({
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
         <button className="rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50">
-          My saved signatures
+          {t('toolPage.sign.mySavedSignatures')}
         </button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content align="start" sideOffset={6} className="animate-dropdown-in z-20 w-[240px] rounded-[10px] bg-white p-1.5 shadow-level-2">
           {savedSignatures.length === 0 ? (
-            <p className="px-2.5 py-2 text-[12px] text-ink-soft">No saved signatures yet.</p>
+            <p className="px-2.5 py-2 text-[12px] text-ink-soft">{t('toolPage.sign.noSavedSignatures')}</p>
           ) : (
             savedSignatures.map((sig) => (
               <div key={sig.id} className="group flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-emerald-soft">
@@ -353,7 +355,7 @@ function SignatureMenu({
                 <button
                   onClick={() => onDeleteSaved(sig.id)}
                   className="shrink-0 text-[11px] text-ink-soft opacity-0 hover:text-redline group-hover:opacity-100"
-                  aria-label={`Delete ${sig.name}`}
+                  aria-label={t('toolPage.sign.deleteSignatureLabel').replace('{name}', sig.name)}
                 >
                   ✕
                 </button>
@@ -365,7 +367,7 @@ function SignatureMenu({
             onSelect={onCreateNew}
             className="cursor-pointer select-none rounded-md px-2.5 py-2 text-[13px] font-medium text-emerald outline-none data-[highlighted]:bg-emerald-soft"
           >
-            + New signature
+            {t('toolPage.sign.newSignatureMenuItem')}
           </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
@@ -384,10 +386,11 @@ function CreateSignatureDialog({
   canSave: boolean;
   onCreated: (sig: ActiveSignature, save: boolean, name?: string) => void;
 }) {
+  const { t } = useLocale();
   const [tab, setTab] = useState<'draw' | 'upload'>('draw');
   const [drawnSrc, setDrawnSrc] = useState<string | null>(null);
   const [uploadedSrc, setUploadedSrc] = useState<string | null>(null);
-  const [name, setName] = useState('My signature');
+  const [name, setName] = useState(t('toolPage.sign.defaultSignatureName'));
   const [saveIt, setSaveIt] = useState(canSave);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isDrawing = useRef(false);
@@ -447,7 +450,7 @@ function CreateSignatureDialog({
 
   function handleUpload(selected: File) {
     if (selected.type !== 'image/png' && selected.type !== 'image/jpeg') {
-      showError('Please upload a PNG or JPEG image.');
+      showError(t('toolPage.sign.uploadPngJpegError'));
       return;
     }
     const reader = new FileReader();
@@ -459,7 +462,7 @@ function CreateSignatureDialog({
     const src = tab === 'draw' ? drawnSrc : uploadedSrc;
     if (!src) return;
     const img = await loadImage(src);
-    onCreated({ src, aspectRatio: img.height / img.width }, saveIt && canSave, name.trim() || 'My signature');
+    onCreated({ src, aspectRatio: img.height / img.width }, saveIt && canSave, name.trim() || t('toolPage.sign.defaultSignatureName'));
   }
 
   const currentSrc = tab === 'draw' ? drawnSrc : uploadedSrc;
@@ -469,20 +472,20 @@ function CreateSignatureDialog({
       <Dialog.Portal>
         <Dialog.Overlay className="overlay-dim fixed inset-0 z-50" />
         <Dialog.Content className="animate-modal-in fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-level-4">
-          <Dialog.Title className="font-serif text-lg font-semibold text-navy">New signature</Dialog.Title>
+          <Dialog.Title className="font-serif text-lg font-semibold text-navy">{t('toolPage.sign.newSignatureTitle')}</Dialog.Title>
 
           <div className="mt-4 flex gap-1">
             <button
               onClick={() => setTab('draw')}
               className={`rounded-t-md px-4 py-2 text-sm font-medium ${tab === 'draw' ? 'bg-paper text-navy' : 'bg-gray-100 text-ink-soft'}`}
             >
-              Draw
+              {t('toolPage.sign.tabDraw')}
             </button>
             <button
               onClick={() => setTab('upload')}
               className={`rounded-t-md px-4 py-2 text-sm font-medium ${tab === 'upload' ? 'bg-paper text-navy' : 'bg-gray-100 text-ink-soft'}`}
             >
-              Upload image
+              {t('toolPage.sign.tabUpload')}
             </button>
           </div>
 
@@ -501,7 +504,7 @@ function CreateSignatureDialog({
                   onPointerUp={handleDrawEnd}
                 />
                 <button onClick={clearCanvas} className="mt-2 text-xs text-ink-soft hover:text-redline">
-                  Clear
+                  {t('toolPage.sign.clear')}
                 </button>
               </>
             ) : (
@@ -513,7 +516,7 @@ function CreateSignatureDialog({
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={uploadedSrc} alt="Uploaded signature" className="max-h-[110px]" />
                 ) : (
-                  <p className="text-xs text-ink-soft">Click to upload a PNG or JPEG</p>
+                  <p className="text-xs text-ink-soft">{t('toolPage.sign.clickToUploadImage')}</p>
                 )}
                 <input
                   ref={uploadInputRef}
@@ -530,14 +533,14 @@ function CreateSignatureDialog({
             <div className="mt-4 flex items-center gap-3">
               <label className="flex items-center gap-2 text-sm text-ink">
                 <input type="checkbox" checked={saveIt} onChange={(e) => setSaveIt(e.target.checked)} />
-                Save for later
+                {t('toolPage.sign.saveForLater')}
               </label>
               {saveIt && (
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Signature name"
+                  placeholder={t('toolPage.sign.signatureNamePlaceholder')}
                   className="flex-1 rounded-md border border-gray-300 px-2 py-1.5 text-sm"
                 />
               )}
@@ -546,14 +549,14 @@ function CreateSignatureDialog({
 
           <div className="mt-6 flex justify-end gap-3">
             <button onClick={onClose} className="text-sm font-medium text-ink-soft hover:text-ink">
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               onClick={handleUse}
               disabled={!currentSrc}
               className="rounded-lg bg-emerald px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
             >
-              Use this signature
+              {t('toolPage.sign.useThisSignature')}
             </button>
           </div>
         </Dialog.Content>
