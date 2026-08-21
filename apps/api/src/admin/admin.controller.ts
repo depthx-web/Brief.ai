@@ -151,6 +151,13 @@ export class AdminController {
     return { success: true };
   }
 
+  @Post('users/:id/plan')
+  async setUserPlan(@Param('id') id: string, @Body() body: { plan?: Plan; billingCycle?: BillingCycle }) {
+    if (!body.plan) throw new BadRequestException('A plan is required.');
+    await this.adminService.setUserPlan(id, body.plan, body.billingCycle ?? null);
+    return { success: true };
+  }
+
   @Post('users/:id/reset-password')
   async resetPassword(@Param('id') id: string) {
     await this.adminService.resetUserPassword(id);

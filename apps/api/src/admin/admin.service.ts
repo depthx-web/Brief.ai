@@ -3,7 +3,7 @@ import { randomBytes } from 'node:crypto';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
-import type { Plan, Segment, UserStatus } from '@prisma/client';
+import type { BillingCycle, Plan, Segment, UserStatus } from '@prisma/client';
 
 interface Failure {
   type: 'conversion' | 'password' | 'ai';
@@ -183,6 +183,16 @@ export class AdminService {
   async reactivateUser(id: string): Promise<void> {
     await this.getExistingUser(id);
     await this.prisma.user.update({ where: { id }, data: { status: 'ACTIVE' } });
+  }
+
+  // Manual plan override — no Lemon Squeezy subscription is created, so this
+  // is for comps/testing only; a real upgrade always goes through checkout.
+  async setUserPlan(id: string, plan: Plan, billingCycle: BillingCycle | null): Promise<void> {
+    await this.getExistingUser(id);
+    await this.prisma.user.update({
+      where: { id },
+      data: { plan, billingCycle: plan === 'PAID' ? billingCycle ?? 'MONTHLY' : null },
+    });
   }
 
   async resetUserPassword(id: string): Promise<void> {
