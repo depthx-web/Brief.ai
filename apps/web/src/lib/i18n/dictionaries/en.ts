@@ -929,6 +929,13 @@ const en = {
   'download.faqHeading': 'FAQ',
   'download.screenshotAlt': 'Dossiera desktop app — Home screen',
 
+  'activity.label': 'Activity',
+  'activity.clearFinished': 'Clear finished',
+  'activity.nothingYet': 'Nothing yet.',
+  'activity.complete': 'Complete',
+  'activity.openFile': 'Open file',
+  'activity.somethingWentWrong': 'Something went wrong.',
+
   // Retention extend confirmation
   'retentionConfirm.title': 'Extend retention?',
   'retentionConfirm.body': 'This will be kept for {days} more days before it’s automatically deleted. Continue?',

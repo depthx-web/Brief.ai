@@ -897,6 +897,13 @@ const it: Record<DictionaryKey, string> = {
   'download.faqHeading': 'Domande frequenti',
   'download.screenshotAlt': 'App desktop Dossiera — Schermata iniziale',
 
+  'activity.label': 'Attività',
+  'activity.clearFinished': 'Cancella completati',
+  'activity.nothingYet': 'Ancora niente.',
+  'activity.complete': 'Completato',
+  'activity.openFile': 'Apri file',
+  'activity.somethingWentWrong': 'Qualcosa è andato storto.',
+
   'retentionConfirm.title': 'Estendere la conservazione?',
   'retentionConfirm.body': 'Questo verrà conservato per altri {days} giorni prima di essere eliminato automaticamente. Continuare?',
   'retentionConfirm.confirm': 'Estendi',

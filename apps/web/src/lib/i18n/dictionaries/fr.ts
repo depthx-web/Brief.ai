@@ -897,6 +897,13 @@ const fr: Record<DictionaryKey, string> = {
   'download.faqHeading': 'FAQ',
   'download.screenshotAlt': 'Application de bureau Dossiera — Écran d’accueil',
 
+  'activity.label': 'Activité',
+  'activity.clearFinished': 'Effacer les terminés',
+  'activity.nothingYet': 'Rien pour le moment.',
+  'activity.complete': 'Terminé',
+  'activity.openFile': 'Ouvrir le fichier',
+  'activity.somethingWentWrong': 'Une erreur est survenue.',
+
   'retentionConfirm.title': 'Prolonger la conservation ?',
   'retentionConfirm.body': 'Ce fichier sera conservé {days} jours de plus avant sa suppression automatique. Continuer ?',
   'retentionConfirm.confirm': 'Prolonger',

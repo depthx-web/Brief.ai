@@ -3,13 +3,33 @@
 import { useEffect, useRef, useState } from 'react';
 import { useActivityJobs, clearFinished, type ActivityJob } from '@/lib/activityStore';
 import { CheckIcon, CloseIcon } from '@/lib/icons';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 
 const CHECKMARK_AUTOHIDE_MS = 4000;
+
+// Downloaded files land in the OS Downloads folder under their job filename
+// (the browser-style `<a download>` click in convertApi.ts's downloadBlob
+// triggers WebView2's normal download flow, same as a real browser) — this
+// re-derives that path rather than storing one, since the folder is a fixed
+// per-install location and doesn't need to be captured at completion time.
+async function openDownloadedFile(filename: string) {
+  try {
+    const { open } = await import('@tauri-apps/plugin-shell');
+    const { downloadDir, join } = await import('@tauri-apps/api/path');
+    const path = await join(await downloadDir(), filename);
+    await open(path);
+  } catch {
+    // The file may have been moved, renamed, or deleted since completion —
+    // opening a downloaded file is a convenience, not worth surfacing an
+    // error for.
+  }
+}
 
 // Fixed bottom-right of the content area (not the sidebar) — hidden
 // entirely when there's nothing to show, rather than a permanent empty
 // button. See brief-ai-desktop-settings-wallet-notifications.md §3.1.
 export default function ActivityBall() {
+  const { t } = useLocale();
   const jobs = useActivityJobs();
   const [open, setOpen] = useState(false);
   const [showCheckmark, setShowCheckmark] = useState(false);
@@ -56,7 +76,7 @@ export default function ActivityBall() {
 
       <button
         onClick={handleToggle}
-        aria-label="Activity"
+        aria-label={t('activity.label')}
         className="relative flex h-12 w-12 items-center justify-center rounded-full bg-navy shadow-level-3"
       >
         {running.length > 0 && (
@@ -80,29 +100,30 @@ export default function ActivityBall() {
 }
 
 function ActivityPanel({ jobs, onClose }: { jobs: ActivityJob[]; onClose: () => void }) {
+  const { t } = useLocale();
   const hasFinished = jobs.some((j) => j.status !== 'running');
 
   return (
     <div className="w-80 overflow-hidden rounded-xl bg-white shadow-level-3">
       <div className="flex items-center justify-between border-b border-paper-line px-4 py-2.5">
-        <span className="text-[13px] font-bold text-ink">Activity</span>
+        <span className="text-[13px] font-bold text-ink">{t('activity.label')}</span>
         <div className="flex items-center gap-3">
           {hasFinished && (
             <button
               onClick={() => clearFinished()}
               className="text-xs text-ink-soft hover:text-ink"
             >
-              Clear finished
+              {t('activity.clearFinished')}
             </button>
           )}
-          <button onClick={onClose} aria-label="Close" className="text-ink-soft hover:text-ink">
+          <button onClick={onClose} aria-label={t('common.close')} className="text-ink-soft hover:text-ink">
             <CloseIcon />
           </button>
         </div>
       </div>
       <div className="max-h-80 overflow-y-auto p-3">
         {jobs.length === 0 ? (
-          <p className="px-1 py-4 text-center text-[13px] text-ink-soft">Nothing yet.</p>
+          <p className="px-1 py-4 text-center text-[13px] text-ink-soft">{t('activity.nothingYet')}</p>
         ) : (
           <div className="flex flex-col gap-2">
             {jobs.map((job) => (
@@ -116,6 +137,7 @@ function ActivityPanel({ jobs, onClose }: { jobs: ActivityJob[]; onClose: () => 
 }
 
 function JobRow({ job }: { job: ActivityJob }) {
+  const { t } = useLocale();
   const ext = job.filename.split('.').pop()?.toUpperCase() ?? 'FILE';
   return (
     <div className="rounded-lg border border-paper-line bg-paper p-3">
@@ -132,14 +154,22 @@ function JobRow({ job }: { job: ActivityJob }) {
         </div>
       )}
       {job.status === 'done' && (
-        <div className="mt-2 flex items-center gap-1.5 text-[11px] text-emerald">
-          <CheckIcon size={12} />
-          Complete
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 text-[11px] text-emerald">
+            <CheckIcon size={12} />
+            {t('activity.complete')}
+          </div>
+          <button
+            onClick={() => openDownloadedFile(job.filename)}
+            className="text-[11px] font-medium text-navy hover:text-emerald"
+          >
+            {t('activity.openFile')}
+          </button>
         </div>
       )}
       {job.status === 'failed' && (
         <p className="mt-2 text-[11px]" style={{ color: '#C24444' }}>
-          {job.error ?? 'Something went wrong.'}
+          {job.error ?? t('activity.somethingWentWrong')}
         </p>
       )}
     </div>

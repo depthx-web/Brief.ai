@@ -897,6 +897,13 @@ const de: Record<DictionaryKey, string> = {
   'download.faqHeading': 'FAQ',
   'download.screenshotAlt': 'Dossiera Desktop-App — Startbildschirm',
 
+  'activity.label': 'Aktivität',
+  'activity.clearFinished': 'Abgeschlossene löschen',
+  'activity.nothingYet': 'Noch nichts.',
+  'activity.complete': 'Abgeschlossen',
+  'activity.openFile': 'Datei öffnen',
+  'activity.somethingWentWrong': 'Etwas ist schiefgelaufen.',
+
   'retentionConfirm.title': 'Aufbewahrung verlängern?',
   'retentionConfirm.body': 'Dies wird {days} weitere Tage aufbewahrt, bevor es automatisch gelöscht wird. Fortfahren?',
   'retentionConfirm.confirm': 'Verlängern',

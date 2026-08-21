@@ -897,6 +897,13 @@ const ar: Record<DictionaryKey, string> = {
   'download.faqHeading': 'الأسئلة الشائعة',
   'download.screenshotAlt': 'تطبيق سطح المكتب Dossiera — الشاشة الرئيسية',
 
+  'activity.label': 'النشاط',
+  'activity.clearFinished': 'مسح المكتملة',
+  'activity.nothingYet': 'لا يوجد شيء بعد.',
+  'activity.complete': 'اكتمل',
+  'activity.openFile': 'فتح الملف',
+  'activity.somethingWentWrong': 'حدث خطأ ما.',
+
   'retentionConfirm.title': 'تمديد مدة الاحتفاظ؟',
   'retentionConfirm.body': 'سيُحفظ هذا لمدة {days} يومًا إضافيًا قبل حذفه تلقائيًا. هل تريد المتابعة؟',
   'retentionConfirm.confirm': 'تمديد',
