@@ -6,6 +6,8 @@ import { extractInvoiceData, type InvoiceData } from '@/lib/aiApi';
 import { downloadCsv } from '@/lib/csv';
 import { exportToQuickBooks, exportToXero } from '@/lib/invoiceExport';
 import { showLoading, resolveLoading } from '@/lib/toast';
+import { useLocale } from '@/lib/i18n/LocaleContext';
+import type { DictionaryKey } from '@/lib/i18n/dictionaries/en';
 
 interface InvoiceRow {
   id: string;
@@ -24,7 +26,17 @@ const CATEGORIES = [
   'Other',
 ];
 
+const CATEGORY_LABEL_KEY: Record<string, DictionaryKey> = {
+  'Office Supplies': 'toolPage.batchInvoices.categoryOfficeSupplies',
+  Travel: 'toolPage.batchInvoices.categoryTravel',
+  Software: 'toolPage.batchInvoices.categorySoftware',
+  Utilities: 'toolPage.batchInvoices.categoryUtilities',
+  'Professional Services': 'toolPage.batchInvoices.categoryProfessionalServices',
+  Other: 'toolPage.batchInvoices.categoryOther',
+};
+
 export default function BatchInvoices() {
+  const { t } = useLocale();
   const [rows, setRows] = useState<InvoiceRow[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progressLabel, setProgressLabel] = useState<string | null>(null);
@@ -37,7 +49,7 @@ export default function BatchInvoices() {
       (f) => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf')
     );
     if (pdfFiles.length === 0) {
-      setError('Please select PDF invoices.');
+      setError(t('toolPage.batchInvoices.selectPdfsError'));
       return;
     }
 
@@ -53,7 +65,12 @@ export default function BatchInvoices() {
     for (let i = 0; i < pdfFiles.length; i++) {
       const file = pdfFiles[i];
       const rowId = initialRows[i].id;
-      setProgressLabel(`Processing ${i + 1} of ${pdfFiles.length} — ${file.name}`);
+      setProgressLabel(
+        t('toolPage.batchInvoices.processingProgress')
+          .replace('{current}', String(i + 1))
+          .replace('{total}', String(pdfFiles.length))
+          .replace('{name}', file.name)
+      );
       try {
         const { pages } = await extractPdfTextWithOcrFallback(file);
         const data = await extractInvoiceData(pages);
@@ -65,7 +82,7 @@ export default function BatchInvoices() {
               ? {
                   ...r,
                   status: 'error',
-                  error: err instanceof Error ? err.message : 'Could not extract this invoice.',
+                  error: err instanceof Error ? err.message : t('toolPage.batchInvoices.couldNotExtract'),
                 }
               : r
           )
@@ -94,48 +111,46 @@ export default function BatchInvoices() {
   function handleExportCsv() {
     const done = doneRows();
     if (done.length === 0) return;
-    const toastId = showLoading('Preparing generic export…');
+    const toastId = showLoading(t('toolPage.batchInvoices.preparingGenericExport'));
     const header = ['Filename', 'Vendor', 'Invoice Number', 'Date', 'Category', 'Total'];
     const dataRows = done.map((r) => [r.filename, r.data.vendor, r.data.invoiceNumber, r.data.date, r.data.category, r.data.total]);
     downloadCsv([header, ...dataRows], 'invoices.csv');
-    resolveLoading(toastId, 'invoices.csv downloaded');
+    resolveLoading(toastId, t('toolPage.batchInvoices.fileDownloaded').replace('{filename}', 'invoices.csv'));
   }
 
   function handleExportQuickBooks() {
     const done = doneRows();
     if (done.length === 0) return;
-    const toastId = showLoading('Preparing QuickBooks export…');
+    const toastId = showLoading(t('toolPage.batchInvoices.preparingQuickBooks'));
     const filename = exportToQuickBooks(done);
-    resolveLoading(toastId, `${filename} downloaded`);
+    resolveLoading(toastId, t('toolPage.batchInvoices.fileDownloaded').replace('{filename}', filename));
   }
 
   function handleExportXero() {
     const done = doneRows();
     if (done.length === 0) return;
-    const toastId = showLoading('Preparing Xero export…');
+    const toastId = showLoading(t('toolPage.batchInvoices.preparingXero'));
     const filename = exportToXero(done);
-    resolveLoading(toastId, `${filename} downloaded`);
+    resolveLoading(toastId, t('toolPage.batchInvoices.fileDownloaded').replace('{filename}', filename));
   }
 
   const doneCount = rows.filter((r) => r.status === 'done').length;
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-16">
-      <h1 className="font-serif text-2xl font-semibold text-navy">Batch Invoice Export</h1>
+      <h1 className="font-serif text-2xl font-semibold text-navy">{t('toolPage.batchInvoices.title')}</h1>
       <p className="mt-2 text-ink-soft">
-        Pull vendor, date, total, and category out of many invoices at once, review, and export
-        to CSV.
+        {t('toolPage.batchInvoices.description')}
       </p>
       <p className="mt-1 text-xs text-ink-soft">
-        Text is extracted from each PDF in your browser (OCR runs locally too, for scans); only
-        that extracted text — not the file — is sent to our AI server.
+        {t('toolPage.batchInvoices.privacyNote')}
       </p>
 
       <div
         onClick={() => inputRef.current?.click()}
         className="mt-6 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white px-6 py-12 text-center"
       >
-        <p className="text-ink-soft">Click to choose one or more invoice PDFs</p>
+        <p className="text-ink-soft">{t('toolPage.batchInvoices.clickToChoose')}</p>
         <input
           ref={inputRef}
           type="file"
@@ -154,12 +169,12 @@ export default function BatchInvoices() {
           <table className="min-w-full text-start text-sm">
             <thead className="border-b border-gray-200 text-xs uppercase text-ink-soft">
               <tr>
-                <th className="px-3 py-2">File</th>
-                <th className="px-3 py-2">Vendor</th>
-                <th className="px-3 py-2">Invoice #</th>
-                <th className="px-3 py-2">Date</th>
-                <th className="px-3 py-2">Category</th>
-                <th className="px-3 py-2">Total</th>
+                <th className="px-3 py-2">{t('toolPage.batchInvoices.colFile')}</th>
+                <th className="px-3 py-2">{t('toolPage.batchInvoices.colVendor')}</th>
+                <th className="px-3 py-2">{t('toolPage.batchInvoices.colInvoiceNumber')}</th>
+                <th className="px-3 py-2">{t('toolPage.batchInvoices.colDate')}</th>
+                <th className="px-3 py-2">{t('toolPage.batchInvoices.colCategory')}</th>
+                <th className="px-3 py-2">{t('toolPage.batchInvoices.colTotal')}</th>
                 <th className="px-3 py-2" />
               </tr>
             </thead>
@@ -169,7 +184,7 @@ export default function BatchInvoices() {
                   <td className="max-w-[10rem] truncate px-3 py-2 text-ink-soft">{row.filename}</td>
                   {row.status === 'processing' && (
                     <td colSpan={5} className="px-3 py-2 text-ink-soft">
-                      Processing…
+                      {t('toolPage.batchInvoices.processingRow')}
                     </td>
                   )}
                   {row.status === 'error' && (
@@ -211,7 +226,7 @@ export default function BatchInvoices() {
                           )}
                           {CATEGORIES.map((c) => (
                             <option key={c} value={c}>
-                              {c}
+                              {t(CATEGORY_LABEL_KEY[c])}
                             </option>
                           ))}
                         </select>
@@ -229,9 +244,9 @@ export default function BatchInvoices() {
                     <button
                       onClick={() => removeRow(row.id)}
                       className="text-ink-soft hover:text-redline"
-                      aria-label={`Remove ${row.filename}`}
+                      aria-label={t('toolPage.batchInvoices.removeLabel').replace('{name}', row.filename)}
                     >
-                      Remove
+                      {t('toolPage.batchInvoices.removeButton')}
                     </button>
                   </td>
                 </tr>
@@ -248,7 +263,7 @@ export default function BatchInvoices() {
           className="flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm font-semibold transition-colors hover:border-gray-300 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <span className="rounded bg-[#2CA01C] px-1.5 py-0.5 font-mono text-[10px] font-bold text-white">QB</span>
-          Export to QuickBooks
+          {t('toolPage.batchInvoices.exportQuickBooks')}
         </button>
         <button
           onClick={handleExportXero}
@@ -256,14 +271,14 @@ export default function BatchInvoices() {
           className="flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm font-semibold transition-colors hover:border-gray-300 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <span className="rounded bg-[#13B5EA] px-1.5 py-0.5 font-mono text-[10px] font-bold text-white">Xero</span>
-          Export to Xero
+          {t('toolPage.batchInvoices.exportXero')}
         </button>
         <button
           onClick={handleExportCsv}
           disabled={doneCount === 0 || isProcessing}
           className="flex items-center justify-center gap-2 rounded-lg bg-emerald px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
         >
-          Download generic CSV
+          {t('toolPage.batchInvoices.downloadCsv')}
         </button>
       </div>
     </div>

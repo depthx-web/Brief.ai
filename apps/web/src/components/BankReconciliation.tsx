@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { extractPdfText, type PageText } from '@/lib/extractPdfText';
 import { reconcileBank, type ReconciliationReport } from '@/lib/aiApi';
 import { showError } from '@/lib/toast';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 import ToolSourceModal from './ToolSourceModal';
 
 interface Slot {
@@ -13,19 +14,21 @@ interface Slot {
 }
 
 function PickSlot({ label, slot, onPick }: { label: string; slot: Slot; onPick: () => void }) {
+  const { t } = useLocale();
   return (
     <button
       onClick={onPick}
       className="flex w-full flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-300 bg-white px-6 py-12 text-center transition-colors hover:border-emerald"
     >
       <span className="text-sm font-medium text-ink">{label}</span>
-      <span className="text-xs text-ink-soft">{slot.file ? slot.file.name : 'Click to choose a PDF'}</span>
+      <span className="text-xs text-ink-soft">{slot.file ? slot.file.name : t('toolPage.compare.clickToChoosePdf')}</span>
     </button>
   );
 }
 
 export default function BankReconciliation() {
   const { token } = useAuth();
+  const { t } = useLocale();
   const [bankSlot, setBankSlot] = useState<Slot>({ file: null, pages: null });
   const [recordsSlot, setRecordsSlot] = useState<Slot>({ file: null, pages: null });
   const [picking, setPicking] = useState<'bank' | 'records' | null>(null);
@@ -43,7 +46,7 @@ export default function BankReconciliation() {
       else setRecordsSlot({ file, pages });
       setReport(null);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Could not read this PDF.';
+      const message = err instanceof Error ? err.message : t('toolPage.compare.couldNotReadPdf');
       setError(message);
       showError(message);
     }
@@ -56,7 +59,7 @@ export default function BankReconciliation() {
     try {
       setReport(await reconcileBank(bankSlot.pages, recordsSlot.pages, token ?? undefined));
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Could not reconcile these records.';
+      const message = err instanceof Error ? err.message : t('toolPage.bankReconciliation.couldNotReconcile');
       setError(message);
       showError(message);
     } finally {
@@ -66,16 +69,16 @@ export default function BankReconciliation() {
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-16">
-      <h1 className="font-serif text-2xl font-semibold text-navy">Bank Reconciliation Assistant</h1>
+      <h1 className="font-serif text-2xl font-semibold text-navy">{t('toolPage.bankReconciliation.title')}</h1>
       <p className="mt-2 text-ink-soft">
-        Compares a bank transaction list against recorded invoices and flags unmatched discrepancies.
+        {t('toolPage.bankReconciliation.description')}
       </p>
 
       {!report ? (
         <>
           <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <PickSlot label="Bank statement" slot={bankSlot} onPick={() => setPicking('bank')} />
-            <PickSlot label="Recorded invoices" slot={recordsSlot} onPick={() => setPicking('records')} />
+            <PickSlot label={t('toolPage.bankReconciliation.bankStatement')} slot={bankSlot} onPick={() => setPicking('bank')} />
+            <PickSlot label={t('toolPage.bankReconciliation.recordedInvoices')} slot={recordsSlot} onPick={() => setPicking('records')} />
           </div>
 
           {error && <p className="mt-4 text-sm text-redline">{error}</p>}
@@ -85,23 +88,23 @@ export default function BankReconciliation() {
             disabled={!bankSlot.pages || !recordsSlot.pages || isRunning}
             className="mt-6 w-full rounded-lg bg-emerald px-6 py-3 font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
           >
-            {isRunning ? 'Reconciling…' : 'Reconcile'}
+            {isRunning ? t('toolPage.bankReconciliation.reconciling') : t('toolPage.bankReconciliation.reconcile')}
           </button>
         </>
       ) : (
         <div className="mt-6">
           <p className="rounded-lg border border-emerald/30 bg-emerald-soft px-4 py-3 text-sm text-emerald-dark">
-            {report.matchedCount} transaction{report.matchedCount === 1 ? '' : 's'} matched.
+            {t(report.matchedCount === 1 ? 'toolPage.bankReconciliation.matchedSingular' : 'toolPage.bankReconciliation.matchedPlural').replace('{n}', String(report.matchedCount))}
           </p>
 
           {report.discrepancies.length === 0 ? (
-            <p className="mt-4 text-sm text-ink-soft">No discrepancies found.</p>
+            <p className="mt-4 text-sm text-ink-soft">{t('toolPage.bankReconciliation.noDiscrepancies')}</p>
           ) : (
             <ul className="mt-4 space-y-3">
               {report.discrepancies.map((d, i) => (
                 <li key={i} className="rounded-lg border border-amber-200 bg-amber-50 p-4">
                   <span className="rounded-full bg-amber-200 px-2 py-0.5 text-[10px] font-semibold uppercase text-amber-800">
-                    {d.side === 'bank' ? 'On bank statement only' : 'In records only'}
+                    {d.side === 'bank' ? t('toolPage.bankReconciliation.onBankOnly') : t('toolPage.bankReconciliation.inRecordsOnly')}
                   </span>
                   <div className="mt-2 flex items-baseline justify-between gap-2 text-sm">
                     <span className="text-ink">{d.description}</span>
@@ -120,7 +123,7 @@ export default function BankReconciliation() {
             }}
             className="mt-6 text-sm font-medium text-navy hover:text-emerald"
           >
-            ← Reconcile different files
+            {t('toolPage.bankReconciliation.reconcileDifferentFiles')}
           </button>
         </div>
       )}
