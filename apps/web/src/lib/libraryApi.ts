@@ -12,6 +12,9 @@ export interface LibraryDocumentSummary {
 export interface LibrarySearchResult extends LibraryDocumentSummary {
   snippet: string;
   score: number;
+  // false for a teammate's file surfaced because its project is shared with
+  // the team — Delete stays owner-only server-side, so the UI hides it too.
+  isOwn: boolean;
 }
 
 export interface ProjectSummary {

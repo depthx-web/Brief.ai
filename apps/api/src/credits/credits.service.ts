@@ -61,6 +61,30 @@ export class CreditsService {
     return true;
   }
 
+  // PAID users bypass consumeCreditIfAvailable entirely (FeatureGuard grants
+  // them access before ever reaching it) — so a team owner's tokenBudgetOverride
+  // had no enforcement point at all until this. Only active team members get
+  // a delta:0 tracking transaction (never touches wallet balance); a non-team
+  // PAID user is untouched, same as before this existed.
+  async recordPaidUsageWithinBudget(userId: string, operationLabel?: string): Promise<boolean> {
+    const membership = await this.prisma.teamMember.findFirst({ where: { userId, status: 'ACTIVE' } });
+    if (!membership) return true;
+
+    const settings = await this.prisma.teamMemberSettings.findUnique({
+      where: { teamId_userId: { teamId: membership.teamId, userId } },
+    });
+    const cap = settings?.tokenBudgetOverride ?? null;
+    if (cap !== null) {
+      const used = await this.getMonthlyUsage(userId);
+      if (used >= cap) return false;
+    }
+
+    await this.prisma.creditTransaction.create({
+      data: { userId, delta: 0, reason: 'AI_USAGE', adminNote: operationLabel },
+    });
+    return true;
+  }
+
   async grantPurchasedCredits(userId: string, amount: number): Promise<void> {
     await this.prisma.creditTransaction.create({
       data: { userId, delta: amount, reason: 'PURCHASE' },

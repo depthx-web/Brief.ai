@@ -322,20 +322,42 @@ export class LibraryService {
     return { expiresAt };
   }
 
+  // Own documents, plus (for a team owner) a teammate's documents inside a
+  // project explicitly marked SHARED_WITH_TEAM — the same access rule
+  // findAccessibleProject/findAccessibleDocument already enforce for a single
+  // record, expressed here as a query filter across all of a user's documents.
   async search(userId: string, query: string) {
     const queryEmbedding = await this.embedding.embed(query);
+    const ownedTeam = await this.prisma.team.findFirst({ where: { ownerUserId: userId } });
+
     const docs = await this.prisma.libraryDocument.findMany({
-      where: { userId },
-      select: { id: true, filename: true, extractedText: true, embedding: true, createdAt: true },
+      where: ownedTeam
+        ? { OR: [{ userId }, { project: { teamId: ownedTeam.id, visibility: 'SHARED_WITH_TEAM' } }] }
+        : { userId },
+      select: {
+        id: true,
+        filename: true,
+        docType: true,
+        projectId: true,
+        expiresAt: true,
+        extractedText: true,
+        embedding: true,
+        createdAt: true,
+        userId: true,
+      },
     });
 
     return docs
       .map((doc) => ({
         id: doc.id,
         filename: doc.filename,
+        docType: doc.docType,
+        projectId: doc.projectId,
+        expiresAt: doc.expiresAt,
         createdAt: doc.createdAt,
         snippet: doc.extractedText.slice(0, SNIPPET_LENGTH),
         score: EmbeddingService.cosineSimilarity(queryEmbedding, doc.embedding as number[]),
+        isOwn: doc.userId === userId,
       }))
       .sort((a, b) => b.score - a.score)
       .slice(0, SEARCH_RESULT_LIMIT);

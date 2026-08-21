@@ -23,6 +23,18 @@ const REASON_COPY: Record<CreditTransaction['reason'], { label: string; icon: st
   MANUAL_ADMIN_ADJUSTMENT: { label: 'Balance adjustment', icon: '↕', iconClass: 'text-amber-600' },
 };
 
+// delta 0 marks a PAID team member's usage tracked only for their team
+// owner's monthly-usage/budget-cap view (Team Settings) — it never touches
+// their wallet balance, so "0" alone would misleadingly read as a no-op.
+function deltaLabel(delta: number): string {
+  if (delta === 0) return 'Included';
+  return delta > 0 ? `+${delta}` : String(delta);
+}
+function deltaClass(delta: number): string {
+  if (delta === 0) return 'text-ink-soft';
+  return delta > 0 ? 'text-emerald' : 'text-navy';
+}
+
 export default function Wallet() {
   const { token } = useAuth();
   const [balance, setBalance] = useState<number | null>(null);
@@ -96,8 +108,8 @@ export default function Wallet() {
                   <span className="shrink-0 font-mono text-xs text-ink-soft">
                     {new Date(t.createdAt).toLocaleDateString()}
                   </span>
-                  <span className={`w-12 shrink-0 text-right font-mono text-[13px] ${t.delta > 0 ? 'text-emerald' : 'text-navy'}`}>
-                    {t.delta > 0 ? `+${t.delta}` : t.delta}
+                  <span className={`w-12 shrink-0 text-right font-mono text-[13px] ${deltaClass(t.delta)}`}>
+                    {deltaLabel(t.delta)}
                   </span>
                 </div>
               );
@@ -118,8 +130,8 @@ export default function Wallet() {
                       <p className="font-mono text-xs text-ink-soft">{new Date(t.createdAt).toLocaleString()}</p>
                     </div>
                   </div>
-                  <span className={`font-mono text-sm ${t.delta > 0 ? 'text-emerald' : 'text-navy'}`}>
-                    {t.delta > 0 ? `+${t.delta}` : t.delta}
+                  <span className={`font-mono text-sm ${deltaClass(t.delta)}`}>
+                    {deltaLabel(t.delta)}
                   </span>
                 </li>
               );

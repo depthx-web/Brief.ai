@@ -356,6 +356,11 @@ function SearchResultCard({
       <p className="mt-1 text-xs text-ink-soft">
         {doc.snippet}… <span className="text-ink-soft/70">(match {(doc.score * 100).toFixed(0)}%)</span>
       </p>
+      {!doc.isOwn && (
+        <span className="mt-1 w-fit rounded-full bg-emerald-soft px-2 py-0.5 text-[10px] font-medium text-emerald">
+          Shared with you
+        </span>
+      )}
       <div className="mt-3 flex items-center justify-between gap-2">
         <span className="text-xs text-ink-soft">{new Date(doc.createdAt).toLocaleDateString()}</span>
         <span
@@ -368,9 +373,11 @@ function SearchResultCard({
         <button onClick={onDownload} className="font-medium text-navy hover:text-emerald">
           Download
         </button>
-        <button onClick={onDelete} className="font-medium text-ink-soft hover:text-redline">
-          Delete
-        </button>
+        {doc.isOwn && (
+          <button onClick={onDelete} className="font-medium text-ink-soft hover:text-redline">
+            Delete
+          </button>
+        )}
       </div>
     </div>
   );

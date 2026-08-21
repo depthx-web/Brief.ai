@@ -33,9 +33,16 @@ export class FeatureGuard implements CanActivate {
       'plan covers merge, split, rotate, organize, and other tools that run entirely in your browser.';
 
     if (!user) throw new ForbiddenException(deniedMessage);
-    if (user.plan === 'PAID') return true;
 
     const key = this.reflector.get<string>(FEATURE_KEY_METADATA, context.getHandler());
+
+    if (user.plan === 'PAID') {
+      const operationLabel = key ? await this.featureService.findLabel(user.segment ?? null, key) : null;
+      if (await this.creditsService.recordPaidUsageWithinBudget(user.id, operationLabel ?? undefined)) return true;
+      throw new ForbiddenException(
+        'Your team owner has set a monthly usage cap for your account, and you have reached it this month. Ask them to raise it in Team Settings.'
+      );
+    }
     if (key && (await this.featureService.isFreeEnabled(user.segment ?? null, key))) return true;
 
     const operationLabel = key ? await this.featureService.findLabel(user.segment ?? null, key) : null;
