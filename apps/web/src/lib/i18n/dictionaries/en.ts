@@ -936,6 +936,26 @@ const en = {
   'activity.openFile': 'Open file',
   'activity.somethingWentWrong': 'Something went wrong.',
 
+  'footer.tagline': 'AI-powered PDF tools for legal, accounting, and research professionals.',
+  'footer.product': 'Product',
+  'footer.legal': 'Legal',
+  'footer.workspaces': 'Workspaces',
+  'footer.pricing': 'Pricing',
+  'footer.tools': 'Tools',
+  'footer.freePlan': 'Free Plan',
+  'footer.desktopApp': 'Desktop App',
+  'footer.privacyPolicy': 'Privacy Policy',
+  'footer.termsOfService': 'Terms of Service',
+  'footer.copyright': '© 2026 Dossiera — All rights reserved.',
+
+  'toolSeo.features': 'Features',
+  'toolSeo.faq': 'FAQ',
+  'toolSeo.relatedTools': 'Related Tools',
+  'toolSeo.processedOnServers': 'Processed on our servers',
+  'toolSeo.processedLocally': 'Processed locally, in your browser',
+  'toolSeo.processedOnServersDescription': 'This tool runs on our servers to do its work. Your file is automatically and permanently deleted afterward, per your retention setting.',
+  'toolSeo.processedLocallyDescription': 'This tool runs entirely on your device — your file is never uploaded anywhere.',
+
   // Retention extend confirmation
   'retentionConfirm.title': 'Extend retention?',
   'retentionConfirm.body': 'This will be kept for {days} more days before it’s automatically deleted. Continue?',

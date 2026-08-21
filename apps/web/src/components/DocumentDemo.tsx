@@ -1,65 +1,16 @@
 'use client';
 
 import { useState } from 'react';
+import { useLocale } from '@/lib/i18n/LocaleContext';
+import { getDocumentDemoContent, type DemoSegmentKey } from '@/lib/i18n/documentDemoContent';
 
-type SegmentKey = 'law' | 'acc' | 'res';
-
-interface DemoLine {
-  html: string;
-}
-
-interface DemoContent {
-  tabLabel: string;
-  filename: string;
-  page: string;
-  title: string;
-  lines: DemoLine[];
-}
-
-const CONTENT: Record<SegmentKey, DemoContent> = {
-  law: {
-    tabLabel: 'Legal',
-    filename: 'Contract_Draft.pdf',
-    page: 'p. 3/12',
-    title: "Dossiera's Analysis",
-    lines: [
-      { html: 'Termination clause <mark class="hl">30 days</mark><span class="note">shorter than typical for similar contracts</span>' },
-      { html: 'Second party <span class="circ">1</span> not clearly defined on page 2' },
-      { html: 'Confidentiality term <mark class="strike">unlimited duration</mark> <mark class="insert">suggest setting a time cap</mark>' },
-      { html: 'Ready to compare with <span class="circ">2</span> the previous version' },
-    ],
-  },
-  acc: {
-    tabLabel: 'Accounting',
-    filename: 'Invoice_Q3.pdf',
-    page: 'p. 1/4',
-    title: "Dossiera's Analysis",
-    lines: [
-      { html: 'Total expenses <mark class="hl">$14,230</mark> for August<span class="note">matches bank statement</span>' },
-      { html: 'Office rent item <span class="circ">1</span> auto-categorized under "Operational"' },
-      { html: 'Recurring charge <mark class="strike">$340</mark> <mark class="insert">flagged as excluded</mark>' },
-      { html: 'Ready to export to <span class="circ">2</span> QuickBooks' },
-    ],
-  },
-  res: {
-    tabLabel: 'Research',
-    filename: 'Research_Paper.pdf',
-    page: 'p. 1/22',
-    title: "Dossiera's Analysis",
-    lines: [
-      { html: 'Core hypothesis <mark class="hl">supported by 3 prior studies</mark>' },
-      { html: 'Sampling methodology <span class="circ">1</span> noted in section 2.1' },
-      { html: 'Incomplete reference <mark class="strike">Smith, 2019</mark> <mark class="insert">full source found</mark>' },
-      { html: 'Ready to export <span class="circ">2</span> as BibTeX' },
-    ],
-  },
-};
-
-const ORDER: SegmentKey[] = ['law', 'acc', 'res'];
+const ORDER: DemoSegmentKey[] = ['law', 'acc', 'res'];
 
 export default function DocumentDemo() {
-  const [active, setActive] = useState<SegmentKey>('acc');
-  const d = CONTENT[active];
+  const { locale } = useLocale();
+  const content = getDocumentDemoContent(locale);
+  const [active, setActive] = useState<DemoSegmentKey>('acc');
+  const d = content[active];
 
   return (
     <div className="relative z-[2] flex justify-center">
@@ -74,7 +25,7 @@ export default function DocumentDemo() {
                 : 'bg-[#E9E2CE] text-[#6B6250] opacity-70 hover:opacity-90'
             }`}
           >
-            {CONTENT[key].tabLabel}
+            {content[key].tabLabel}
           </button>
         ))}
       </div>

@@ -24,7 +24,7 @@ function findTool(slug: string): { tool: Tool; tab: Tab } | null {
 // fallback shown until/unless an admin publishes an override.
 export default function ToolSeoSections({ slug }: { slug: string }) {
   const found = findTool(slug);
-  const { locale } = useLocale();
+  const { locale, t } = useLocale();
   const preview = useSearchParams().get('cmsPreview') === '1';
   const defaults = getToolSeoContent(slug, locale);
   const [features, setFeatures] = useState<string[]>(defaults?.features ?? []);
@@ -54,7 +54,7 @@ export default function ToolSeoSections({ slug }: { slug: string }) {
     <div className="mx-auto max-w-3xl px-6 py-14">
       {features.length > 0 && (
         <section>
-          <h2 className="font-serif text-xl font-medium text-navy">Features</h2>
+          <h2 className="font-serif text-xl font-medium text-navy">{t('toolSeo.features')}</h2>
           <ul className="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-3">
             {features.map((f) => (
               <li key={f} className="flex items-start gap-2 text-sm text-ink-soft">
@@ -75,12 +75,10 @@ export default function ToolSeoSections({ slug }: { slug: string }) {
           </span>
           <div>
             <p className="text-sm font-medium text-navy">
-              {isServerSide ? 'Processed on our servers' : 'Processed locally, in your browser'}
+              {isServerSide ? t('toolSeo.processedOnServers') : t('toolSeo.processedLocally')}
             </p>
             <p className="mt-1 text-xs text-ink-soft">
-              {isServerSide
-                ? 'This tool runs on our servers to do its work. Your file is automatically and permanently deleted afterward, per your retention setting.'
-                : 'This tool runs entirely on your device — your file is never uploaded anywhere.'}
+              {isServerSide ? t('toolSeo.processedOnServersDescription') : t('toolSeo.processedLocallyDescription')}
             </p>
           </div>
         </div>
@@ -88,7 +86,7 @@ export default function ToolSeoSections({ slug }: { slug: string }) {
 
       {faq.length > 0 && (
         <section className="mt-12">
-          <h2 className="font-serif text-xl font-medium text-navy">FAQ</h2>
+          <h2 className="font-serif text-xl font-medium text-navy">{t('toolSeo.faq')}</h2>
           <div className="mt-2">
             {faq.map((item, i) => (
               <div key={item.q} className="border-t border-gray-200 py-4">
@@ -108,7 +106,7 @@ export default function ToolSeoSections({ slug }: { slug: string }) {
 
       {related.length > 0 && (
         <section className="mt-12">
-          <h2 className="font-serif text-xl font-medium text-navy">Related Tools</h2>
+          <h2 className="font-serif text-xl font-medium text-navy">{t('toolSeo.relatedTools')}</h2>
           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {related.map((t) => (
               <Link
