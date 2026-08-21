@@ -198,6 +198,11 @@ const fr: Record<DictionaryKey, string> = {
   'desktopHome.aiToolsName': 'Outils IA',
   'desktopHome.aiToolsDescription': 'Analyse de clauses, chat, comparaisons et résumés pour votre domaine.',
   'desktopHome.aiToolsCount': '14 outils · nécessite internet',
+  'desktopHome.defaultAnnouncementBadge': 'Nouveau',
+  'desktopHome.defaultAnnouncementKicker': 'Mise à jour produit',
+  'desktopHome.defaultAnnouncementHeadline': 'La comparaison de contrats par IA est arrivée',
+  'desktopHome.defaultAnnouncementBody': 'Comparez deux versions d’un même contrat côte à côte et faites expliquer chaque changement en langage clair — inclus avec tout espace de travail Juridique.',
+  'desktopHome.defaultAnnouncementCtaLabel': 'Voir les nouveautés',
 
   'countdown.noExpiry': 'Sans expiration',
   'countdown.expired': 'Expiré',
@@ -869,6 +874,15 @@ const fr: Record<DictionaryKey, string> = {
   'toolPage.sign.signatureNamePlaceholder': 'Nom de la signature',
   'toolPage.sign.useThisSignature': 'Utiliser cette signature',
   'toolPage.sign.defaultSignatureName': 'Ma signature',
+
+  'desktopAppSection.kicker': 'Application de bureau',
+  'desktopAppSection.heading': 'Conçu aussi pour votre bureau',
+  'desktopAppSection.description': 'Les outils principaux fonctionnent entièrement sur votre machine — aucun envoi, aucune connexion Internet requise. Connectez-vous lorsque vous souhaitez utiliser les fonctionnalités IA ; travaillez hors ligne le reste du temps.',
+  'desktopAppSection.downloadWindows': 'Télécharger pour Windows',
+  'desktopAppSection.downloadMac': 'Télécharger pour Mac',
+  'desktopAppSection.downloadLinux': 'Télécharger pour Linux',
+  'desktopAppSection.signedInstaller': 'Installateur signé · Mêmes garanties de confidentialité que l’application web',
+  'desktopAppSection.screenshotAlt': 'Application de bureau Brief.ai — Écran d’accueil',
 
   'retentionConfirm.title': 'Prolonger la conservation ?',
   'retentionConfirm.body': 'Ce fichier sera conservé {days} jours de plus avant sa suppression automatique. Continuer ?',

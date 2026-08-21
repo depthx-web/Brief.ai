@@ -198,6 +198,11 @@ const ar: Record<DictionaryKey, string> = {
   'desktopHome.aiToolsName': 'أدوات الذكاء الاصطناعي',
   'desktopHome.aiToolsDescription': 'تحليل البنود، الدردشة، المقارنات والملخصات لمجالك.',
   'desktopHome.aiToolsCount': '14 أداة · تحتاج إلى إنترنت',
+  'desktopHome.defaultAnnouncementBadge': 'جديد',
+  'desktopHome.defaultAnnouncementKicker': 'تحديث المنتج',
+  'desktopHome.defaultAnnouncementHeadline': 'مقارنة العقود بالذكاء الاصطناعي متاحة الآن',
+  'desktopHome.defaultAnnouncementBody': 'قارن نسختين من أي عقد جنبًا إلى جنب واحصل على شرح لكل تغيير بلغة واضحة — متوفرة مع كل مساحة عمل قانونية.',
+  'desktopHome.defaultAnnouncementCtaLabel': 'اطّلع على الجديد',
 
   'countdown.noExpiry': 'بلا انتهاء',
   'countdown.expired': 'منتهي الصلاحية',
@@ -869,6 +874,15 @@ const ar: Record<DictionaryKey, string> = {
   'toolPage.sign.signatureNamePlaceholder': 'اسم التوقيع',
   'toolPage.sign.useThisSignature': 'استخدام هذا التوقيع',
   'toolPage.sign.defaultSignatureName': 'توقيعي',
+
+  'desktopAppSection.kicker': 'تطبيق سطح المكتب',
+  'desktopAppSection.heading': 'مُصمَّم أيضًا لجهاز الكمبيوتر لديك',
+  'desktopAppSection.description': 'تعمل الأدوات الأساسية بالكامل على جهازك — دون رفع للملفات ودون الحاجة إلى الإنترنت. سجّل الدخول عند رغبتك في استخدام ميزات الذكاء الاصطناعي، واعمل بلا اتصال في بقية الأوقات.',
+  'desktopAppSection.downloadWindows': 'التنزيل لنظام Windows',
+  'desktopAppSection.downloadMac': 'التنزيل لنظام Mac',
+  'desktopAppSection.downloadLinux': 'التنزيل لنظام Linux',
+  'desktopAppSection.signedInstaller': 'مثبّت موقّع · نفس ضمانات الخصوصية الخاصة بتطبيق الويب',
+  'desktopAppSection.screenshotAlt': 'تطبيق سطح المكتب Brief.ai — الشاشة الرئيسية',
 
   'retentionConfirm.title': 'تمديد مدة الاحتفاظ؟',
   'retentionConfirm.body': 'سيُحفظ هذا لمدة {days} يومًا إضافيًا قبل حذفه تلقائيًا. هل تريد المتابعة؟',

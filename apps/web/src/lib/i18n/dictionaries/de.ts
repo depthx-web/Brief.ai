@@ -198,6 +198,11 @@ const de: Record<DictionaryKey, string> = {
   'desktopHome.aiToolsName': 'KI-Werkzeuge',
   'desktopHome.aiToolsDescription': 'Klauselanalyse, Chat, Vergleiche und Zusammenfassungen für Ihr Fachgebiet.',
   'desktopHome.aiToolsCount': '14 Werkzeuge · benötigt Internet',
+  'desktopHome.defaultAnnouncementBadge': 'Neu',
+  'desktopHome.defaultAnnouncementKicker': 'Produktupdate',
+  'desktopHome.defaultAnnouncementHeadline': 'KI-Vertragsvergleich ist da',
+  'desktopHome.defaultAnnouncementBody': 'Vergleichen Sie zwei Versionen eines Vertrags nebeneinander und lassen Sie sich jede Änderung in einfacher Sprache erklären — in jedem Legal-Arbeitsbereich enthalten.',
+  'desktopHome.defaultAnnouncementCtaLabel': 'Neuigkeiten ansehen',
 
   'countdown.noExpiry': 'Kein Ablauf',
   'countdown.expired': 'Abgelaufen',
@@ -869,6 +874,15 @@ const de: Record<DictionaryKey, string> = {
   'toolPage.sign.signatureNamePlaceholder': 'Name der Unterschrift',
   'toolPage.sign.useThisSignature': 'Diese Unterschrift verwenden',
   'toolPage.sign.defaultSignatureName': 'Meine Unterschrift',
+
+  'desktopAppSection.kicker': 'Desktop-App',
+  'desktopAppSection.heading': 'Auch für Ihren Desktop gebaut',
+  'desktopAppSection.description': 'Kernfunktionen laufen vollständig auf Ihrem Rechner — kein Upload, kein Internet erforderlich. Melden Sie sich an, wenn Sie KI-Funktionen nutzen möchten; ansonsten arbeiten Sie offline.',
+  'desktopAppSection.downloadWindows': 'Für Windows herunterladen',
+  'desktopAppSection.downloadMac': 'Für Mac herunterladen',
+  'desktopAppSection.downloadLinux': 'Für Linux herunterladen',
+  'desktopAppSection.signedInstaller': 'Signierter Installer · Gleiche Datenschutzgarantien wie die Web-App',
+  'desktopAppSection.screenshotAlt': 'Brief.ai Desktop-App — Startbildschirm',
 
   'retentionConfirm.title': 'Aufbewahrung verlängern?',
   'retentionConfirm.body': 'Dies wird {days} weitere Tage aufbewahrt, bevor es automatisch gelöscht wird. Fortfahren?',

@@ -198,6 +198,11 @@ const es: Record<DictionaryKey, string> = {
   'desktopHome.aiToolsName': 'Herramientas de IA',
   'desktopHome.aiToolsDescription': 'Análisis de cláusulas, chat, comparaciones y resúmenes para tu área.',
   'desktopHome.aiToolsCount': '14 herramientas · necesita internet',
+  'desktopHome.defaultAnnouncementBadge': 'Novedad',
+  'desktopHome.defaultAnnouncementKicker': 'Actualización de producto',
+  'desktopHome.defaultAnnouncementHeadline': 'Ya está aquí la comparación de contratos con IA',
+  'desktopHome.defaultAnnouncementBody': 'Compara dos versiones de cualquier contrato en paralelo y haz que se explique cada cambio en lenguaje sencillo — incluido en todo espacio de trabajo Legal.',
+  'desktopHome.defaultAnnouncementCtaLabel': 'Ver las novedades',
 
   'countdown.noExpiry': 'Sin caducidad',
   'countdown.expired': 'Caducado',
@@ -869,6 +874,15 @@ const es: Record<DictionaryKey, string> = {
   'toolPage.sign.signatureNamePlaceholder': 'Nombre de la firma',
   'toolPage.sign.useThisSignature': 'Usar esta firma',
   'toolPage.sign.defaultSignatureName': 'Mi firma',
+
+  'desktopAppSection.kicker': 'Aplicación de escritorio',
+  'desktopAppSection.heading': 'También creada para tu escritorio',
+  'desktopAppSection.description': 'Las herramientas principales funcionan por completo en tu equipo — sin subidas, sin necesidad de internet. Inicia sesión cuando quieras usar las funciones de IA; el resto del tiempo trabaja sin conexión.',
+  'desktopAppSection.downloadWindows': 'Descargar para Windows',
+  'desktopAppSection.downloadMac': 'Descargar para Mac',
+  'desktopAppSection.downloadLinux': 'Descargar para Linux',
+  'desktopAppSection.signedInstaller': 'Instalador firmado · Las mismas garantías de privacidad que la app web',
+  'desktopAppSection.screenshotAlt': 'Aplicación de escritorio Brief.ai — Pantalla de inicio',
 
   'retentionConfirm.title': '¿Ampliar la retención?',
   'retentionConfirm.body': 'Esto se conservará {days} días más antes de eliminarse automáticamente. ¿Continuar?',

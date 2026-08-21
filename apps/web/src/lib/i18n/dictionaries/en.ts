@@ -211,6 +211,11 @@ const en = {
   'desktopHome.aiToolsName': 'AI Tools',
   'desktopHome.aiToolsDescription': 'Clause analysis, chat, comparisons and summaries for your field.',
   'desktopHome.aiToolsCount': '14 tools · needs internet',
+  'desktopHome.defaultAnnouncementBadge': 'New',
+  'desktopHome.defaultAnnouncementKicker': 'Product update',
+  'desktopHome.defaultAnnouncementHeadline': 'AI Contract Compare is here',
+  'desktopHome.defaultAnnouncementBody': 'Redline two versions of any contract side-by-side and get every change explained in plain English — included with every Legal workspace.',
+  'desktopHome.defaultAnnouncementCtaLabel': 'See what’s new',
 
   // Retention countdown badge (Library, Dashboard, desktop home)
   'countdown.noExpiry': 'No expiry',
@@ -901,6 +906,15 @@ const en = {
   'toolPage.sign.signatureNamePlaceholder': 'Signature name',
   'toolPage.sign.useThisSignature': 'Use this signature',
   'toolPage.sign.defaultSignatureName': 'My signature',
+
+  'desktopAppSection.kicker': 'Desktop App',
+  'desktopAppSection.heading': 'Also built for your desktop',
+  'desktopAppSection.description': 'Core tools run entirely on your machine — no upload, no internet required. Sign in when you want AI features; work offline the rest of the time.',
+  'desktopAppSection.downloadWindows': 'Download for Windows',
+  'desktopAppSection.downloadMac': 'Download for Mac',
+  'desktopAppSection.downloadLinux': 'Download for Linux',
+  'desktopAppSection.signedInstaller': 'Signed installer · Same privacy guarantees as the web app',
+  'desktopAppSection.screenshotAlt': 'Brief.ai desktop app — Home screen',
 
   // Retention extend confirmation
   'retentionConfirm.title': 'Extend retention?',

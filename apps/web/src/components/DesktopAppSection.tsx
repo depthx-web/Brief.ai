@@ -2,16 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useLocale } from '@/lib/i18n/LocaleContext';
+import type { DictionaryKey } from '@/lib/i18n/dictionaries/en';
 
 type Os = 'windows' | 'mac' | 'linux' | 'unknown';
 
-const OS_LABEL: Record<Os, string> = {
-  windows: 'Download for Windows',
-  mac: 'Download for Mac',
-  linux: 'Download for Linux',
+const OS_LABEL_KEY: Record<Os, DictionaryKey> = {
+  windows: 'desktopAppSection.downloadWindows',
+  mac: 'desktopAppSection.downloadMac',
+  linux: 'desktopAppSection.downloadLinux',
   // Unrecognized/mobile visitor — default to the largest likely desktop
   // audience rather than guess further.
-  unknown: 'Download for Windows',
+  unknown: 'desktopAppSection.downloadWindows',
 };
 
 function detectOs(): Os {
@@ -27,23 +29,30 @@ function detectOs(): Os {
 }
 
 export default function DesktopAppSection() {
+  const { t, locale } = useLocale();
   const [os, setOs] = useState<Os>('unknown');
+  const [screenshotSrc, setScreenshotSrc] = useState(
+    locale === 'en' ? '/desktop-app-home.png' : `/desktop-app-home-${locale}.png`
+  );
 
   useEffect(() => {
     setOs(detectOs());
   }, []);
 
+  useEffect(() => {
+    setScreenshotSrc(locale === 'en' ? '/desktop-app-home.png' : `/desktop-app-home-${locale}.png`);
+  }, [locale]);
+
   return (
     <section id="desktop-app" className="bg-surface px-6 py-24 sm:px-12">
       <div className="mx-auto grid max-w-[1180px] items-center gap-14 lg:grid-cols-2">
         <div>
-          <div className="mb-3.5 font-mono text-xs uppercase tracking-wider text-emerald">Desktop App</div>
+          <div className="mb-3.5 font-mono text-xs uppercase tracking-wider text-emerald">{t('desktopAppSection.kicker')}</div>
           <h2 className="mb-4 max-w-md font-serif text-3xl font-medium leading-tight text-navy sm:text-4xl">
-            Also built for your desktop
+            {t('desktopAppSection.heading')}
           </h2>
           <p className="mb-8 max-w-[440px] text-base leading-relaxed text-ink-soft">
-            Core tools run entirely on your machine — no upload, no internet required. Sign in when
-            you want AI features; work offline the rest of the time.
+            {t('desktopAppSection.description')}
           </p>
 
           <Link
@@ -51,12 +60,12 @@ export default function DesktopAppSection() {
             className="inline-flex items-center gap-3 rounded-md bg-emerald px-7 py-3.5 text-[15px] font-semibold text-white transition-all hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(30,157,117,0.4)]"
           >
             <OsIcon os={os} />
-            {OS_LABEL[os]}
+            {t(OS_LABEL_KEY[os])}
           </Link>
 
           <p className="mt-4 flex items-center gap-1.5 text-[13px] text-ink-soft">
             <LockIcon />
-            Signed installer · Same privacy guarantees as the web app
+            {t('desktopAppSection.signedInstaller')}
           </p>
         </div>
 
@@ -73,7 +82,12 @@ export default function DesktopAppSection() {
               <span />
             </div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/desktop-app-home.png" alt="Brief.ai desktop app — Home screen" className="block w-full" />
+            <img
+              src={screenshotSrc}
+              alt={t('desktopAppSection.screenshotAlt')}
+              className="block w-full"
+              onError={() => setScreenshotSrc('/desktop-app-home.png')}
+            />
           </div>
         </div>
       </div>

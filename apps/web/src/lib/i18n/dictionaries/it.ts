@@ -198,6 +198,11 @@ const it: Record<DictionaryKey, string> = {
   'desktopHome.aiToolsName': 'Strumenti IA',
   'desktopHome.aiToolsDescription': 'Analisi delle clausole, chat, confronti e riepiloghi per il tuo settore.',
   'desktopHome.aiToolsCount': '14 strumenti · richiede internet',
+  'desktopHome.defaultAnnouncementBadge': 'Novità',
+  'desktopHome.defaultAnnouncementKicker': 'Aggiornamento prodotto',
+  'desktopHome.defaultAnnouncementHeadline': 'È arrivato il confronto contratti con IA',
+  'desktopHome.defaultAnnouncementBody': 'Confronta fianco a fianco due versioni dello stesso contratto e fatti spiegare ogni modifica in linguaggio semplice — incluso in ogni area di lavoro Legale.',
+  'desktopHome.defaultAnnouncementCtaLabel': 'Scopri le novità',
 
   'countdown.noExpiry': 'Nessuna scadenza',
   'countdown.expired': 'Scaduto',
@@ -869,6 +874,15 @@ const it: Record<DictionaryKey, string> = {
   'toolPage.sign.signatureNamePlaceholder': 'Nome della firma',
   'toolPage.sign.useThisSignature': 'Usa questa firma',
   'toolPage.sign.defaultSignatureName': 'La mia firma',
+
+  'desktopAppSection.kicker': 'App desktop',
+  'desktopAppSection.heading': 'Pensata anche per il tuo desktop',
+  'desktopAppSection.description': 'Gli strumenti principali funzionano interamente sul tuo computer — nessun caricamento, nessuna connessione a internet richiesta. Accedi quando vuoi usare le funzionalità IA; per il resto lavora offline.',
+  'desktopAppSection.downloadWindows': 'Scarica per Windows',
+  'desktopAppSection.downloadMac': 'Scarica per Mac',
+  'desktopAppSection.downloadLinux': 'Scarica per Linux',
+  'desktopAppSection.signedInstaller': 'Installer firmato · Stesse garanzie di privacy dell’app web',
+  'desktopAppSection.screenshotAlt': 'App desktop Brief.ai — Schermata iniziale',
 
   'retentionConfirm.title': 'Estendere la conservazione?',
   'retentionConfirm.body': 'Questo verrà conservato per altri {days} giorni prima di essere eliminato automaticamente. Continuare?',

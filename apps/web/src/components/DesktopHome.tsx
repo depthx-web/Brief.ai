@@ -26,16 +26,20 @@ interface Announcement {
 }
 
 // Shown until the admin publishes something at /admin/content → "Desktop
-// App — Home" — matches what the migration seeds, so first boot and an
-// unpublished page look identical rather than the card flashing empty.
-const DEFAULT_ANNOUNCEMENT: Announcement = {
-  badge: 'New',
-  kicker: 'Product update',
-  headline: 'AI Contract Compare is here',
-  body: 'Redline two versions of any contract side-by-side and get every change explained in plain English — included with every Legal workspace.',
-  ctaLabel: 'See what’s new',
-  ctaHref: '/contract-compare',
-};
+// App — Home" — matches what the migration seeds (in English), so first
+// boot and an unpublished page look identical rather than the card
+// flashing empty. Translated via the dictionary so a locale with no
+// published announcement yet doesn't show raw English marketing copy.
+function defaultAnnouncement(t: (key: DictionaryKey) => string): Announcement {
+  return {
+    badge: t('desktopHome.defaultAnnouncementBadge'),
+    kicker: t('desktopHome.defaultAnnouncementKicker'),
+    headline: t('desktopHome.defaultAnnouncementHeadline'),
+    body: t('desktopHome.defaultAnnouncementBody'),
+    ctaLabel: t('desktopHome.defaultAnnouncementCtaLabel'),
+    ctaHref: '/contract-compare',
+  };
+}
 
 // One announcement section per workspace segment (announcement_lawyer /
 // _accountant / _researcher), each independently editable at
@@ -107,7 +111,7 @@ function DesktopHomeInner() {
   // segment's accordion section is actually open, regardless of the
   // logged-in admin's own workspace — see AdminCms.tsx.
   const previewSegment = searchParams.get('previewSegment');
-  const [announcement, setAnnouncement] = useState<Announcement>(DEFAULT_ANNOUNCEMENT);
+  const [announcement, setAnnouncement] = useState<Announcement>(defaultAnnouncement(t));
   const [dismissed, setDismissed] = useState(false);
   const [recentFiles, setRecentFiles] = useState<LibraryDocumentSummary[] | null>(null);
 
@@ -119,8 +123,10 @@ function DesktopHomeInner() {
   useEffect(() => {
     fetchCmsPage('desktop-home', preview, locale).then((page) => {
       const fields = page?.sections[announcementKey] as Partial<Announcement> | undefined;
-      if (fields?.headline) setAnnouncement({ ...DEFAULT_ANNOUNCEMENT, ...fields });
+      if (fields?.headline) setAnnouncement({ ...defaultAnnouncement(t), ...fields });
+      else setAnnouncement(defaultAnnouncement(t));
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [preview, announcementKey, locale]);
 
   useEffect(() => {
