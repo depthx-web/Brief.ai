@@ -771,6 +771,31 @@ const en = {
   'toolPage.ocr.running': 'Running OCR…',
   'toolPage.ocr.runAndDownload': 'Run OCR & Download',
 
+  'toolPage.protect.serverNote': 'This tool sends your file to our conversion server (using a real encryption engine, qpdf, AES-256). The file and password are deleted immediately after processing.',
+  'toolPage.protect.minLengthError': 'Use a password of at least 4 characters.',
+  'toolPage.protect.mismatchError': 'Passwords do not match.',
+  'toolPage.protect.couldNotProtect': 'Could not protect this PDF.',
+  'toolPage.protect.confirmPassword': 'Confirm password',
+  'toolPage.protect.protecting': 'Protecting…',
+  'toolPage.protect.protectAndDownload': 'Protect & Download',
+
+  'toolPage.removePassword.description': 'Remove password protection from a PDF. You need to know the current password.',
+  'toolPage.removePassword.serverNote': 'This tool sends your file to our conversion server (using a real encryption engine, qpdf). The file and password are deleted immediately after processing.',
+  'toolPage.removePassword.couldNotRemove': 'Could not remove the password.',
+  'toolPage.removePassword.currentPassword': 'Current password',
+  'toolPage.removePassword.removing': 'Removing…',
+  'toolPage.removePassword.removeAndDownload': 'Remove Password & Download',
+
+  'toolPage.watermark.defaultText': 'CONFIDENTIAL',
+  'toolPage.watermark.description': 'Stamp text across every page — draft markers, confidentiality notices, or a company name. Processed entirely in your browser.',
+  'toolPage.watermark.couldNotWatermark': 'Could not watermark this PDF.',
+  'toolPage.watermark.watermarkText': 'Watermark text',
+  'toolPage.watermark.size': 'Size',
+  'toolPage.watermark.opacity': 'Opacity',
+  'toolPage.watermark.rotation': 'Rotation',
+  'toolPage.watermark.applying': 'Applying…',
+  'toolPage.watermark.applyAndDownload': 'Apply Watermark & Download',
+
   // Retention extend confirmation
   'retentionConfirm.title': 'Extend retention?',
   'retentionConfirm.body': 'This will be kept for {days} more days before it’s automatically deleted. Continue?',

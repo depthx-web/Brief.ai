@@ -4,14 +4,14 @@ import { useRef, useState } from 'react';
 import { PDFDocument, StandardFonts, rgb, degrees } from 'pdf-lib';
 import { loadPdfForPreview, renderPageDataUrl } from '@/lib/pdfThumbnails';
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 import GuestEncouragementBar from './GuestEncouragementBar';
 
-const DEFAULT_TEXT = 'CONFIDENTIAL';
-
 export default function WatermarkPdf() {
+  const { t } = useLocale();
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [text, setText] = useState(DEFAULT_TEXT);
+  const [text, setText] = useState(() => t('toolPage.watermark.defaultText'));
   const [fontSize, setFontSize] = useState(48);
   const [opacity, setOpacity] = useState(0.3);
   const [rotation, setRotation] = useState(45);
@@ -29,7 +29,7 @@ export default function WatermarkPdf() {
     setPreviewUrl(null);
     setCompleted(false);
     if (selected.type !== 'application/pdf' && !selected.name.toLowerCase().endsWith('.pdf')) {
-      setError('Please select a PDF file.');
+      setError(t('dashboard.selectPdfError'));
       return;
     }
     setIsLoadingPreview(true);
@@ -39,7 +39,7 @@ export default function WatermarkPdf() {
       setPreviewUrl(await renderPageDataUrl(previewDoc, 1, 480));
       await previewDoc.destroy();
     } catch {
-      setError('Could not read this PDF. It may be corrupted or password-protected.');
+      setError(t('toolPage.split.couldNotRead'));
     } finally {
       setIsLoadingPreview(false);
     }
@@ -78,7 +78,7 @@ export default function WatermarkPdf() {
       URL.revokeObjectURL(url);
       setCompleted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not watermark this PDF.');
+      setError(err instanceof Error ? err.message : t('toolPage.watermark.couldNotWatermark'));
     } finally {
       setIsProcessing(false);
     }
@@ -86,10 +86,9 @@ export default function WatermarkPdf() {
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-16">
-      <h1 className="font-serif text-2xl font-semibold text-navy">Watermark PDF</h1>
+      <h1 className="font-serif text-2xl font-semibold text-navy">{t('tool.watermark.name')}</h1>
       <p className="mt-2 text-gray-600">
-        Stamp text across every page — draft markers, confidentiality notices, or a company name.
-        Processed entirely in your browser.
+        {t('toolPage.watermark.description')}
       </p>
 
       {!file ? (
@@ -97,13 +96,13 @@ export default function WatermarkPdf() {
           onClick={() => inputRef.current?.click()}
           className="mt-6 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white px-6 py-12 text-center"
         >
-          <p className="text-gray-600">{isLoadingPreview ? 'Reading pages…' : 'Click to choose a PDF file'}</p>
+          <p className="text-gray-600">{isLoadingPreview ? t('toolPage.readingPages') : t('aiTool.clickToChoosePdf')}</p>
         </div>
       ) : (
         <>
           <div className="mt-6 space-y-3 rounded-lg border border-gray-200 bg-white p-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Watermark text</label>
+              <label className="block text-sm font-medium text-gray-700">{t('toolPage.watermark.watermarkText')}</label>
               <input
                 type="text"
                 value={text}
@@ -113,7 +112,7 @@ export default function WatermarkPdf() {
             </div>
             <div className="grid grid-cols-3 gap-3">
               <label className="text-xs text-gray-600">
-                Size
+                {t('toolPage.watermark.size')}
                 <input
                   type="range"
                   min={16}
@@ -124,7 +123,7 @@ export default function WatermarkPdf() {
                 />
               </label>
               <label className="text-xs text-gray-600">
-                Opacity
+                {t('toolPage.watermark.opacity')}
                 <input
                   type="range"
                   min={0.05}
@@ -136,7 +135,7 @@ export default function WatermarkPdf() {
                 />
               </label>
               <label className="text-xs text-gray-600">
-                Rotation
+                {t('toolPage.watermark.rotation')}
                 <input
                   type="range"
                   min={-90}
@@ -185,7 +184,7 @@ export default function WatermarkPdf() {
         disabled={!file || isProcessing || !text.trim()}
         className="mt-6 w-full rounded-lg bg-emerald px-6 py-3 font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
       >
-        {isProcessing ? 'Applying…' : 'Apply Watermark & Download'}
+        {isProcessing ? t('toolPage.watermark.applying') : t('toolPage.watermark.applyAndDownload')}
       </button>
 
       {completed && <GuestEncouragementBar />}
