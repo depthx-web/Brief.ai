@@ -425,8 +425,8 @@ export async function fetchAdminCmsPageDraft(token: string, slug: string): Promi
   return adminFetch<AdminCmsPageDraft>(token, `/admin/cms/pages/${slug}`);
 }
 
-export async function updateAdminCmsSection(token: string, slug: string, key: string, fields: unknown): Promise<void> {
-  await adminFetch(token, `/admin/cms/pages/${slug}/sections/${key}`, { method: 'PATCH', body: { fields } });
+export async function updateAdminCmsSection(token: string, slug: string, key: string, fields: unknown, locale: string = 'en'): Promise<void> {
+  await adminFetch(token, `/admin/cms/pages/${slug}/sections/${key}`, { method: 'PATCH', body: { fields, locale } });
 }
 
 export async function updateAdminCmsSeo(

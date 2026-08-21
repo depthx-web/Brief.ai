@@ -14,7 +14,7 @@ export class CmsController {
   constructor(private readonly cmsService: CmsService) {}
 
   @Get('pages/:slug')
-  async getPage(@Param('slug') slug: string, @Query('preview') preview?: string) {
-    return this.cmsService.getPublished(slug, preview === '1');
+  async getPage(@Param('slug') slug: string, @Query('preview') preview?: string, @Query('locale') locale?: string) {
+    return this.cmsService.getPublished(slug, preview === '1', locale || 'en');
   }
 }

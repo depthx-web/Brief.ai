@@ -13,6 +13,27 @@ import {
   type AdminCmsPageDraft,
 } from '@/lib/adminApi';
 import { showError, showSuccess } from '@/lib/toast';
+import { LOCALES, LOCALE_LABELS, type Locale } from '@/lib/i18n/locales';
+
+// Strips the `_locales` bag out of a section's raw draftFields, leaving the
+// English content — used both as the "en" tab's own display value and as
+// the starting draft prefilled into every other locale tab until an admin
+// edits and saves it (matching the "machine translation as a starting draft,
+// admin edits after" decision — here the starting draft is just English
+// content to translate in place, not a machine-translated draft, since no
+// translation provider is configured in this environment).
+function baseFields(raw: unknown): unknown {
+  if (typeof raw !== 'object' || raw === null) return raw;
+  const { _locales, ...rest } = raw as Record<string, unknown>;
+  return rest;
+}
+
+function localizedFields(raw: unknown, locale: Locale): unknown {
+  const base = baseFields(raw);
+  if (locale === 'en') return base;
+  const locales = (raw as Record<string, unknown> | null)?._locales as Record<string, unknown> | undefined;
+  return locales?.[locale] ?? base;
+}
 
 interface HeroFields {
   eyebrow: string;
@@ -78,6 +99,7 @@ export default function AdminCms() {
   const [pages, setPages] = useState<AdminCmsPageSummary[]>([]);
   const [slug, setSlug] = useState<string>('home');
   const [draft, setDraft] = useState<AdminCmsPageDraft | null>(null);
+  const [activeLocale, setActiveLocale] = useState<Locale>('en');
   const [openSection, setOpenSection] = useState<string | null>(null);
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [previewNonce, setPreviewNonce] = useState(0);
@@ -121,12 +143,32 @@ export default function AdminCms() {
 
   async function saveSection(key: string, fields: unknown) {
     if (!token) return;
-    setDraft((prev) => (prev ? { ...prev, sections: prev.sections.map((s) => (s.key === key ? { ...s, fields, hasUnpublishedChanges: true } : s)) } : prev));
+    const locale = activeLocale;
+    // Optimistic local update writes back into the same raw-blob shape the
+    // section carries (English fields at top level, translations nested
+    // under _locales) so re-deriving localizedFields() after this still
+    // works for every locale tab, not just the one being edited.
+    setDraft((prev) =>
+      prev
+        ? {
+            ...prev,
+            sections: prev.sections.map((s) => {
+              if (s.key !== key) return s;
+              const rawObj = (typeof s.fields === 'object' && s.fields !== null ? (s.fields as Record<string, unknown>) : {});
+              const nextRaw =
+                locale === 'en'
+                  ? { ...(fields as Record<string, unknown>), _locales: rawObj._locales ?? {} }
+                  : { ...rawObj, _locales: { ...((rawObj._locales as Record<string, unknown>) ?? {}), [locale]: fields } };
+              return { ...s, fields: nextRaw, hasUnpublishedChanges: true };
+            }),
+          }
+        : prev
+    );
     if (debounceRef.current) clearTimeout(debounceRef.current);
     setSavingKey(key);
     debounceRef.current = setTimeout(async () => {
       try {
-        await updateAdminCmsSection(token, slug, key, fields);
+        await updateAdminCmsSection(token, slug, key, fields, locale);
         schedulePreviewRefresh();
       } catch (err) {
         showError(err instanceof Error ? err.message : 'Could not save this section.');
@@ -225,6 +267,28 @@ export default function AdminCms() {
               </div>
             </div>
 
+            {/* Locale tabs — translated content is edited per-language; English
+                stays the fallback shown on the live site for any locale with
+                no override saved yet. */}
+            <div className="mt-4 flex flex-wrap gap-1.5">
+              {LOCALES.map((code) => (
+                <button
+                  key={code}
+                  onClick={() => setActiveLocale(code)}
+                  className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                    activeLocale === code ? 'bg-navy text-white' : 'bg-gray-100 text-ink-soft hover:bg-gray-200'
+                  }`}
+                >
+                  {LOCALE_LABELS[code]}
+                </button>
+              ))}
+            </div>
+            {activeLocale !== 'en' && (
+              <p className="mt-1.5 text-[11px] text-ink-soft">
+                Prefilled with the English content until you edit and save a translation for this language.
+              </p>
+            )}
+
             {/* Section accordion, in the order they actually appear on the page */}
             <div className="mt-4 space-y-2">
               {draft.sections.map((section) => {
@@ -250,8 +314,9 @@ export default function AdminCms() {
                     {isOpen && (
                       <div className="border-t border-gray-100 px-4 py-4">
                         <SectionEditor
+                          key={`${section.key}-${activeLocale}`}
                           sectionKey={section.key}
-                          fields={section.fields}
+                          fields={localizedFields(section.fields, activeLocale)}
                           onChange={(fields) => saveSection(section.key, fields)}
                         />
                       </div>

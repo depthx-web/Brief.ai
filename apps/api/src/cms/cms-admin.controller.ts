@@ -30,8 +30,13 @@ export class CmsAdminController {
   }
 
   @Patch('pages/:slug/sections/:key')
-  async updateSection(@Param('slug') slug: string, @Param('key') key: string, @Body('fields') fields: unknown) {
-    await this.cmsService.updateSectionDraft(slug, key, fields as never);
+  async updateSection(
+    @Param('slug') slug: string,
+    @Param('key') key: string,
+    @Body('fields') fields: unknown,
+    @Body('locale') locale?: string
+  ) {
+    await this.cmsService.updateSectionDraft(slug, key, fields as never, locale || 'en');
     return { success: true };
   }
 

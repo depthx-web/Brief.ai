@@ -2,6 +2,28 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import type { Prisma } from '@prisma/client';
 
+// Non-English translations live inside the same JSON blob under this key,
+// keyed by locale — e.g. { headline: '...', _locales: { de: { headline: '...' } } }.
+// This is deliberately additive rather than a schema/migration change: every
+// row written before i18n existed has no `_locales` key at all and keeps
+// working as pure English content with zero backfill needed.
+const LOCALES_FIELD = '_locales';
+
+function stripLocalesKey(raw: unknown): unknown {
+  if (typeof raw !== 'object' || raw === null) return raw;
+  const { [LOCALES_FIELD]: _omit, ...rest } = raw as Record<string, unknown>;
+  return rest;
+}
+
+function resolveLocaleFields(raw: unknown, locale: string): unknown {
+  const base = stripLocalesKey(raw);
+  if (locale === 'en' || typeof raw !== 'object' || raw === null) return base;
+  const localesMap = (raw as Record<string, unknown>)[LOCALES_FIELD] as Record<string, unknown> | undefined;
+  const override = localesMap?.[locale];
+  if (!override || typeof override !== 'object') return base;
+  return { ...(base as object), ...(override as object) };
+}
+
 // Every individual tool page (route slug -> display name), each getting its
 // own `tools-<slug>` CMS page with Features/FAQ sections (SEO template,
 // ToolSeoSections.tsx). Kept as its own list since the seed migration
@@ -115,7 +137,7 @@ export class CmsService {
   // Public: what the live site actually renders. Falls back to an empty
   // sections map (never null/undefined per section) so a page with nothing
   // published yet doesn't 500 — the frontend's own hardcoded defaults cover it.
-  async getPublished(slug: string, preview: boolean) {
+  async getPublished(slug: string, preview: boolean, locale: string = 'en') {
     const page = await this.prisma.page.findUnique({
       where: { slug },
       include: { sections: { orderBy: { order: 'asc' } } },
@@ -125,7 +147,7 @@ export class CmsService {
     const sections: Record<string, unknown> = {};
     for (const section of page.sections) {
       const fields = preview ? section.draftFields : (section.publishedFields ?? undefined);
-      if (fields !== undefined) sections[section.sectionKey] = fields;
+      if (fields !== undefined) sections[section.sectionKey] = resolveLocaleFields(fields, locale);
     }
 
     return {
@@ -160,11 +182,23 @@ export class CmsService {
     };
   }
 
-  async updateSectionDraft(slug: string, sectionKey: string, fields: Prisma.InputJsonValue) {
+  // English (or omitted locale) replaces the top-level fields directly, same
+  // as before i18n existed — only a non-English locale writes into the
+  // additive `_locales.<code>` sub-object, leaving English and every other
+  // locale's content untouched.
+  async updateSectionDraft(slug: string, sectionKey: string, fields: Prisma.InputJsonValue, locale: string = 'en') {
     const page = await this.findPageWithSections(slug);
     const section = page.sections.find((s) => s.sectionKey === sectionKey);
     if (!section) throw new NotFoundException('Section not found.');
-    await this.prisma.contentSection.update({ where: { id: section.id }, data: { draftFields: fields } });
+
+    const existing = (section.draftFields as Record<string, unknown> | null) ?? {};
+    const existingLocales = (existing[LOCALES_FIELD] as Record<string, unknown>) ?? {};
+    const nextDraftFields: Prisma.InputJsonValue =
+      locale === 'en'
+        ? ({ ...(fields as Record<string, unknown>), [LOCALES_FIELD]: existingLocales } as Prisma.InputJsonValue)
+        : ({ ...existing, [LOCALES_FIELD]: { ...existingLocales, [locale]: fields } } as Prisma.InputJsonValue);
+
+    await this.prisma.contentSection.update({ where: { id: section.id }, data: { draftFields: nextDraftFields } });
   }
 
   async updateSeo(
