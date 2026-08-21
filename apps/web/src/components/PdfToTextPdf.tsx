@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import { extractPdfTextWithOcrFallback, type PageText } from '@/lib/extractPdfText';
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 import GuestEncouragementBar from './GuestEncouragementBar';
 
 function toPlainText(pages: PageText[]): string {
@@ -10,6 +11,7 @@ function toPlainText(pages: PageText[]): string {
 }
 
 export default function PdfToTextPdf() {
+  const { t } = useLocale();
   const [file, setFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
@@ -23,7 +25,7 @@ export default function PdfToTextPdf() {
     setError(null);
     setCompleted(false);
     if (selected.type !== 'application/pdf' && !selected.name.toLowerCase().endsWith('.pdf')) {
-      setError('Please select a PDF file.');
+      setError(t('dashboard.selectPdfError'));
       return;
     }
     setFile(selected);
@@ -45,7 +47,7 @@ export default function PdfToTextPdf() {
       URL.revokeObjectURL(url);
       setCompleted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not extract text from this PDF.');
+      setError(err instanceof Error ? err.message : t('toolPage.pdfToText.couldNotExtract'));
     } finally {
       setStatus(null);
       setIsProcessing(false);
@@ -54,19 +56,19 @@ export default function PdfToTextPdf() {
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-16">
-      <h1 className="font-serif text-2xl font-semibold text-navy">PDF to Plain Text</h1>
+      <h1 className="font-serif text-2xl font-semibold text-navy">{t('toolPage.pdfToText.title')}</h1>
       <p className="mt-2 text-gray-600">
-        Extract every page's text into a single .txt file. Processed entirely in your browser.
+        {t('toolPage.pdfToText.description')}
       </p>
       <p className="mt-1 text-xs text-gray-400">
-        Scanned pages with no embedded text are recognized automatically via on-device OCR.
+        {t('toolPage.pdfToText.ocrNote')}
       </p>
 
       <div
         onClick={() => inputRef.current?.click()}
         className="mt-6 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white px-6 py-12 text-center"
       >
-        <p className="text-gray-600">{file ? file.name : 'Click to choose a PDF file'}</p>
+        <p className="text-gray-600">{file ? file.name : t('aiTool.clickToChoosePdf')}</p>
         <input
           ref={inputRef}
           type="file"
@@ -84,7 +86,7 @@ export default function PdfToTextPdf() {
         disabled={!file || isProcessing}
         className="mt-6 w-full rounded-lg bg-emerald px-6 py-3 font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
       >
-        {isProcessing ? 'Extracting…' : 'Extract Text & Download'}
+        {isProcessing ? t('toolPage.pdfToText.extracting') : t('toolPage.pdfToText.extractAndDownload')}
       </button>
 
       {completed && <GuestEncouragementBar />}

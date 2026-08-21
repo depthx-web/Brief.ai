@@ -240,6 +240,8 @@ export default function AdminCms() {
   }
 
   const unpublishedCount = draft?.sections.filter((s) => s.hasUnpublishedChanges).length ?? 0;
+  const corePages = pages.filter((p) => !p.slug.startsWith('tools-'));
+  const toolPages = pages.filter((p) => p.slug.startsWith('tools-'));
 
   return (
     <div className="mx-auto max-w-6xl px-8 py-10">
@@ -248,13 +250,24 @@ export default function AdminCms() {
         <select
           value={slug}
           onChange={(e) => setSlug(e.target.value)}
-          className="rounded-md border border-gray-300 px-3 py-1.5 text-sm"
+          className="w-64 rounded-md border border-gray-300 px-3 py-1.5 text-sm"
         >
-          {pages.map((p) => (
-            <option key={p.slug} value={p.slug}>
-              {p.label}
-            </option>
-          ))}
+          <optgroup label="Core Pages">
+            {corePages.map((p) => (
+              <option key={p.slug} value={p.slug}>
+                {p.label}
+              </option>
+            ))}
+          </optgroup>
+          {toolPages.length > 0 && (
+            <optgroup label="Tool Pages">
+              {toolPages.map((p) => (
+                <option key={p.slug} value={p.slug}>
+                  {p.label.replace(/^Tool page — /, '')}
+                </option>
+              ))}
+            </optgroup>
+          )}
         </select>
       </div>
 
@@ -304,14 +317,16 @@ export default function AdminCms() {
 
             {/* Locale tabs — translated content is edited per-language; English
                 stays the fallback shown on the live site for any locale with
-                no override saved yet. */}
-            <div className="mt-4 flex flex-wrap gap-1.5">
+                no override saved yet. A connected segmented control reads as
+                one control switching the whole editor's language, rather than
+                a loose row of pill buttons. */}
+            <div className="mt-4 flex rounded-lg border border-gray-200 bg-gray-50 p-1">
               {LOCALES.map((code) => (
                 <button
                   key={code}
                   onClick={() => setActiveLocale(code)}
-                  className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
-                    activeLocale === code ? 'bg-navy text-white' : 'bg-gray-100 text-ink-soft hover:bg-gray-200'
+                  className={`flex-1 rounded-md px-2 py-1.5 text-xs font-semibold transition-colors ${
+                    activeLocale === code ? 'bg-navy text-white shadow-sm' : 'text-ink-soft hover:bg-gray-200/70 hover:text-ink'
                   }`}
                 >
                   {LOCALE_LABELS[code]}

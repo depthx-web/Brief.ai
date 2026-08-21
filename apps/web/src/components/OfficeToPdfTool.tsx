@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { convertOfficeToPdf, downloadBlob, type OfficeFamily } from '@/lib/convertApi';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 
 const FAMILY_LABEL: Record<OfficeFamily, string> = { word: 'Word', excel: 'Excel', powerpoint: 'PowerPoint' };
 const FAMILY_EXTENSIONS: Record<OfficeFamily, string[]> = {
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export default function OfficeToPdfTool({ family }: Props) {
+  const { t } = useLocale();
   const label = FAMILY_LABEL[family];
   const extensions = FAMILY_EXTENSIONS[family];
   const [file, setFile] = useState<File | null>(null);
@@ -30,7 +32,7 @@ export default function OfficeToPdfTool({ family }: Props) {
   function handleFileSelect(selected: File) {
     setError(null);
     if (!isAcceptedFile(selected)) {
-      setError(`Please select a ${label} file.`);
+      setError(t('toolPage.officeToPdf.selectFileError').replace('{label}', label));
       return;
     }
     setFile(selected);
@@ -44,7 +46,7 @@ export default function OfficeToPdfTool({ family }: Props) {
       const { blob, filename } = await convertOfficeToPdf(file, family);
       downloadBlob(blob, filename);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not convert this file.');
+      setError(err instanceof Error ? err.message : t('toolPage.pdfToHtml.couldNotConvert'));
     } finally {
       setIsProcessing(false);
     }
@@ -52,18 +54,17 @@ export default function OfficeToPdfTool({ family }: Props) {
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-16">
-      <h1 className="font-serif text-2xl font-semibold text-navy">{label} to PDF</h1>
-      <p className="mt-2 text-gray-600">Convert a {label} file to PDF.</p>
+      <h1 className="font-serif text-2xl font-semibold text-navy">{t('toolPage.officeToPdf.title').replace('{label}', label)}</h1>
+      <p className="mt-2 text-gray-600">{t('toolPage.officeToPdf.description').replace('{label}', label)}</p>
       <p className="mt-1 text-xs text-gray-400">
-        This tool sends your file to our conversion server (using a real office engine for accurate
-        formatting). The file is deleted immediately after conversion.
+        {t('toolPage.officeToPdf.serverNote')}
       </p>
 
       <div
         onClick={() => inputRef.current?.click()}
         className="mt-6 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white px-6 py-12 text-center"
       >
-        <p className="text-gray-600">{file ? file.name : `Click to choose a ${label} file`}</p>
+        <p className="text-gray-600">{file ? file.name : t('toolPage.officeToPdf.clickToChoose').replace('{label}', label)}</p>
         <input
           ref={inputRef}
           type="file"
@@ -80,7 +81,7 @@ export default function OfficeToPdfTool({ family }: Props) {
         disabled={!file || isProcessing}
         className="mt-6 w-full rounded-lg bg-emerald px-6 py-3 font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
       >
-        {isProcessing ? 'Converting…' : 'Convert to PDF & Download'}
+        {isProcessing ? t('toolPage.converting') : t('toolPage.officeToPdf.convertAndDownload')}
       </button>
     </div>
   );

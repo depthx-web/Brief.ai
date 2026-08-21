@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { PDFDocument } from 'pdf-lib';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 import GuestEncouragementBar from './GuestEncouragementBar';
 
 interface ImageItem {
@@ -22,6 +23,7 @@ function isJpeg(file: File): boolean {
 }
 
 export default function ImagesToPdf() {
+  const { t } = useLocale();
   const [items, setItems] = useState<ImageItem[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +34,7 @@ export default function ImagesToPdf() {
   function addFiles(fileList: FileList | File[]) {
     const images = Array.from(fileList).filter((f) => isPng(f) || isJpeg(f));
     if (images.length === 0) {
-      setError('Please select JPG or PNG images.');
+      setError(t('toolPage.imagesToPdf.selectImagesError'));
       return;
     }
     setError(null);
@@ -85,7 +87,9 @@ export default function ImagesToPdf() {
       setCompleted(true);
     } catch (err) {
       setError(
-        err instanceof Error ? `Could not convert: ${err.message}` : 'Could not convert these images.'
+        err instanceof Error
+          ? t('toolPage.imagesToPdf.couldNotConvertWithMessage').replace('{message}', err.message)
+          : t('toolPage.imagesToPdf.couldNotConvert')
       );
     } finally {
       setIsProcessing(false);
@@ -94,16 +98,16 @@ export default function ImagesToPdf() {
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-16">
-      <h1 className="font-serif text-2xl font-semibold text-navy">Images to PDF</h1>
+      <h1 className="font-serif text-2xl font-semibold text-navy">{t('tool.imagesToPdf.name')}</h1>
       <p className="mt-2 text-gray-600">
-        Combine JPG or PNG images into a single PDF. Processed entirely in your browser.
+        {t('toolPage.imagesToPdf.description')}
       </p>
 
       <div
         onClick={() => inputRef.current?.click()}
         className="mt-6 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white px-6 py-12 text-center"
       >
-        <p className="text-gray-600">Click to choose JPG or PNG images</p>
+        <p className="text-gray-600">{t('toolPage.imagesToPdf.clickToChoose')}</p>
         <input
           ref={inputRef}
           type="file"
@@ -134,9 +138,9 @@ export default function ImagesToPdf() {
               <button
                 onClick={() => removeItem(item.id)}
                 className="shrink-0 text-sm text-gray-400 hover:text-red-600"
-                aria-label={`Remove ${item.file.name}`}
+                aria-label={t('toolPage.imagesToPdf.removeAriaLabel').replace('{name}', item.file.name)}
               >
-                Remove
+                {t('toolPage.imagesToPdf.remove')}
               </button>
             </li>
           ))}
@@ -148,7 +152,7 @@ export default function ImagesToPdf() {
         disabled={items.length === 0 || isProcessing}
         className="mt-6 w-full rounded-lg bg-emerald px-6 py-3 font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
       >
-        {isProcessing ? 'Converting…' : `Convert ${items.length || ''} Images & Download`}
+        {isProcessing ? t('toolPage.converting') : t('toolPage.imagesToPdf.convertAndDownload').replace('{n}', String(items.length || ''))}
       </button>
 
       {completed && <GuestEncouragementBar />}

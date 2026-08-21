@@ -647,6 +647,50 @@ const en = {
   'aiTool.plainSummary.description': 'Turn a complex contract into a summary a non-legal client can actually understand.',
   'aiTool.plainSummary.runLabel': 'Generate Summary',
 
+  // Shared across the client-side conversion tool pages
+  'toolPage.converting': 'Converting…',
+  'toolPage.browserProcessed': 'Processed entirely in your browser.',
+
+  'toolPage.pdfToImages.description': 'Export every page as an image. Processed entirely in your browser.',
+  'toolPage.pdfToImages.formatPngLossless': 'PNG (lossless)',
+  'toolPage.pdfToImages.formatJpegSmaller': 'JPEG (smaller)',
+  'toolPage.pdfToImages.canvasError': 'Could not create a canvas context for rendering.',
+  'toolPage.pdfToImages.encodeError': 'Failed to encode page as an image.',
+  'toolPage.pdfToImages.couldNotConvert': 'Could not convert this PDF.',
+  'toolPage.pdfToImages.convertAndDownload': 'Convert & Download',
+
+  'toolPage.imagesToPdf.description': 'Combine JPG or PNG images into a single PDF. Processed entirely in your browser.',
+  'toolPage.imagesToPdf.selectImagesError': 'Please select JPG or PNG images.',
+  'toolPage.imagesToPdf.clickToChoose': 'Click to choose JPG or PNG images',
+  'toolPage.imagesToPdf.remove': 'Remove',
+  'toolPage.imagesToPdf.removeAriaLabel': 'Remove {name}',
+  'toolPage.imagesToPdf.couldNotConvertWithMessage': 'Could not convert: {message}',
+  'toolPage.imagesToPdf.couldNotConvert': 'Could not convert these images.',
+  'toolPage.imagesToPdf.convertAndDownload': 'Convert {n} Images & Download',
+
+  'toolPage.pdfToText.title': 'PDF to Plain Text',
+  'toolPage.pdfToText.description': "Extract every page's text into a single .txt file. Processed entirely in your browser.",
+  'toolPage.pdfToText.ocrNote': 'Scanned pages with no embedded text are recognized automatically via on-device OCR.',
+  'toolPage.pdfToText.couldNotExtract': 'Could not extract text from this PDF.',
+  'toolPage.pdfToText.extracting': 'Extracting…',
+  'toolPage.pdfToText.extractAndDownload': 'Extract Text & Download',
+
+  'toolPage.pdfToHtml.description': 'Convert a PDF into a single, styled HTML page.',
+  'toolPage.pdfToHtml.serverNote': 'This tool sends your file to our conversion server. The file is deleted immediately after conversion. Layout fidelity depends on the source PDF — text-based documents convert more cleanly than scanned ones.',
+  'toolPage.pdfToHtml.couldNotConvert': 'Could not convert this file.',
+  'toolPage.pdfToHtml.convertAndDownload': 'Convert to HTML & Download',
+
+  'toolPage.officeToPdf.title': '{label} to PDF',
+  'toolPage.officeToPdf.description': 'Convert a {label} file to PDF.',
+  'toolPage.officeToPdf.selectFileError': 'Please select a {label} file.',
+  'toolPage.officeToPdf.clickToChoose': 'Click to choose a {label} file',
+  'toolPage.officeToPdf.serverNote': 'This tool sends your file to our conversion server (using a real office engine for accurate formatting). The file is deleted immediately after conversion.',
+  'toolPage.officeToPdf.convertAndDownload': 'Convert to PDF & Download',
+
+  'toolPage.pdfToOffice.title': 'PDF to {label}',
+  'toolPage.pdfToOffice.description': 'Convert a PDF to an editable {label} file ({ext}).',
+  'toolPage.pdfToOffice.serverNote': 'This tool sends your file to our conversion server (using a real office engine for accurate formatting). The file is deleted immediately after conversion. How well this preserves layout depends on the PDF — scanned/complex documents convert less cleanly than text-based ones.',
+
   // Retention extend confirmation
   'retentionConfirm.title': 'Extend retention?',
   'retentionConfirm.body': 'This will be kept for {days} more days before it’s automatically deleted. Continue?',

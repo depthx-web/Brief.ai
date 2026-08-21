@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import JSZip from 'jszip';
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 import GuestEncouragementBar from './GuestEncouragementBar';
 
 // Served as a static asset (see scripts/copy-pdf-worker.mjs) rather than bundled,
@@ -22,6 +23,7 @@ function downloadBlob(blob: Blob, filename: string) {
 }
 
 export default function PdfToImages() {
+  const { t } = useLocale();
   const [file, setFile] = useState<File | null>(null);
   const [format, setFormat] = useState<Format>('png');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -34,7 +36,7 @@ export default function PdfToImages() {
   async function handleFileSelect(selected: File) {
     setError(null);
     if (selected.type !== 'application/pdf' && !selected.name.toLowerCase().endsWith('.pdf')) {
-      setError('Please select a PDF file.');
+      setError(t('dashboard.selectPdfError'));
       return;
     }
     setFile(selected);
@@ -59,13 +61,13 @@ export default function PdfToImages() {
         canvas.width = Math.round(viewport.width);
         canvas.height = Math.round(viewport.height);
         const ctx = canvas.getContext('2d');
-        if (!ctx) throw new Error('Could not create a canvas context for rendering.');
+        if (!ctx) throw new Error(t('toolPage.pdfToImages.canvasError'));
 
         await page.render({ canvasContext: ctx, viewport }).promise;
 
         const blob = await new Promise<Blob>((resolve, reject) => {
           canvas.toBlob(
-            (b) => (b ? resolve(b) : reject(new Error('Failed to encode page as an image.'))),
+            (b) => (b ? resolve(b) : reject(new Error(t('toolPage.pdfToImages.encodeError')))),
             mime,
             0.85
           );
@@ -84,7 +86,7 @@ export default function PdfToImages() {
       }
       setCompleted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not convert this PDF.');
+      setError(err instanceof Error ? err.message : t('toolPage.pdfToImages.couldNotConvert'));
     } finally {
       setIsProcessing(false);
     }
@@ -92,16 +94,16 @@ export default function PdfToImages() {
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-16">
-      <h1 className="font-serif text-2xl font-semibold text-navy">PDF to Images</h1>
+      <h1 className="font-serif text-2xl font-semibold text-navy">{t('tool.pdfToImages.name')}</h1>
       <p className="mt-2 text-gray-600">
-        Export every page as an image. Processed entirely in your browser.
+        {t('toolPage.pdfToImages.description')}
       </p>
 
       <div
         onClick={() => inputRef.current?.click()}
         className="mt-6 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white px-6 py-12 text-center"
       >
-        <p className="text-gray-600">{file ? file.name : 'Click to choose a PDF file'}</p>
+        <p className="text-gray-600">{file ? file.name : t('aiTool.clickToChoosePdf')}</p>
         <input
           ref={inputRef}
           type="file"
@@ -117,11 +119,11 @@ export default function PdfToImages() {
         <div className="mt-6 flex gap-4 rounded-lg border border-gray-200 bg-white p-4 text-sm">
           <label className="flex items-center gap-2">
             <input type="radio" checked={format === 'png'} onChange={() => setFormat('png')} />
-            PNG (lossless)
+            {t('toolPage.pdfToImages.formatPngLossless')}
           </label>
           <label className="flex items-center gap-2">
             <input type="radio" checked={format === 'jpeg'} onChange={() => setFormat('jpeg')} />
-            JPEG (smaller)
+            {t('toolPage.pdfToImages.formatJpegSmaller')}
           </label>
         </div>
       )}
@@ -131,7 +133,7 @@ export default function PdfToImages() {
         disabled={!file || isProcessing}
         className="mt-6 w-full rounded-lg bg-emerald px-6 py-3 font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
       >
-        {isProcessing ? 'Converting…' : 'Convert & Download'}
+        {isProcessing ? t('toolPage.converting') : t('toolPage.pdfToImages.convertAndDownload')}
       </button>
 
       {completed && <GuestEncouragementBar />}
