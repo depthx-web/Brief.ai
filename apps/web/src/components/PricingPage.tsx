@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import * as Dialog from '@radix-ui/react-dialog';
 import { useAuth } from '@/lib/AuthContext';
+import { useLocale } from '@/lib/i18n/LocaleContext';
+import { getPricingContent } from '@/lib/i18n/pricingContent';
 import { isTauri } from '@/lib/platform';
 import { CheckIcon } from '@/lib/icons';
 import {
@@ -27,49 +29,6 @@ import { showError } from '@/lib/toast';
 
 type Segment = 'LAWYER' | 'ACCOUNTANT' | 'RESEARCHER';
 type TabValue = Segment | 'CREDITS';
-
-const PLAN_COPY: Record<Segment, { tab: string; name: string }> = {
-  LAWYER: { tab: 'Legal', name: 'For Lawyers & Firms' },
-  ACCOUNTANT: { tab: 'Accounting', name: 'For Accountants & Small Business' },
-  RESEARCHER: { tab: 'Research', name: 'For Researchers & Grad Students' },
-};
-
-const CORE_TOOLS_LINE = 'Merge, split, compress, rotate & other core PDF tools — free, unlimited, forever';
-
-const CYCLES: { value: BillingCycle; label: string }[] = [
-  { value: 'WEEKLY', label: 'Weekly' },
-  { value: 'MONTHLY', label: 'Monthly' },
-  { value: 'QUARTERLY', label: 'Quarterly' },
-  { value: 'YEARLY', label: 'Yearly' },
-];
-
-const CYCLE_PERIOD: Record<BillingCycle, string> = {
-  WEEKLY: '/week',
-  MONTHLY: '/month',
-  QUARTERLY: '/quarter',
-  YEARLY: '/year',
-};
-
-const DEFAULT_HEADING = 'A plan for every profession';
-
-const DEFAULT_FAQS = [
-  {
-    q: 'Is my document content used to train any AI model?',
-    a: 'No. Your files and extracted text are sent only to process your request, never used for training.',
-  },
-  {
-    q: 'Can I switch professions/workspace later?',
-    a: 'No — your workspace is set once at registration and can’t be changed afterward. You can still change your billing plan anytime from Settings or the dashboard sidebar.',
-  },
-  {
-    q: 'What does "processed locally" mean?',
-    a: 'Merge, split, rotate, organize, and other core tools run entirely in your browser — the file never leaves your device, and they stay free with no usage cap.',
-  },
-  {
-    q: 'What needs a paid plan?',
-    a: 'AI features and anything that needs our servers (Office↔PDF conversion, password protect/remove) are part of a paid workspace plan. OCR runs locally in your browser and stays free.',
-  },
-];
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -97,6 +56,28 @@ async function fetchCmsSections(preview: boolean): Promise<CmsSections> {
 
 function PricingPageInner() {
   const { user, token } = useAuth();
+  const { locale } = useLocale();
+  const pc = getPricingContent(locale);
+  const PLAN_COPY: Record<Segment, { tab: string; name: string }> = {
+    LAWYER: { tab: pc.planTabs.legal, name: pc.planNames.legal },
+    ACCOUNTANT: { tab: pc.planTabs.accounting, name: pc.planNames.accounting },
+    RESEARCHER: { tab: pc.planTabs.research, name: pc.planNames.research },
+  };
+  const CORE_TOOLS_LINE = pc.coreToolsLine;
+  const CYCLES: { value: BillingCycle; label: string }[] = [
+    { value: 'WEEKLY', label: pc.cycleLabels.weekly },
+    { value: 'MONTHLY', label: pc.cycleLabels.monthly },
+    { value: 'QUARTERLY', label: pc.cycleLabels.quarterly },
+    { value: 'YEARLY', label: pc.cycleLabels.yearly },
+  ];
+  const CYCLE_PERIOD: Record<BillingCycle, string> = {
+    WEEKLY: pc.cyclePeriod.weekly,
+    MONTHLY: pc.cyclePeriod.monthly,
+    QUARTERLY: pc.cyclePeriod.quarterly,
+    YEARLY: pc.cyclePeriod.yearly,
+  };
+  const DEFAULT_HEADING = pc.heading;
+  const DEFAULT_FAQS = pc.faqs;
   const searchParams = useSearchParams();
   const preview = searchParams.get('cmsPreview') === '1';
   const [tab, setTab] = useState<TabValue>('LAWYER');
@@ -210,7 +191,7 @@ function PricingPageInner() {
                   : 'bg-[#E9E2CE] text-[#6B6250] opacity-70 hover:opacity-90'
               }`}
             >
-              Pay as you go
+              {pc.planTabs.credits}
             </button>
           )}
         </div>
@@ -455,6 +436,26 @@ function ComparePlansModal({
   user: { plan: 'FREE' | 'PAID' } | null;
   token: string | null;
 }) {
+  const { locale } = useLocale();
+  const pc = getPricingContent(locale);
+  const PLAN_COPY: Record<Segment, { tab: string; name: string }> = {
+    LAWYER: { tab: pc.planTabs.legal, name: pc.planNames.legal },
+    ACCOUNTANT: { tab: pc.planTabs.accounting, name: pc.planNames.accounting },
+    RESEARCHER: { tab: pc.planTabs.research, name: pc.planNames.research },
+  };
+  const CORE_TOOLS_LINE = pc.coreToolsLine;
+  const CYCLES: { value: BillingCycle; label: string }[] = [
+    { value: 'WEEKLY', label: pc.cycleLabels.weekly },
+    { value: 'MONTHLY', label: pc.cycleLabels.monthly },
+    { value: 'QUARTERLY', label: pc.cycleLabels.quarterly },
+    { value: 'YEARLY', label: pc.cycleLabels.yearly },
+  ];
+  const CYCLE_PERIOD: Record<BillingCycle, string> = {
+    WEEKLY: pc.cyclePeriod.weekly,
+    MONTHLY: pc.cyclePeriod.monthly,
+    QUARTERLY: pc.cyclePeriod.quarterly,
+    YEARLY: pc.cyclePeriod.yearly,
+  };
   const [cycle, setCycle] = useState<BillingCycle>('MONTHLY');
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
