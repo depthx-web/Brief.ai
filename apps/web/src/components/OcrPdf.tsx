@@ -5,6 +5,8 @@ import { PDFDocument, StandardFonts } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { createWorker } from 'tesseract.js';
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
+import { useLocale } from '@/lib/i18n/LocaleContext';
+import type { DictionaryKey } from '@/lib/i18n/dictionaries/en';
 import GuestEncouragementBar from './GuestEncouragementBar';
 
 // Served as a static asset (see scripts/copy-pdf-worker.mjs) rather than bundled,
@@ -16,14 +18,15 @@ const MIN_CONFIDENCE = 20;
 
 type Language = 'eng' | 'fra' | 'ara' | 'spa';
 
-const LANGUAGES: Record<Language, string> = {
-  eng: 'English',
-  fra: 'French',
-  ara: 'Arabic',
-  spa: 'Spanish',
+const LANGUAGE_KEY: Record<Language, DictionaryKey> = {
+  eng: 'toolPage.ocr.langEnglish',
+  fra: 'toolPage.ocr.langFrench',
+  ara: 'toolPage.ocr.langArabic',
+  spa: 'toolPage.ocr.langSpanish',
 };
 
 export default function OcrPdf() {
+  const { t } = useLocale();
   const [file, setFile] = useState<File | null>(null);
   const [pageCount, setPageCount] = useState<number | null>(null);
   const [language, setLanguage] = useState<Language>('eng');
@@ -41,7 +44,7 @@ export default function OcrPdf() {
     setPageCount(null);
     setHasResult(false);
     if (selected.type !== 'application/pdf' && !selected.name.toLowerCase().endsWith('.pdf')) {
-      setError('Please select a PDF file.');
+      setError(t('dashboard.selectPdfError'));
       return;
     }
     try {
@@ -50,7 +53,7 @@ export default function OcrPdf() {
       setFile(selected);
       setPageCount(doc.getPageCount());
     } catch {
-      setError('Could not read this PDF. It may be corrupted or password-protected.');
+      setError(t('toolPage.split.couldNotRead'));
     }
   }
 
@@ -58,7 +61,7 @@ export default function OcrPdf() {
     if (!file) return;
     setError(null);
     setIsProcessing(true);
-    setStatus('Starting OCR engine…');
+    setStatus(t('toolPage.ocr.startingEngine'));
 
     const worker = await createWorker(language, 1, {
       workerPath: '/tesseract/worker.min.js',
@@ -76,7 +79,7 @@ export default function OcrPdf() {
       const renderScale = OCR_DPI / 72;
 
       for (let i = 1; i <= pdfDoc.numPages; i++) {
-        setStatus(`Page ${i} of ${pdfDoc.numPages} — rendering…`);
+        setStatus(t('toolPage.ocr.pageRendering').replace('{current}', String(i)).replace('{total}', String(pdfDoc.numPages)));
         const page = await pdfDoc.getPage(i);
         const pointViewport = page.getViewport({ scale: 1 });
         const renderViewport = page.getViewport({ scale: renderScale });
@@ -85,16 +88,16 @@ export default function OcrPdf() {
         canvas.width = Math.round(renderViewport.width);
         canvas.height = Math.round(renderViewport.height);
         const ctx = canvas.getContext('2d');
-        if (!ctx) throw new Error('Could not create a canvas context for rendering.');
+        if (!ctx) throw new Error(t('toolPage.pdfToImages.canvasError'));
         await page.render({ canvasContext: ctx, viewport: renderViewport }).promise;
 
-        setStatus(`Page ${i} of ${pdfDoc.numPages} — recognizing text…`);
+        setStatus(t('toolPage.ocr.pageRecognizing').replace('{current}', String(i)).replace('{total}', String(pdfDoc.numPages)));
         const { data } = await worker.recognize(canvas);
 
         const imgBytes = await new Promise<Uint8Array>((resolve, reject) => {
           canvas.toBlob(async (blob) => {
             if (!blob) {
-              reject(new Error('Failed to encode page as an image.'));
+              reject(new Error(t('toolPage.pdfToImages.encodeError')));
               return;
             }
             resolve(new Uint8Array(await blob.arrayBuffer()));
@@ -126,7 +129,7 @@ export default function OcrPdf() {
       }
 
       await pdfDoc.destroy();
-      setStatus('Saving…');
+      setStatus(t('toolPage.ocr.saving'));
       const outBytes = await outDoc.save();
       const blob = new Blob([outBytes.buffer as ArrayBuffer], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
@@ -138,7 +141,7 @@ export default function OcrPdf() {
       setStatus(null);
       setHasResult(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not run OCR on this PDF.');
+      setError(err instanceof Error ? err.message : t('toolPage.ocr.couldNotRun'));
     } finally {
       await worker.terminate();
       setIsProcessing(false);
@@ -147,15 +150,12 @@ export default function OcrPdf() {
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-16">
-      <h1 className="font-serif text-2xl font-semibold text-navy">OCR — Make PDF Searchable</h1>
+      <h1 className="font-serif text-2xl font-semibold text-navy">{t('toolPage.ocr.title')}</h1>
       <p className="mt-2 text-gray-600">
-        Recognize text in a scanned PDF and add an invisible, searchable/selectable text layer on
-        top of the original page images. Processed entirely in your browser.
+        {t('toolPage.ocr.description')}
       </p>
       <p className="mt-1 text-xs text-gray-400">
-        The recognition engine runs locally via WebAssembly; your file never leaves the browser.
-        Language data (a few MB) is downloaded once from a public CDN the first time you use a
-        given language.
+        {t('toolPage.ocr.note')}
       </p>
 
       <div
@@ -163,7 +163,7 @@ export default function OcrPdf() {
         className="mt-6 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white px-6 py-12 text-center"
       >
         <p className="text-gray-600">
-          {file ? `${file.name} (${pageCount} pages)` : 'Click to choose a PDF file'}
+          {file ? t('toolPage.split.fileWithPageCount').replace('{name}', file.name).replace('{n}', String(pageCount)) : t('aiTool.clickToChoosePdf')}
         </p>
         <input
           ref={inputRef}
@@ -178,9 +178,9 @@ export default function OcrPdf() {
 
       {file && (
         <div className="mt-6 rounded-lg border border-gray-200 bg-white p-4">
-          <label className="block text-sm font-medium text-gray-700">Document language</label>
+          <label className="block text-sm font-medium text-gray-700">{t('toolPage.ocr.documentLanguage')}</label>
           <div className="mt-2 flex flex-wrap gap-4 text-sm">
-            {(Object.keys(LANGUAGES) as Language[]).map((key) => (
+            {(Object.keys(LANGUAGE_KEY) as Language[]).map((key) => (
               <label key={key} className="flex items-center gap-2">
                 <input
                   type="radio"
@@ -188,7 +188,7 @@ export default function OcrPdf() {
                   onChange={() => setLanguage(key)}
                   disabled={isProcessing}
                 />
-                {LANGUAGES[key]}
+                {t(LANGUAGE_KEY[key])}
               </label>
             ))}
           </div>
@@ -202,7 +202,7 @@ export default function OcrPdf() {
         disabled={!file || isProcessing}
         className="mt-6 w-full rounded-lg bg-emerald px-6 py-3 font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
       >
-        {isProcessing ? 'Running OCR…' : 'Run OCR & Download'}
+        {isProcessing ? t('toolPage.ocr.running') : t('toolPage.ocr.runAndDownload')}
       </button>
 
       {hasResult && <GuestEncouragementBar />}

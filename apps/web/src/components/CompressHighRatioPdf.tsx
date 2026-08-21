@@ -3,10 +3,12 @@
 import { useRef, useState } from 'react';
 import { compressHighRatio, downloadBlob, type CompressionPreset } from '@/lib/convertApi';
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
+import { useLocale } from '@/lib/i18n/LocaleContext';
+import type { DictionaryKey } from '@/lib/i18n/dictionaries/en';
 
-const PRESETS: { value: CompressionPreset; label: string }[] = [
-  { value: 'ebook', label: 'Balanced — 150 dpi images' },
-  { value: 'screen', label: 'Smallest file — 72 dpi images' },
+const PRESETS: { value: CompressionPreset; labelKey: DictionaryKey }[] = [
+  { value: 'ebook', labelKey: 'toolPage.compressHighRatio.presetBalanced' },
+  { value: 'screen', labelKey: 'toolPage.compressHighRatio.presetSmallest' },
 ];
 
 function formatSize(bytes: number): string {
@@ -15,6 +17,7 @@ function formatSize(bytes: number): string {
 }
 
 export default function CompressHighRatioPdf() {
+  const { t } = useLocale();
   const [file, setFile] = useState<File | null>(null);
   const [preset, setPreset] = useState<CompressionPreset>('ebook');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -28,7 +31,7 @@ export default function CompressHighRatioPdf() {
     setError(null);
     setResult(null);
     if (selected.type !== 'application/pdf' && !selected.name.toLowerCase().endsWith('.pdf')) {
-      setError('Please select a PDF file.');
+      setError(t('dashboard.selectPdfError'));
       return;
     }
     setFile(selected);
@@ -44,7 +47,7 @@ export default function CompressHighRatioPdf() {
       downloadBlob(blob, filename);
       setResult({ originalSize: file.size, newSize: blob.size });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not compress this PDF.');
+      setError(err instanceof Error ? err.message : t('toolPage.compress.couldNotCompress'));
     } finally {
       setIsProcessing(false);
     }
@@ -52,21 +55,19 @@ export default function CompressHighRatioPdf() {
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-16">
-      <h1 className="font-serif text-2xl font-semibold text-navy">Compress PDF (High Ratio)</h1>
+      <h1 className="font-serif text-2xl font-semibold text-navy">{t('tool.compressHighRatio.name')}</h1>
       <p className="mt-2 text-gray-600">
-        Recompress embedded images on our server — text stays sharp and selectable, unlike the free
-        tool, which flattens every page to an image.
+        {t('toolPage.compressHighRatio.description')}
       </p>
       <p className="mt-1 text-xs text-gray-400">
-        This tool sends your file to our conversion server. The file is deleted immediately after
-        processing.
+        {t('toolPage.compressHighRatio.serverNote')}
       </p>
 
       <div
         onClick={() => inputRef.current?.click()}
         className="mt-6 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white px-6 py-12 text-center"
       >
-        <p className="text-gray-600">{file ? file.name : 'Click to choose a PDF file'}</p>
+        <p className="text-gray-600">{file ? file.name : t('aiTool.clickToChoosePdf')}</p>
         <input
           ref={inputRef}
           type="file"
@@ -83,7 +84,7 @@ export default function CompressHighRatioPdf() {
           {PRESETS.map((p) => (
             <label key={p.value} className="flex items-center gap-2 text-sm">
               <input type="radio" checked={preset === p.value} onChange={() => setPreset(p.value)} />
-              {p.label}
+              {t(p.labelKey)}
             </label>
           ))}
         </div>
@@ -100,7 +101,7 @@ export default function CompressHighRatioPdf() {
         disabled={!file || isProcessing}
         className="mt-6 w-full rounded-lg bg-emerald px-6 py-3 font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
       >
-        {isProcessing ? 'Compressing…' : 'Compress & Download'}
+        {isProcessing ? t('toolPage.compress.compressing') : t('toolPage.compress.compressAndDownload')}
       </button>
     </div>
   );

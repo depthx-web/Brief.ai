@@ -4,15 +4,17 @@ import { useRef, useState } from 'react';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { loadPdfForPreview, renderAllThumbnails, renderPageDataUrl } from '@/lib/pdfThumbnails';
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
+import { useLocale } from '@/lib/i18n/LocaleContext';
+import type { DictionaryKey } from '@/lib/i18n/dictionaries/en';
 import PageThumbnailStrip from './PageThumbnailStrip';
 import GuestEncouragementBar from './GuestEncouragementBar';
 
 type Position = 'bottom-center' | 'bottom-right' | 'top-right';
 
-const POSITIONS: Record<Position, string> = {
-  'bottom-center': 'Bottom center',
-  'bottom-right': 'Bottom right',
-  'top-right': 'Top right',
+const POSITION_KEY: Record<Position, DictionaryKey> = {
+  'bottom-center': 'toolPage.pageNumbers.positionBottomCenter',
+  'bottom-right': 'toolPage.pageNumbers.positionBottomRight',
+  'top-right': 'toolPage.pageNumbers.positionTopRight',
 };
 
 interface PageItem {
@@ -22,6 +24,7 @@ interface PageItem {
 }
 
 export default function PageNumbersPdf() {
+  const { t } = useLocale();
   const [file, setFile] = useState<File | null>(null);
   const [pages, setPages] = useState<PageItem[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -43,7 +46,7 @@ export default function PageNumbersPdf() {
     setSelectedId(null);
     setPreviewUrl(null);
     if (selected.type !== 'application/pdf' && !selected.name.toLowerCase().endsWith('.pdf')) {
-      setError('Please select a PDF file.');
+      setError(t('dashboard.selectPdfError'));
       return;
     }
     setIsLoadingThumbs(true);
@@ -63,7 +66,7 @@ export default function PageNumbersPdf() {
       if (items[0]) setPreviewUrl(await renderPageDataUrl(previewDoc, 1, 720));
       await previewDoc.destroy();
     } catch {
-      setError('Could not read this PDF. It may be corrupted or password-protected.');
+      setError(t('toolPage.split.couldNotRead'));
     } finally {
       setIsLoadingThumbs(false);
     }
@@ -121,7 +124,7 @@ export default function PageNumbersPdf() {
       URL.revokeObjectURL(url);
       setCompleted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not number this PDF.');
+      setError(err instanceof Error ? err.message : t('toolPage.pageNumbers.couldNotNumber'));
     } finally {
       setIsProcessing(false);
     }
@@ -132,9 +135,9 @@ export default function PageNumbersPdf() {
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-16">
-      <h1 className="font-serif text-2xl font-semibold text-navy">Add Page Numbers</h1>
+      <h1 className="font-serif text-2xl font-semibold text-navy">{t('toolPage.pageNumbers.title')}</h1>
       <p className="mt-2 text-gray-600">
-        Stamp page numbers onto every page. Processed entirely in your browser.
+        {t('toolPage.pageNumbers.description')}
       </p>
 
       {!file ? (
@@ -142,7 +145,7 @@ export default function PageNumbersPdf() {
           onClick={() => inputRef.current?.click()}
           className="mt-6 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white px-6 py-12 text-center"
         >
-          <p className="text-gray-600">{isLoadingThumbs ? 'Reading pages…' : 'Click to choose a PDF file'}</p>
+          <p className="text-gray-600">{isLoadingThumbs ? t('toolPage.readingPages') : t('aiTool.clickToChoosePdf')}</p>
         </div>
       ) : (
         <div className="mt-6 flex h-[560px] overflow-hidden rounded-lg border border-gray-200 bg-white">
@@ -150,16 +153,16 @@ export default function PageNumbersPdf() {
           <div className="flex flex-1 flex-col">
             <div className="flex flex-wrap items-center gap-5 border-b border-gray-200 px-4 py-3">
               <div className="flex items-center gap-2">
-                <label className="text-xs font-medium text-ink-soft">Position</label>
-                {(Object.keys(POSITIONS) as Position[]).map((key) => (
+                <label className="text-xs font-medium text-ink-soft">{t('toolPage.pageNumbers.position')}</label>
+                {(Object.keys(POSITION_KEY) as Position[]).map((key) => (
                   <label key={key} className="flex items-center gap-1.5 text-xs text-ink">
                     <input type="radio" checked={position === key} onChange={() => setPosition(key)} />
-                    {POSITIONS[key]}
+                    {t(POSITION_KEY[key])}
                   </label>
                 ))}
               </div>
               <div className="flex items-center gap-2">
-                <label className="text-xs font-medium text-ink-soft">Start at</label>
+                <label className="text-xs font-medium text-ink-soft">{t('toolPage.pageNumbers.startAt')}</label>
                 <input
                   type="number"
                   min={0}
@@ -208,7 +211,7 @@ export default function PageNumbersPdf() {
         disabled={!file || isProcessing}
         className="mt-6 w-full rounded-lg bg-emerald px-6 py-3 font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
       >
-        {isProcessing ? 'Numbering…' : 'Add Numbers & Download'}
+        {isProcessing ? t('toolPage.pageNumbers.numbering') : t('toolPage.pageNumbers.addAndDownload')}
       </button>
 
       {completed && <GuestEncouragementBar />}

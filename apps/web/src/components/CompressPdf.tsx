@@ -4,6 +4,8 @@ import { useRef, useState } from 'react';
 import { PDFDocument } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
+import { useLocale } from '@/lib/i18n/LocaleContext';
+import type { DictionaryKey } from '@/lib/i18n/dictionaries/en';
 import GuestEncouragementBar from './GuestEncouragementBar';
 
 // Served as a static asset (see scripts/copy-pdf-worker.mjs) rather than bundled,
@@ -12,10 +14,10 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
 type Quality = 'high' | 'medium' | 'low';
 
-const QUALITY_PRESETS: Record<Quality, { dpi: number; jpegQuality: number; label: string }> = {
-  high: { dpi: 150, jpegQuality: 0.82, label: 'High quality — larger file' },
-  medium: { dpi: 110, jpegQuality: 0.6, label: 'Balanced' },
-  low: { dpi: 72, jpegQuality: 0.4, label: 'Smallest file' },
+const QUALITY_PRESETS: Record<Quality, { dpi: number; jpegQuality: number; labelKey: DictionaryKey }> = {
+  high: { dpi: 150, jpegQuality: 0.82, labelKey: 'toolPage.compress.presetHigh' },
+  medium: { dpi: 110, jpegQuality: 0.6, labelKey: 'toolPage.compress.presetMedium' },
+  low: { dpi: 72, jpegQuality: 0.4, labelKey: 'toolPage.compress.presetLow' },
 };
 
 function formatSize(bytes: number): string {
@@ -24,6 +26,7 @@ function formatSize(bytes: number): string {
 }
 
 export default function CompressPdf() {
+  const { t } = useLocale();
   const [file, setFile] = useState<File | null>(null);
   const [quality, setQuality] = useState<Quality>('medium');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -38,7 +41,7 @@ export default function CompressPdf() {
     setResult(null);
     setFile(null);
     if (selected.type !== 'application/pdf' && !selected.name.toLowerCase().endsWith('.pdf')) {
-      setError('Please select a PDF file.');
+      setError(t('dashboard.selectPdfError'));
       return;
     }
     setFile(selected);
@@ -65,13 +68,13 @@ export default function CompressPdf() {
         canvas.width = Math.round(renderViewport.width);
         canvas.height = Math.round(renderViewport.height);
         const ctx = canvas.getContext('2d');
-        if (!ctx) throw new Error('Could not create a canvas context for rendering.');
+        if (!ctx) throw new Error(t('toolPage.pdfToImages.canvasError'));
 
         await page.render({ canvasContext: ctx, viewport: renderViewport }).promise;
 
         const blob = await new Promise<Blob>((resolve, reject) => {
           canvas.toBlob(
-            (b) => (b ? resolve(b) : reject(new Error('Failed to encode page as JPEG.'))),
+            (b) => (b ? resolve(b) : reject(new Error(t('toolPage.compress.encodeJpegError')))),
             'image/jpeg',
             preset.jpegQuality
           );
@@ -100,7 +103,7 @@ export default function CompressPdf() {
 
       setResult({ originalSize: file.size, newSize: outBytes.byteLength });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not compress this PDF.');
+      setError(err instanceof Error ? err.message : t('toolPage.compress.couldNotCompress'));
     } finally {
       setIsProcessing(false);
     }
@@ -108,21 +111,19 @@ export default function CompressPdf() {
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-16">
-      <h1 className="font-serif text-2xl font-semibold text-navy">Compress PDF</h1>
+      <h1 className="font-serif text-2xl font-semibold text-navy">{t('tool.compress.name')}</h1>
       <p className="mt-2 text-gray-600">
-        Shrink file size by re-encoding pages as optimized images. Processed entirely in your
-        browser.
+        {t('toolPage.compress.description')}
       </p>
       <p className="mt-1 text-xs text-gray-400">
-        Note: this flattens each page to an image, so text is no longer selectable/searchable in
-        the output. Best for scanned documents or when file size matters more than that.
+        {t('toolPage.compress.note')}
       </p>
 
       <div
         onClick={() => inputRef.current?.click()}
         className="mt-6 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white px-6 py-12 text-center"
       >
-        <p className="text-gray-600">{file ? file.name : 'Click to choose a PDF file'}</p>
+        <p className="text-gray-600">{file ? file.name : t('aiTool.clickToChoosePdf')}</p>
         <input
           ref={inputRef}
           type="file"
@@ -143,7 +144,7 @@ export default function CompressPdf() {
                 checked={quality === key}
                 onChange={() => setQuality(key)}
               />
-              {QUALITY_PRESETS[key].label}
+              {t(QUALITY_PRESETS[key].labelKey)}
             </label>
           ))}
         </div>
@@ -160,7 +161,7 @@ export default function CompressPdf() {
         disabled={!file || isProcessing}
         className="mt-6 w-full rounded-lg bg-emerald px-6 py-3 font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
       >
-        {isProcessing ? 'Compressing…' : 'Compress & Download'}
+        {isProcessing ? t('toolPage.compress.compressing') : t('toolPage.compress.compressAndDownload')}
       </button>
 
       {result && <GuestEncouragementBar />}
