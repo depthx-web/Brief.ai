@@ -585,6 +585,68 @@ const en = {
   'workspace.creditsRemainingPlural': '{n} credits remaining →',
   'workspace.changePlan': 'Change plan →',
 
+  // Shared single-document AI tool shell
+  'aiTool.selectPdfError': 'Please select a PDF file.',
+  'aiTool.couldNotReadPdf': 'Could not read this PDF. It may be corrupted, password-protected, or scanned without OCR.',
+  'aiTool.couldNotCompleteAnalysis': 'Could not complete this analysis.',
+  'aiTool.clickToChoosePdf': 'Click to choose a PDF file',
+  'aiTool.working': 'Working…',
+
+  // Single-doc AI tool pages (title/description/run label/result copy)
+  'aiTool.redaction.title': 'Auto-Redaction of Sensitive Data',
+  'aiTool.redaction.description': 'Scans for ID numbers, bank account numbers, and similar identifiers worth redacting before sharing.',
+  'aiTool.redaction.runLabel': 'Scan for Sensitive Data',
+  'aiTool.redaction.noneFound': 'No sensitive data detected.',
+
+  'aiTool.taxDeductible.title': 'Tax-Deductible Expense Flagger',
+  'aiTool.taxDeductible.description': 'Highlights line items that may qualify as tax-deductible business expenses, based on their category.',
+  'aiTool.taxDeductible.runLabel': 'Flag Expenses',
+  'aiTool.taxDeductible.noneFound': 'No clearly deductible items found.',
+  'aiTool.taxDeductible.disclaimer': 'This is a suggestion based on expense category, not formal tax advice. Confirm deductibility with a qualified tax professional before filing.',
+
+  'aiTool.ndaAudit.title': 'Quick NDA Auditor',
+  'aiTool.ndaAudit.description': 'Checks the NDA against three standard criteria: confidentiality duration, exceptions, and scope of protection.',
+  'aiTool.ndaAudit.runLabel': 'Audit NDA',
+  'aiTool.ndaAudit.statusOk': 'OK',
+  'aiTool.ndaAudit.statusConcern': 'Concern',
+  'aiTool.ndaAudit.statusMissing': 'Missing',
+
+  'aiTool.highRiskClauses.title': 'High-Risk Clause Detector',
+  'aiTool.highRiskClauses.description': 'Flags unfair, incomplete, or non-standard clauses and pulls out parties, dates, amounts, and obligations.',
+  'aiTool.highRiskClauses.runLabel': 'Detect Clauses',
+  'aiTool.highRiskClauses.noneFound': 'No flagged clauses.',
+  'aiTool.highRiskClauses.parties': 'Parties',
+  'aiTool.highRiskClauses.dates': 'Dates',
+  'aiTool.highRiskClauses.amounts': 'Amounts',
+  'aiTool.highRiskClauses.obligations': 'Obligations',
+
+  'aiTool.methodology.title': 'Methodology Extractor',
+  'aiTool.methodology.description': 'Summarizes the methodology section into a structured table: sample, tools, and statistical analysis.',
+  'aiTool.methodology.runLabel': 'Extract Methodology',
+  'aiTool.methodology.sample': 'Sample',
+  'aiTool.methodology.tools': 'Tools',
+  'aiTool.methodology.statisticalAnalysis': 'Statistical analysis',
+
+  'aiTool.financialRatios.title': 'Financial Ratio Analyzer',
+  'aiTool.financialRatios.description': 'Extracts core liquidity and profitability ratios from a financial statement and explains them in plain language.',
+  'aiTool.financialRatios.runLabel': 'Analyze Ratios',
+  'aiTool.financialRatios.noneFound': 'Not enough figures in this document to compute ratios.',
+
+  'aiTool.duplicatePayments.title': 'Duplicate Payment Detector',
+  'aiTool.duplicatePayments.description': 'Scans a batch of invoices or payment records for the same vendor, amount, and date appearing more than once.',
+  'aiTool.duplicatePayments.runLabel': 'Scan for Duplicates',
+  'aiTool.duplicatePayments.noneFound': 'No likely duplicate payments found.',
+  'aiTool.duplicatePayments.appears': 'Appears {n}×',
+
+  'aiTool.presentationOutline.title': 'Presentation Outline Generator',
+  'aiTool.presentationOutline.description': 'Turns the paper into a set of key talking points as a base for slides — exported as a structured text file, not a full .pptx.',
+  'aiTool.presentationOutline.runLabel': 'Generate Outline',
+  'aiTool.presentationOutline.downloadTxt': 'Download as text file',
+
+  'aiTool.plainSummary.title': 'Plain-Language Summary Generator',
+  'aiTool.plainSummary.description': 'Turn a complex contract into a summary a non-legal client can actually understand.',
+  'aiTool.plainSummary.runLabel': 'Generate Summary',
+
   // Retention extend confirmation
   'retentionConfirm.title': 'Extend retention?',
   'retentionConfirm.body': 'This will be kept for {days} more days before it’s automatically deleted. Continue?',

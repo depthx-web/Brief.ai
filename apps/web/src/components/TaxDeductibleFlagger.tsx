@@ -1,20 +1,22 @@
 'use client';
 
 import { flagDeductibleExpenses } from '@/lib/aiApi';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 import SingleDocAiTool from './SingleDocAiTool';
 
 export default function TaxDeductibleFlagger() {
+  const { t } = useLocale();
   return (
     <SingleDocAiTool
-      title="Tax-Deductible Expense Flagger"
-      description="Highlights line items that may qualify as tax-deductible business expenses, based on their category."
-      runLabel="Flag Expenses"
+      title={t('aiTool.taxDeductible.title')}
+      description={t('aiTool.taxDeductible.description')}
+      runLabel={t('aiTool.taxDeductible.runLabel')}
       onRun={(pages, token) => flagDeductibleExpenses(pages, token)}
       renderResult={(report) => (
         <>
           {report.items.length === 0 ? (
             <p className="rounded-lg border border-gray-200 bg-white p-5 text-sm text-ink-soft">
-              No clearly deductible items found.
+              {t('aiTool.taxDeductible.noneFound')}
             </p>
           ) : (
             <ul className="space-y-3">
@@ -30,8 +32,7 @@ export default function TaxDeductibleFlagger() {
             </ul>
           )}
           <p className="mt-4 text-xs text-gray-400">
-            This is a suggestion based on expense category, not formal tax advice. Confirm
-            deductibility with a qualified tax professional before filing.
+            {t('aiTool.taxDeductible.disclaimer')}
           </p>
         </>
       )}

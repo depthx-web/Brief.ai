@@ -1,14 +1,16 @@
 'use client';
 
 import { summarizePlain } from '@/lib/aiApi';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 import SingleDocAiTool from './SingleDocAiTool';
 
 export default function PlainLanguageSummary() {
+  const { t } = useLocale();
   return (
     <SingleDocAiTool
-      title="Plain-Language Summary Generator"
-      description="Turn a complex contract into a summary a non-legal client can actually understand."
-      runLabel="Generate Summary"
+      title={t('aiTool.plainSummary.title')}
+      description={t('aiTool.plainSummary.description')}
+      runLabel={t('aiTool.plainSummary.runLabel')}
       onRun={(pages, token) => summarizePlain(pages, token, 'Contract')}
       renderResult={(summary) => (
         <div className="rounded-lg border border-gray-200 bg-white p-5">

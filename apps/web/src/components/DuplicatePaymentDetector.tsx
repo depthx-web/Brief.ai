@@ -1,19 +1,21 @@
 'use client';
 
 import { detectDuplicatePayments } from '@/lib/aiApi';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 import SingleDocAiTool from './SingleDocAiTool';
 
 export default function DuplicatePaymentDetector() {
+  const { t } = useLocale();
   return (
     <SingleDocAiTool
-      title="Duplicate Payment Detector"
-      description="Scans a batch of invoices or payment records for the same vendor, amount, and date appearing more than once."
-      runLabel="Scan for Duplicates"
+      title={t('aiTool.duplicatePayments.title')}
+      description={t('aiTool.duplicatePayments.description')}
+      runLabel={t('aiTool.duplicatePayments.runLabel')}
       onRun={(pages, token) => detectDuplicatePayments(pages, token)}
       renderResult={(report) =>
         report.duplicates.length === 0 ? (
           <p className="rounded-lg border border-gray-200 bg-white p-5 text-sm text-ink-soft">
-            No likely duplicate payments found.
+            {t('aiTool.duplicatePayments.noneFound')}
           </p>
         ) : (
           <ul className="space-y-3">
@@ -24,7 +26,7 @@ export default function DuplicatePaymentDetector() {
                   <span className="font-mono text-ink-soft">{d.amount}</span>
                 </div>
                 <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-amber-700">
-                  Appears {d.occurrences}×
+                  {t('aiTool.duplicatePayments.appears').replace('{n}', String(d.occurrences))}
                 </p>
               </li>
             ))}

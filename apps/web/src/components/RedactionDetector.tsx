@@ -1,19 +1,21 @@
 'use client';
 
 import { detectSensitiveData } from '@/lib/aiApi';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 import SingleDocAiTool from './SingleDocAiTool';
 
 export default function RedactionDetector() {
+  const { t } = useLocale();
   return (
     <SingleDocAiTool
-      title="Auto-Redaction of Sensitive Data"
-      description="Scans for ID numbers, bank account numbers, and similar identifiers worth redacting before sharing."
-      runLabel="Scan for Sensitive Data"
+      title={t('aiTool.redaction.title')}
+      description={t('aiTool.redaction.description')}
+      runLabel={t('aiTool.redaction.runLabel')}
       onRun={(pages, token) => detectSensitiveData(pages, token)}
       renderResult={(report) =>
         report.items.length === 0 ? (
           <p className="rounded-lg border border-gray-200 bg-white p-5 text-sm text-ink-soft">
-            No sensitive data detected.
+            {t('aiTool.redaction.noneFound')}
           </p>
         ) : (
           <ul className="space-y-3">

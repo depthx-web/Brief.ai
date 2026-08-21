@@ -1,19 +1,21 @@
 'use client';
 
 import { analyzeFinancialRatios } from '@/lib/aiApi';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 import SingleDocAiTool from './SingleDocAiTool';
 
 export default function FinancialRatioAnalyzer() {
+  const { t } = useLocale();
   return (
     <SingleDocAiTool
-      title="Financial Ratio Analyzer"
-      description="Extracts core liquidity and profitability ratios from a financial statement and explains them in plain language."
-      runLabel="Analyze Ratios"
+      title={t('aiTool.financialRatios.title')}
+      description={t('aiTool.financialRatios.description')}
+      runLabel={t('aiTool.financialRatios.runLabel')}
       onRun={(pages, token) => analyzeFinancialRatios(pages, token)}
       renderResult={(report) =>
         report.ratios.length === 0 ? (
           <p className="rounded-lg border border-gray-200 bg-white p-5 text-sm text-ink-soft">
-            Not enough figures in this document to compute ratios.
+            {t('aiTool.financialRatios.noneFound')}
           </p>
         ) : (
           <ul className="space-y-3">

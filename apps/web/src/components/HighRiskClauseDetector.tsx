@@ -1,14 +1,24 @@
 'use client';
 
 import { analyzeClauses } from '@/lib/aiApi';
+import { useLocale } from '@/lib/i18n/LocaleContext';
+import type { DictionaryKey } from '@/lib/i18n/dictionaries/en';
 import SingleDocAiTool from './SingleDocAiTool';
 
+const ENTITY_LABEL_KEY: Record<'parties' | 'dates' | 'amounts' | 'obligations', DictionaryKey> = {
+  parties: 'aiTool.highRiskClauses.parties',
+  dates: 'aiTool.highRiskClauses.dates',
+  amounts: 'aiTool.highRiskClauses.amounts',
+  obligations: 'aiTool.highRiskClauses.obligations',
+};
+
 export default function HighRiskClauseDetector() {
+  const { t } = useLocale();
   return (
     <SingleDocAiTool
-      title="High-Risk Clause Detector"
-      description="Flags unfair, incomplete, or non-standard clauses and pulls out parties, dates, amounts, and obligations."
-      runLabel="Detect Clauses"
+      title={t('aiTool.highRiskClauses.title')}
+      description={t('aiTool.highRiskClauses.description')}
+      runLabel={t('aiTool.highRiskClauses.runLabel')}
       onRun={(pages, token) => analyzeClauses(pages, token, 'Contract')}
       renderResult={(analysis) => (
         <div className="space-y-5">
@@ -25,12 +35,12 @@ export default function HighRiskClauseDetector() {
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-ink-soft">No flagged clauses.</p>
+            <p className="text-sm text-ink-soft">{t('aiTool.highRiskClauses.noneFound')}</p>
           )}
           <dl className="space-y-3 text-sm">
             {(['parties', 'dates', 'amounts', 'obligations'] as const).map((key) => (
               <div key={key}>
-                <dt className="font-medium capitalize text-ink">{key}</dt>
+                <dt className="font-medium text-ink">{t(ENTITY_LABEL_KEY[key])}</dt>
                 <dd className="text-ink-soft">{analysis.entities[key].length > 0 ? analysis.entities[key].join(', ') : '—'}</dd>
               </div>
             ))}
