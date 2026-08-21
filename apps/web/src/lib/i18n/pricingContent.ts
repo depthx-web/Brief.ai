@@ -8,6 +8,33 @@ export interface PricingContent {
   cyclePeriod: { weekly: string; monthly: string; quarterly: string; yearly: string };
   heading: string;
   faqs: { q: string; a: string }[];
+  desktopTitle: string;
+  desktopSubtitle: string;
+  comparePlans: string;
+  payAsYouGoDescription: string;
+  loading: string;
+  bestValue: string;
+  buyCredits: string;
+  startingCheckout: string;
+  signUpToBuy: string;
+  creditsNeverExpire: string;
+  billingNotLive: string;
+  free: string;
+  paid: string;
+  forever: string;
+  yourCurrentPlan: string;
+  includedWithEveryPlan: string;
+  startFree: string;
+  everythingInFreePlus: string;
+  saveQuarterly: string;
+  saveYearly: string;
+  billingSetupInProgress: string;
+  subscribe: string;
+  signUp: string;
+  comparePlansTitle: string;
+  comparePlansDescription: string;
+  close: string;
+  couldNotStartCheckout: string;
 }
 
 const en: PricingContent = {
@@ -39,6 +66,33 @@ const en: PricingContent = {
       a: 'AI features and anything that needs our servers (Office↔PDF conversion, password protect/remove) are part of a paid workspace plan. OCR runs locally in your browser and stays free.',
     },
   ],
+  desktopTitle: 'Pricing',
+  desktopSubtitle: 'Compare plans for your workspace',
+  comparePlans: 'Compare plans →',
+  payAsYouGoDescription: '1 credit = 1 AI analysis, chat session, or comparison. No subscription required.',
+  loading: 'Loading…',
+  bestValue: 'Best value',
+  buyCredits: 'Buy credits',
+  startingCheckout: 'Starting checkout…',
+  signUpToBuy: 'Sign up to buy',
+  creditsNeverExpire: 'Credits never expire. Best for occasional use — for regular monthly use, a subscription plan costs less per document.',
+  billingNotLive: 'Billing isn’t live yet — every tool is free to use while we finish it.',
+  free: 'Free',
+  paid: 'Paid',
+  forever: 'forever',
+  yourCurrentPlan: 'Your current plan',
+  includedWithEveryPlan: 'Included with every plan',
+  startFree: 'Start Free',
+  everythingInFreePlus: 'Everything in Free, plus:',
+  saveQuarterly: 'Save 10%',
+  saveYearly: 'Save 20%',
+  billingSetupInProgress: 'Billing setup in progress',
+  subscribe: 'Subscribe',
+  signUp: 'Sign Up',
+  comparePlansTitle: 'Compare plans — {name}',
+  comparePlansDescription: 'Everything below is scoped to your workspace — pick a billing cycle for Paid.',
+  close: 'Close',
+  couldNotStartCheckout: 'Could not start checkout.',
 };
 
 const de: PricingContent = {
@@ -70,6 +124,33 @@ const de: PricingContent = {
       a: 'KI-Funktionen und alles, was unsere Server benötigt (Office↔PDF-Konvertierung, Passwort schützen/entfernen), gehören zu einem bezahlten Arbeitsbereich-Plan. OCR läuft lokal in Ihrem Browser und bleibt kostenlos.',
     },
   ],
+  desktopTitle: 'Preise',
+  desktopSubtitle: 'Vergleichen Sie Pläne für Ihren Arbeitsbereich',
+  comparePlans: 'Pläne vergleichen →',
+  payAsYouGoDescription: '1 Guthaben = 1 KI-Analyse, Chat-Sitzung oder Vergleich. Kein Abonnement erforderlich.',
+  loading: 'Wird geladen…',
+  bestValue: 'Bestes Angebot',
+  buyCredits: 'Guthaben kaufen',
+  startingCheckout: 'Kasse wird gestartet…',
+  signUpToBuy: 'Zum Kaufen registrieren',
+  creditsNeverExpire: 'Guthaben verfällt nie. Am besten für gelegentliche Nutzung — bei regelmäßiger monatlicher Nutzung kostet ein Abonnement pro Dokument weniger.',
+  billingNotLive: 'Die Abrechnung ist noch nicht aktiv — jedes Werkzeug ist kostenlos nutzbar, während wir sie fertigstellen.',
+  free: 'Kostenlos',
+  paid: 'Bezahlt',
+  forever: 'für immer',
+  yourCurrentPlan: 'Ihr aktueller Plan',
+  includedWithEveryPlan: 'In jedem Plan enthalten',
+  startFree: 'Kostenlos starten',
+  everythingInFreePlus: 'Alles aus Kostenlos, plus:',
+  saveQuarterly: '10 % sparen',
+  saveYearly: '20 % sparen',
+  billingSetupInProgress: 'Abrechnung wird eingerichtet',
+  subscribe: 'Abonnieren',
+  signUp: 'Registrieren',
+  comparePlansTitle: 'Pläne vergleichen — {name}',
+  comparePlansDescription: 'Alles unten bezieht sich auf Ihren Arbeitsbereich — wählen Sie einen Abrechnungszyklus für Bezahlt.',
+  close: 'Schließen',
+  couldNotStartCheckout: 'Der Bezahlvorgang konnte nicht gestartet werden.',
 };
 
 const fr: PricingContent = {
@@ -101,6 +182,33 @@ const fr: PricingContent = {
       a: 'Les fonctionnalités IA et tout ce qui nécessite nos serveurs (conversion Office↔PDF, protection/suppression de mot de passe) font partie d’un forfait d’espace de travail payant. L’OCR s’exécute localement dans votre navigateur et reste gratuit.',
     },
   ],
+  desktopTitle: 'Tarifs',
+  desktopSubtitle: 'Comparez les forfaits pour votre espace de travail',
+  comparePlans: 'Comparer les forfaits →',
+  payAsYouGoDescription: '1 crédit = 1 analyse IA, session de chat ou comparaison. Aucun abonnement requis.',
+  loading: 'Chargement…',
+  bestValue: 'Meilleure offre',
+  buyCredits: 'Acheter des crédits',
+  startingCheckout: 'Démarrage du paiement…',
+  signUpToBuy: 'S’inscrire pour acheter',
+  creditsNeverExpire: 'Les crédits n’expirent jamais. Idéal pour un usage occasionnel — pour un usage mensuel régulier, un abonnement coûte moins cher par document.',
+  billingNotLive: 'La facturation n’est pas encore active — tous les outils sont gratuits pendant que nous la finalisons.',
+  free: 'Gratuit',
+  paid: 'Payant',
+  forever: 'pour toujours',
+  yourCurrentPlan: 'Votre forfait actuel',
+  includedWithEveryPlan: 'Inclus avec tous les forfaits',
+  startFree: 'Commencer gratuitement',
+  everythingInFreePlus: 'Tout ce qui est inclus dans Gratuit, plus :',
+  saveQuarterly: 'Économisez 10 %',
+  saveYearly: 'Économisez 20 %',
+  billingSetupInProgress: 'Configuration de la facturation en cours',
+  subscribe: 'S’abonner',
+  signUp: 'S’inscrire',
+  comparePlansTitle: 'Comparer les forfaits — {name}',
+  comparePlansDescription: 'Tout ci-dessous est propre à votre espace de travail — choisissez un cycle de facturation pour Payant.',
+  close: 'Fermer',
+  couldNotStartCheckout: 'Impossible de démarrer le paiement.',
 };
 
 const es: PricingContent = {
@@ -132,6 +240,33 @@ const es: PricingContent = {
       a: 'Las funciones de IA y todo lo que requiera nuestros servidores (conversión Office↔PDF, proteger/quitar contraseña) forman parte de un plan de espacio de trabajo de pago. El OCR se ejecuta localmente en tu navegador y sigue siendo gratuito.',
     },
   ],
+  desktopTitle: 'Precios',
+  desktopSubtitle: 'Compara planes para tu espacio de trabajo',
+  comparePlans: 'Comparar planes →',
+  payAsYouGoDescription: '1 crédito = 1 análisis de IA, sesión de chat o comparación. No se requiere suscripción.',
+  loading: 'Cargando…',
+  bestValue: 'Mejor valor',
+  buyCredits: 'Comprar créditos',
+  startingCheckout: 'Iniciando el pago…',
+  signUpToBuy: 'Regístrate para comprar',
+  creditsNeverExpire: 'Los créditos nunca caducan. Ideal para uso ocasional — para uso mensual regular, un plan de suscripción cuesta menos por documento.',
+  billingNotLive: 'La facturación aún no está activa — todas las herramientas son gratis mientras la terminamos.',
+  free: 'Gratis',
+  paid: 'De pago',
+  forever: 'para siempre',
+  yourCurrentPlan: 'Tu plan actual',
+  includedWithEveryPlan: 'Incluido en todos los planes',
+  startFree: 'Empezar gratis',
+  everythingInFreePlus: 'Todo lo de Gratis, más:',
+  saveQuarterly: 'Ahorra 10 %',
+  saveYearly: 'Ahorra 20 %',
+  billingSetupInProgress: 'Configuración de facturación en curso',
+  subscribe: 'Suscribirse',
+  signUp: 'Regístrate',
+  comparePlansTitle: 'Comparar planes — {name}',
+  comparePlansDescription: 'Todo lo de abajo es específico de tu espacio de trabajo — elige un ciclo de facturación para De pago.',
+  close: 'Cerrar',
+  couldNotStartCheckout: 'No se pudo iniciar el pago.',
 };
 
 const it: PricingContent = {
@@ -163,6 +298,33 @@ const it: PricingContent = {
       a: 'Le funzioni IA e tutto ciò che richiede i nostri server (conversione Office↔PDF, protezione/rimozione password) fanno parte di un piano a pagamento. L’OCR funziona localmente nel tuo browser e resta gratuito.',
     },
   ],
+  desktopTitle: 'Prezzi',
+  desktopSubtitle: 'Confronta i piani per la tua area di lavoro',
+  comparePlans: 'Confronta i piani →',
+  payAsYouGoDescription: '1 credito = 1 analisi IA, sessione di chat o confronto. Nessun abbonamento richiesto.',
+  loading: 'Caricamento…',
+  bestValue: 'Miglior valore',
+  buyCredits: 'Acquista crediti',
+  startingCheckout: 'Avvio del pagamento…',
+  signUpToBuy: 'Registrati per acquistare',
+  creditsNeverExpire: 'I crediti non scadono mai. Ideali per un uso occasionale — per un uso mensile regolare, un piano in abbonamento costa meno per documento.',
+  billingNotLive: 'La fatturazione non è ancora attiva — tutti gli strumenti sono gratuiti mentre la completiamo.',
+  free: 'Gratuito',
+  paid: 'A pagamento',
+  forever: 'per sempre',
+  yourCurrentPlan: 'Il tuo piano attuale',
+  includedWithEveryPlan: 'Incluso in ogni piano',
+  startFree: 'Inizia gratis',
+  everythingInFreePlus: 'Tutto quello di Gratuito, più:',
+  saveQuarterly: 'Risparmia il 10%',
+  saveYearly: 'Risparmia il 20%',
+  billingSetupInProgress: 'Configurazione della fatturazione in corso',
+  subscribe: 'Abbonati',
+  signUp: 'Registrati',
+  comparePlansTitle: 'Confronta i piani — {name}',
+  comparePlansDescription: 'Tutto qui sotto è specifico per la tua area di lavoro — scegli un ciclo di fatturazione per A pagamento.',
+  close: 'Chiudi',
+  couldNotStartCheckout: 'Impossibile avviare il pagamento.',
 };
 
 const ar: PricingContent = {
@@ -194,6 +356,33 @@ const ar: PricingContent = {
       a: 'ميزات الذكاء الاصطناعي وكل ما يحتاج خوادمنا (تحويل Office↔PDF، حماية/إزالة كلمة المرور) جزء من خطة مساحة عمل مدفوعة. يعمل التعرف الضوئي محليًا في متصفحك ويبقى مجانيًا.',
     },
   ],
+  desktopTitle: 'الأسعار',
+  desktopSubtitle: 'قارن الخطط الخاصة بمساحة عملك',
+  comparePlans: 'مقارنة الخطط ←',
+  payAsYouGoDescription: 'رصيد واحد = تحليل ذكاء اصطناعي واحد، أو جلسة محادثة، أو مقارنة واحدة. لا حاجة لاشتراك.',
+  loading: 'جارٍ التحميل…',
+  bestValue: 'أفضل قيمة',
+  buyCredits: 'شراء أرصدة',
+  startingCheckout: 'جارٍ بدء الدفع…',
+  signUpToBuy: 'سجّل للشراء',
+  creditsNeverExpire: 'لا تنتهي صلاحية الأرصدة أبدًا. الأنسب للاستخدام العرضي — أما الاستخدام الشهري المنتظم فتكون فيه خطة الاشتراك أقل تكلفة لكل مستند.',
+  billingNotLive: 'الفوترة غير مفعّلة بعد — كل أداة مجانية الاستخدام حتى ننتهي منها.',
+  free: 'مجاني',
+  paid: 'مدفوع',
+  forever: 'إلى الأبد',
+  yourCurrentPlan: 'خطتك الحالية',
+  includedWithEveryPlan: 'مُتضمَّن في كل خطة',
+  startFree: 'ابدأ مجانًا',
+  everythingInFreePlus: 'كل ما في المجاني، بالإضافة إلى:',
+  saveQuarterly: 'وفّر 10%',
+  saveYearly: 'وفّر 20%',
+  billingSetupInProgress: 'إعداد الفوترة قيد التنفيذ',
+  subscribe: 'اشترك',
+  signUp: 'سجّل',
+  comparePlansTitle: 'مقارنة الخطط — {name}',
+  comparePlansDescription: 'كل ما يلي خاص بمساحة عملك — اختر دورة فوترة للخطة المدفوعة.',
+  close: 'إغلاق',
+  couldNotStartCheckout: 'تعذر بدء عملية الدفع.',
 };
 
 const PRICING_CONTENT: Record<Locale, PricingContent> = { en, de, fr, es, it, ar };

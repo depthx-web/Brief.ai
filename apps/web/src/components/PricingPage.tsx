@@ -140,7 +140,7 @@ function PricingPageInner() {
       const url = await startCheckout(token, cycle);
       window.location.href = url;
     } catch (err) {
-      setCheckoutError(err instanceof Error ? err.message : 'Could not start checkout.');
+      setCheckoutError(err instanceof Error ? err.message : pc.couldNotStartCheckout);
     } finally {
       setIsCheckingOut(false);
     }
@@ -153,7 +153,7 @@ function PricingPageInner() {
       const url = await startCreditCheckout(token, packId);
       window.location.href = url;
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Could not start checkout.');
+      showError(err instanceof Error ? err.message : pc.couldNotStartCheckout);
     } finally {
       setBuyingPackId(null);
     }
@@ -166,8 +166,8 @@ function PricingPageInner() {
       <div className={desktop ? '' : `mx-auto text-center ${tab === 'CREDITS' ? 'max-w-2xl' : 'max-w-3xl'}`}>
         {desktop ? (
           <div className="mb-6">
-            <h1 className="font-serif text-2xl font-medium text-navy">Pricing</h1>
-            <p className="mt-1.5 text-xs text-ink-soft">Compare plans for your workspace</p>
+            <h1 className="font-serif text-2xl font-medium text-navy">{pc.desktopTitle}</h1>
+            <p className="mt-1.5 text-xs text-ink-soft">{pc.desktopSubtitle}</p>
           </div>
         ) : (
           <h1 className="font-serif text-3xl font-medium text-navy sm:text-4xl">{heading}</h1>
@@ -204,20 +204,20 @@ function PricingPageInner() {
         {tab !== 'CREDITS' && (
           <div className={desktop ? 'mb-3' : 'mb-1 mt-3'}>
             <button onClick={() => setCompareOpen(true)} className="text-[13px] text-emerald hover:underline">
-              Compare plans &rarr;
+              {pc.comparePlans}
             </button>
           </div>
         )}
 
         {tab === 'CREDITS' ? (
           <div className={`rounded-b-xl rounded-se-xl border border-paper-line bg-white text-start shadow-sm ${desktop ? 'p-6' : 'p-10'}`}>
-            <h2 className="font-serif text-xl font-semibold text-navy">Pay as you go</h2>
+            <h2 className="font-serif text-xl font-semibold text-navy">{pc.planTabs.credits}</h2>
             <p className="mt-1 text-sm text-ink-soft">
-              1 credit = 1 AI analysis, chat session, or comparison. No subscription required.
+              {pc.payAsYouGoDescription}
             </p>
 
             {!packs ? (
-              <p className="mt-8 text-sm text-ink-soft">Loading…</p>
+              <p className="mt-8 text-sm text-ink-soft">{pc.loading}</p>
             ) : (
               <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 {packs.map((pack) => (
@@ -229,7 +229,7 @@ function PricingPageInner() {
                   >
                     {pack.isBestValue && (
                       <span className="absolute -top-3 end-4 rounded-full bg-emerald-soft px-2.5 py-1 font-mono text-[10px] font-semibold text-emerald">
-                        Best value
+                        {pc.bestValue}
                       </span>
                     )}
                     <p className="font-serif text-lg text-navy">{pack.size} credits</p>
@@ -245,14 +245,14 @@ function PricingPageInner() {
                         disabled={buyingPackId !== null}
                         className="mt-5 block w-full rounded-lg bg-emerald px-6 py-2.5 text-center text-sm font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
                       >
-                        {buyingPackId === pack.id ? 'Starting checkout…' : 'Buy credits'}
+                        {buyingPackId === pack.id ? pc.startingCheckout : pc.buyCredits}
                       </button>
                     ) : (
                       <Link
                         href="/signup"
                         className="mt-5 block w-full rounded-lg bg-emerald px-6 py-2.5 text-center text-sm font-medium text-white transition-colors hover:bg-emerald-dark"
                       >
-                        Sign up to buy
+                        {pc.signUpToBuy}
                       </Link>
                     )}
                   </div>
@@ -261,12 +261,11 @@ function PricingPageInner() {
             )}
 
             <p className="mt-6 text-[13px] text-ink-soft">
-              Credits never expire. Best for occasional use — for regular monthly use, a
-              subscription plan costs less per document.
+              {pc.creditsNeverExpire}
             </p>
             {!billingConfigured && (
               <p className="mt-3 text-center text-xs text-ink-soft">
-                Billing isn&apos;t live yet — every tool is free to use while we finish it.
+                {pc.billingNotLive}
               </p>
             )}
           </div>
@@ -276,10 +275,10 @@ function PricingPageInner() {
                 Its feature list is exactly the segment's freeEnabled features, live from
                 the admin panel's "Features per plan" toggles. */}
             <div className={`rounded-b-xl rounded-se-xl border border-paper-line bg-white text-start shadow-sm sm:rounded-ss-xl ${desktop ? 'p-6' : 'p-10'}`}>
-              <h2 className="font-serif text-xl font-semibold text-navy">Free</h2>
+              <h2 className="font-serif text-xl font-semibold text-navy">{pc.free}</h2>
               <p className="mt-6">
                 <span className="font-serif text-4xl font-medium text-navy">$0</span>
-                <span className="ms-1 text-sm text-ink-soft">forever</span>
+                <span className="ms-1 text-sm text-ink-soft">{pc.forever}</span>
               </p>
 
               <ul className="mt-6 space-y-2.5 text-sm text-ink-soft">
@@ -297,14 +296,14 @@ function PricingPageInner() {
 
               {user ? (
                 <p className="mt-8 rounded-lg border border-gray-200 px-6 py-3 text-center text-sm text-ink-soft">
-                  {user.plan === 'FREE' ? 'Your current plan' : 'Included with every plan'}
+                  {user.plan === 'FREE' ? pc.yourCurrentPlan : pc.includedWithEveryPlan}
                 </p>
               ) : (
                 <Link
                   href="/signup"
                   className="mt-8 block w-full rounded-lg border border-navy px-6 py-3 text-center font-medium text-navy transition-colors hover:bg-navy hover:text-white"
                 >
-                  Start Free
+                  {pc.startFree}
                 </Link>
               )}
             </div>
@@ -328,7 +327,7 @@ function PricingPageInner() {
                           className="absolute -top-2 -end-2 rounded px-1 py-0.5 font-mono text-[9px] font-semibold"
                           style={{ background: '#D4A054', color: '#3D2806' }}
                         >
-                          Save {c.value === 'QUARTERLY' ? '10%' : '20%'}
+                          {c.value === 'QUARTERLY' ? pc.saveQuarterly : pc.saveYearly}
                         </span>
                       )}
                       {c.label}
@@ -345,7 +344,7 @@ function PricingPageInner() {
                   </p>
                 ) : (
                   <span className="inline-block rounded-full border border-[#E4E8ED] bg-surface px-3 py-1.5 font-mono text-[11px] text-ink-soft">
-                    Billing setup in progress
+                    {pc.billingSetupInProgress}
                   </span>
                 )}
               </div>
@@ -353,7 +352,7 @@ function PricingPageInner() {
               <ul className="mt-6 space-y-2.5 text-sm text-ink-soft">
                 <li className="flex items-center gap-2">
                   <span className="text-[8px] text-emerald">●</span>
-                  Everything in Free, plus:
+                  {pc.everythingInFreePlus}
                 </li>
                 {segmentFeatures.map((f) => (
                   <li key={f.key} className="flex items-center gap-2">
@@ -370,7 +369,7 @@ function PricingPageInner() {
                     disabled={isCheckingOut}
                     className="mt-8 block w-full rounded-lg bg-emerald px-6 py-3 text-center font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
                   >
-                    {isCheckingOut ? 'Starting checkout…' : 'Subscribe'}
+                    {isCheckingOut ? pc.startingCheckout : pc.subscribe}
                   </button>
                   {checkoutError && <p className="mt-3 text-center text-xs text-redline">{checkoutError}</p>}
                 </>
@@ -379,13 +378,13 @@ function PricingPageInner() {
                   href="/signup"
                   className="mt-8 block w-full rounded-lg bg-emerald px-6 py-3 text-center font-medium text-white transition-colors hover:bg-emerald-dark"
                 >
-                  Sign Up
+                  {pc.signUp}
                 </Link>
               )}
               {!billingConfigured && (
                 <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-ink-soft">
                   <InfoIcon />
-                  Billing isn&apos;t live yet — every tool is free to use while we finish it.
+                  {pc.billingNotLive}
                 </p>
               )}
             </div>
@@ -477,7 +476,7 @@ function ComparePlansModal({
       const url = await startCheckout(token, cycle);
       window.location.href = url;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not start checkout.');
+      setError(err instanceof Error ? err.message : pc.couldNotStartCheckout);
     } finally {
       setIsCheckingOut(false);
     }
@@ -489,19 +488,19 @@ function ComparePlansModal({
         <Dialog.Overlay className="overlay-dim fixed inset-0 z-50" />
         <Dialog.Content className="animate-modal-in fixed left-1/2 top-1/2 z-50 w-full max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-7 shadow-level-4">
           <Dialog.Title className="font-serif text-xl font-medium text-navy">
-            Compare plans &mdash; {PLAN_COPY[segment].name}
+            {pc.comparePlansTitle.replace('{name}', PLAN_COPY[segment].name)}
           </Dialog.Title>
           <Dialog.Description className="mt-1 text-sm text-ink-soft">
-            Everything below is scoped to your workspace — pick a billing cycle for Paid.
+            {pc.comparePlansDescription}
           </Dialog.Description>
 
           <div className="mt-6 grid grid-cols-2 gap-4">
             <div className="rounded-xl border border-paper-line p-5">
-              <h3 className="font-serif text-base font-semibold text-navy">Free</h3>
+              <h3 className="font-serif text-base font-semibold text-navy">{pc.free}</h3>
               <p className="mt-2 font-serif text-2xl font-medium text-navy">$0</p>
             </div>
             <div className="rounded-xl border border-emerald p-5">
-              <h3 className="font-serif text-base font-semibold text-navy">Paid</h3>
+              <h3 className="font-serif text-base font-semibold text-navy">{pc.paid}</h3>
               <div className="mt-2 grid grid-cols-4 gap-1">
                 {CYCLES.map((c) => (
                   <button
@@ -516,7 +515,7 @@ function ComparePlansModal({
                         className="absolute -top-2 -end-2 rounded px-1 py-0.5 font-mono text-[9px] font-semibold"
                         style={{ background: '#D4A054', color: '#3D2806' }}
                       >
-                        Save {c.value === 'QUARTERLY' ? '10%' : '20%'}
+                        {c.value === 'QUARTERLY' ? pc.saveQuarterly : pc.saveYearly}
                       </span>
                     )}
                     {c.label}
@@ -533,8 +532,8 @@ function ComparePlansModal({
           </div>
 
           <div className="mt-6 flex items-center justify-end gap-6 text-[11px] font-medium text-ink-soft">
-            <span className="w-10 text-center">Free</span>
-            <span className="w-10 text-center">Paid</span>
+            <span className="w-10 text-center">{pc.free}</span>
+            <span className="w-10 text-center">{pc.paid}</span>
           </div>
           <ul className="mt-1 divide-y divide-gray-100">
             <li className="flex items-center justify-between py-2 text-sm">
@@ -566,18 +565,18 @@ function ComparePlansModal({
                 disabled={isCheckingOut}
                 className="rounded-lg bg-emerald px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
               >
-                {isCheckingOut ? 'Starting checkout…' : 'Subscribe'}
+                {isCheckingOut ? pc.startingCheckout : pc.subscribe}
               </button>
             ) : (
               <Link
                 href="/signup"
                 className="rounded-lg bg-emerald px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-emerald-dark"
               >
-                Sign Up
+                {pc.signUp}
               </Link>
             )}
             <button onClick={onClose} className="text-sm font-medium text-ink-soft hover:text-ink">
-              Close
+              {pc.close}
             </button>
           </div>
         </Dialog.Content>
