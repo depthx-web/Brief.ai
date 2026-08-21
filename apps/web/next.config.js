@@ -8,6 +8,15 @@ const nextConfig = {
   ...(isDesktopExport ? { output: 'export', images: { unoptimized: true } } : {}),
   reactStrictMode: true,
   swcMinify: true,
+  // Default (60s) started getting hit on Vercel's shared build machine as the
+  // static export grew past 67 pages — a handful of heavy AI-tool bundles
+  // (up to ~500kB First Load JS) restarting past the deadline cascaded into
+  // every remaining page restarting too, eventually failing the whole build
+  // ("Static page generation for /bank-reconciliation is still timing out
+  // after 3 attempts"). Builds locally in well under a minute per page even
+  // under memory pressure — this is Vercel-machine-specific headroom, not a
+  // real per-page regression.
+  staticPageGenerationTimeout: 180,
   typescript: {
     tsconfigPath: './tsconfig.json',
   },
