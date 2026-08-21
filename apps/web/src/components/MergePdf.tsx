@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { PDFDocument } from 'pdf-lib';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 import GuestEncouragementBar from './GuestEncouragementBar';
 
 interface PdfItem {
@@ -15,6 +16,7 @@ function formatSize(bytes: number): string {
 }
 
 export default function MergePdf() {
+  const { t } = useLocale();
   const [items, setItems] = useState<PdfItem[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isMerging, setIsMerging] = useState(false);
@@ -28,7 +30,7 @@ export default function MergePdf() {
       (f) => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf')
     );
     if (pdfFiles.length === 0) {
-      setError('Please select PDF files.');
+      setError(t('toolPage.merge.selectPdfsError'));
       return;
     }
     setError(null);
@@ -87,8 +89,8 @@ export default function MergePdf() {
     } catch (err) {
       setError(
         err instanceof Error
-          ? `Could not merge: ${err.message}`
-          : 'Could not merge these files. One of them may be corrupted or password-protected.'
+          ? t('toolPage.merge.couldNotMergeWithMessage').replace('{message}', err.message)
+          : t('toolPage.merge.couldNotMerge')
       );
     } finally {
       setIsMerging(false);
@@ -97,10 +99,9 @@ export default function MergePdf() {
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-16">
-      <h1 className="font-serif text-2xl font-semibold text-navy">Merge PDF</h1>
+      <h1 className="font-serif text-2xl font-semibold text-navy">{t('tool.merge.name')}</h1>
       <p className="mt-2 text-gray-600">
-        Combine multiple PDFs into one file. Everything happens in your browser — files are never
-        uploaded anywhere.
+        {t('toolPage.merge.description')}
       </p>
 
       <div
@@ -115,7 +116,7 @@ export default function MergePdf() {
           isDragOver ? 'border-emerald bg-emerald/5' : 'border-gray-300 bg-white'
         }`}
       >
-        <p className="text-gray-600">Drag & drop PDF files here, or click to browse</p>
+        <p className="text-gray-600">{t('toolPage.merge.dropzone')}</p>
         <input
           ref={inputRef}
           type="file"
@@ -147,9 +148,9 @@ export default function MergePdf() {
               <button
                 onClick={() => removeItem(item.id)}
                 className="shrink-0 text-sm text-gray-400 hover:text-red-600"
-                aria-label={`Remove ${item.file.name}`}
+                aria-label={t('toolPage.imagesToPdf.removeAriaLabel').replace('{name}', item.file.name)}
               >
-                Remove
+                {t('toolPage.imagesToPdf.remove')}
               </button>
             </li>
           ))}
@@ -161,7 +162,7 @@ export default function MergePdf() {
         disabled={items.length < 2 || isMerging}
         className="mt-6 w-full rounded-lg bg-emerald px-6 py-3 font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
       >
-        {isMerging ? 'Merging…' : `Merge ${items.length || ''} PDFs & Download`}
+        {isMerging ? t('toolPage.merge.merging') : t('toolPage.merge.mergeAndDownload').replace('{n}', String(items.length || ''))}
       </button>
 
       {completed && <GuestEncouragementBar />}

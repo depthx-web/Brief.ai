@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import { PDFDocument, degrees } from 'pdf-lib';
 import { loadPdfForPreview, renderAllThumbnails, renderPageDataUrl } from '@/lib/pdfThumbnails';
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 import PageThumbnailStrip from './PageThumbnailStrip';
 import GuestEncouragementBar from './GuestEncouragementBar';
 
@@ -15,6 +16,7 @@ interface PageItem {
 }
 
 export default function RotatePdf() {
+  const { t } = useLocale();
   const [file, setFile] = useState<File | null>(null);
   const [pages, setPages] = useState<PageItem[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -34,7 +36,7 @@ export default function RotatePdf() {
     setSelectedId(null);
     setPreviewUrl(null);
     if (selected.type !== 'application/pdf' && !selected.name.toLowerCase().endsWith('.pdf')) {
-      setError('Please select a PDF file.');
+      setError(t('dashboard.selectPdfError'));
       return;
     }
     setIsLoadingThumbs(true);
@@ -55,7 +57,7 @@ export default function RotatePdf() {
       if (items[0]) setPreviewUrl(await renderPageDataUrl(previewDoc, 1, 720));
       await previewDoc.destroy();
     } catch {
-      setError('Could not read this PDF. It may be corrupted or password-protected.');
+      setError(t('toolPage.split.couldNotRead'));
     } finally {
       setIsLoadingThumbs(false);
     }
@@ -106,7 +108,7 @@ export default function RotatePdf() {
       URL.revokeObjectURL(url);
       setCompleted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not rotate this PDF.');
+      setError(err instanceof Error ? err.message : t('toolPage.rotate.couldNotRotate'));
     } finally {
       setIsProcessing(false);
     }
@@ -117,9 +119,9 @@ export default function RotatePdf() {
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-16">
-      <h1 className="font-serif text-2xl font-semibold text-navy">Rotate PDF</h1>
+      <h1 className="font-serif text-2xl font-semibold text-navy">{t('tool.rotate.name')}</h1>
       <p className="mt-2 text-gray-600">
-        Rotate individual pages or the whole file. Processed entirely in your browser.
+        {t('toolPage.rotate.description')}
       </p>
 
       {!file ? (
@@ -127,7 +129,7 @@ export default function RotatePdf() {
           onClick={() => inputRef.current?.click()}
           className="mt-6 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white px-6 py-12 text-center"
         >
-          <p className="text-gray-600">{isLoadingThumbs ? 'Reading pages…' : 'Click to choose a PDF file'}</p>
+          <p className="text-gray-600">{isLoadingThumbs ? t('toolPage.readingPages') : t('aiTool.clickToChoosePdf')}</p>
         </div>
       ) : (
         <div className="mt-6 flex h-[560px] overflow-hidden rounded-lg border border-gray-200 bg-white">
@@ -139,29 +141,29 @@ export default function RotatePdf() {
           <div className="flex flex-1 flex-col">
             <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
               <span className="text-sm text-ink-soft">
-                Page {selectedPage ? selectedPage.originalIndex + 1 : '—'} of {pages.length}
+                {t('toolPage.pageOfTotal').replace('{current}', selectedPage ? String(selectedPage.originalIndex + 1) : '—').replace('{total}', String(pages.length))}
               </span>
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => rotateSelected(-90)}
                   className="rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50"
-                  aria-label="Rotate this page counter-clockwise"
+                  aria-label={t('toolPage.rotate.ariaCounterClockwise')}
                 >
-                  ↺ This page
+                  {t('toolPage.rotate.thisPageCcw')}
                 </button>
                 <button
                   onClick={() => rotateSelected(90)}
                   className="rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50"
-                  aria-label="Rotate this page clockwise"
+                  aria-label={t('toolPage.rotate.ariaClockwise')}
                 >
-                  ↻ This page
+                  {t('toolPage.rotate.thisPageCw')}
                 </button>
                 <span className="text-ink-soft/40">|</span>
                 <button
                   onClick={() => rotateAll(90)}
                   className="rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50"
                 >
-                  Rotate all 90°
+                  {t('toolPage.rotate.rotateAll90')}
                 </button>
               </div>
             </div>
@@ -194,7 +196,7 @@ export default function RotatePdf() {
         disabled={!file || isProcessing || !anyRotated}
         className="mt-6 w-full rounded-lg bg-emerald px-6 py-3 font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
       >
-        {isProcessing ? 'Rotating…' : 'Rotate & Download'}
+        {isProcessing ? t('toolPage.rotate.rotating') : t('toolPage.rotate.rotateAndDownload')}
       </button>
 
       {completed && <GuestEncouragementBar />}

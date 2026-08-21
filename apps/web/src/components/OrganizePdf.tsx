@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import { PDFDocument } from 'pdf-lib';
 import { loadPdfForPreview, renderAllThumbnails, renderPageDataUrl } from '@/lib/pdfThumbnails';
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 import PageThumbnailStrip, { type ThumbnailPage } from './PageThumbnailStrip';
 import GuestEncouragementBar from './GuestEncouragementBar';
 
@@ -15,6 +16,7 @@ interface PageItem {
 }
 
 export default function OrganizePdf() {
+  const { t } = useLocale();
   const [file, setFile] = useState<File | null>(null);
   const [pages, setPages] = useState<PageItem[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -34,7 +36,7 @@ export default function OrganizePdf() {
     setSelectedId(null);
     setPreviewUrl(null);
     if (selected.type !== 'application/pdf' && !selected.name.toLowerCase().endsWith('.pdf')) {
-      setError('Please select a PDF file.');
+      setError(t('dashboard.selectPdfError'));
       return;
     }
     setIsLoadingThumbs(true);
@@ -55,7 +57,7 @@ export default function OrganizePdf() {
       if (items[0]) setPreviewUrl(await renderPageDataUrl(previewDoc, 1, 720));
       await previewDoc.destroy();
     } catch {
-      setError('Could not read this PDF. It may be corrupted or password-protected.');
+      setError(t('toolPage.split.couldNotRead'));
     } finally {
       setIsLoadingThumbs(false);
     }
@@ -105,7 +107,7 @@ export default function OrganizePdf() {
       URL.revokeObjectURL(url);
       setCompleted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not save this PDF.');
+      setError(err instanceof Error ? err.message : t('toolPage.organize.couldNotSave'));
     } finally {
       setIsProcessing(false);
     }
@@ -116,9 +118,9 @@ export default function OrganizePdf() {
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-16">
-      <h1 className="font-serif text-2xl font-semibold text-navy">Organize PDF</h1>
+      <h1 className="font-serif text-2xl font-semibold text-navy">{t('toolPage.organize.title')}</h1>
       <p className="mt-2 text-gray-600">
-        Reorder or delete pages within a single PDF. Processed entirely in your browser.
+        {t('toolPage.organize.description')}
       </p>
 
       {!file ? (
@@ -126,7 +128,7 @@ export default function OrganizePdf() {
           onClick={() => inputRef.current?.click()}
           className="mt-6 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white px-6 py-12 text-center"
         >
-          <p className="text-gray-600">{isLoadingThumbs ? 'Reading pages…' : 'Click to choose a PDF file'}</p>
+          <p className="text-gray-600">{isLoadingThumbs ? t('toolPage.readingPages') : t('aiTool.clickToChoosePdf')}</p>
         </div>
       ) : (
         <div className="mt-6 flex h-[560px] overflow-hidden rounded-lg border border-gray-200 bg-white">
@@ -139,12 +141,12 @@ export default function OrganizePdf() {
           <div className="flex flex-1 flex-col">
             <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
               <span className="text-sm text-ink-soft">
-                Page {selectedPage ? selectedPage.originalIndex + 1 : '—'} of {pages.length}
+                {t('toolPage.pageOfTotal').replace('{current}', selectedPage ? String(selectedPage.originalIndex + 1) : '—').replace('{total}', String(pages.length))}
               </span>
               {selectedPage && (
                 <label className="flex items-center gap-2 text-sm text-ink">
                   <input type="checkbox" checked={selectedPage.keep} onChange={() => toggleKeep(selectedPage.id)} />
-                  Keep this page
+                  {t('toolPage.organize.keepThisPage')}
                 </label>
               )}
             </div>
@@ -176,7 +178,7 @@ export default function OrganizePdf() {
         disabled={!file || isProcessing || keptCount === 0}
         className="mt-6 w-full rounded-lg bg-emerald px-6 py-3 font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
       >
-        {isProcessing ? 'Saving…' : `Save ${keptCount || ''} Pages & Download`}
+        {isProcessing ? t('toolPage.organize.saving') : t('toolPage.organize.saveAndDownload').replace('{n}', String(keptCount || ''))}
       </button>
 
       {completed && <GuestEncouragementBar />}

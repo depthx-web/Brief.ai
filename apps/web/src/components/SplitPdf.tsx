@@ -5,6 +5,7 @@ import { PDFDocument } from 'pdf-lib';
 import JSZip from 'jszip';
 import { parsePageRanges, everyPageIndividually, type PageRange } from '@/lib/pageRanges';
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 import GuestEncouragementBar from './GuestEncouragementBar';
 
 function downloadBlob(blob: Blob, filename: string) {
@@ -17,6 +18,7 @@ function downloadBlob(blob: Blob, filename: string) {
 }
 
 export default function SplitPdf() {
+  const { t } = useLocale();
   const [file, setFile] = useState<File | null>(null);
   const [pageCount, setPageCount] = useState<number | null>(null);
   const [mode, setMode] = useState<'ranges' | 'each'>('ranges');
@@ -33,7 +35,7 @@ export default function SplitPdf() {
     setFile(null);
     setPageCount(null);
     if (selected.type !== 'application/pdf' && !selected.name.toLowerCase().endsWith('.pdf')) {
-      setError('Please select a PDF file.');
+      setError(t('dashboard.selectPdfError'));
       return;
     }
     try {
@@ -42,7 +44,7 @@ export default function SplitPdf() {
       setFile(selected);
       setPageCount(doc.getPageCount());
     } catch {
-      setError('Could not read this PDF. It may be corrupted or password-protected.');
+      setError(t('toolPage.split.couldNotRead'));
     }
   }
 
@@ -83,7 +85,7 @@ export default function SplitPdf() {
       }
       setCompleted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not split this PDF.');
+      setError(err instanceof Error ? err.message : t('toolPage.split.couldNotSplit'));
     } finally {
       setIsProcessing(false);
     }
@@ -91,9 +93,9 @@ export default function SplitPdf() {
 
   return (
     <div className="mx-auto max-w-2xl px-6 py-16">
-      <h1 className="font-serif text-2xl font-semibold text-navy">Split PDF</h1>
+      <h1 className="font-serif text-2xl font-semibold text-navy">{t('tool.split.name')}</h1>
       <p className="mt-2 text-gray-600">
-        Extract page ranges or every page individually. Processed entirely in your browser.
+        {t('toolPage.split.description')}
       </p>
 
       <div
@@ -101,7 +103,7 @@ export default function SplitPdf() {
         className="mt-6 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-white px-6 py-12 text-center"
       >
         <p className="text-gray-600">
-          {file ? `${file.name} (${pageCount} pages)` : 'Click to choose a PDF file'}
+          {file ? t('toolPage.split.fileWithPageCount').replace('{name}', file.name).replace('{n}', String(pageCount)) : t('aiTool.clickToChoosePdf')}
         </p>
         <input
           ref={inputRef}
@@ -123,11 +125,11 @@ export default function SplitPdf() {
                 checked={mode === 'ranges'}
                 onChange={() => setMode('ranges')}
               />
-              Page ranges
+              {t('toolPage.split.pageRanges')}
             </label>
             <label className="flex items-center gap-2">
               <input type="radio" checked={mode === 'each'} onChange={() => setMode('each')} />
-              Every page individually
+              {t('toolPage.split.everyPageIndividually')}
             </label>
           </div>
 
@@ -136,7 +138,7 @@ export default function SplitPdf() {
               type="text"
               value={rangesInput}
               onChange={(e) => setRangesInput(e.target.value)}
-              placeholder={`e.g. 1-3, 5, 8-${pageCount}`}
+              placeholder={t('toolPage.split.rangesPlaceholder').replace('{n}', String(pageCount))}
               className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
             />
           )}
@@ -148,7 +150,7 @@ export default function SplitPdf() {
         disabled={!file || isProcessing || (mode === 'ranges' && rangesInput.trim() === '')}
         className="mt-6 w-full rounded-lg bg-emerald px-6 py-3 font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
       >
-        {isProcessing ? 'Splitting…' : 'Split & Download'}
+        {isProcessing ? t('toolPage.split.splitting') : t('toolPage.split.splitAndDownload')}
       </button>
 
       {completed && <GuestEncouragementBar />}
