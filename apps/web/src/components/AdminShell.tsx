@@ -73,7 +73,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
   return (
     <div className="flex min-h-screen">
-      <aside className="fixed inset-y-0 left-0 z-10 flex h-screen w-[260px] shrink-0 flex-col overflow-y-auto bg-navy text-white">
+      <aside className="fixed inset-y-0 start-0 z-10 flex h-screen w-[260px] shrink-0 flex-col overflow-y-auto bg-navy text-white">
         <div className="flex items-center gap-2 px-6 py-6">
           <Link href="/admin" className="font-serif text-xl font-semibold">
             brief<span className="text-emerald">.ai</span>

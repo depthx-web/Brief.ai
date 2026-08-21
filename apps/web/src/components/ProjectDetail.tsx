@@ -205,7 +205,7 @@ function ProjectDocumentCard({
   return (
     <div className="shadow-level-1 flex flex-col rounded-lg border border-gray-200 bg-white p-4">
       <div className="flex items-start justify-between gap-2">
-        <button onClick={onOpen} className="min-w-0 text-left">
+        <button onClick={onOpen} className="min-w-0 text-start">
           <p className="truncate font-mono text-sm text-ink hover:text-emerald">{doc.filename}</p>
         </button>
         <FileOptionsMenu

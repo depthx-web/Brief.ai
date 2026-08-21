@@ -210,7 +210,7 @@ function PricingPageInner() {
         )}
 
         {tab === 'CREDITS' ? (
-          <div className={`rounded-b-xl rounded-tr-xl border border-paper-line bg-white text-left shadow-sm ${desktop ? 'p-6' : 'p-10'}`}>
+          <div className={`rounded-b-xl rounded-se-xl border border-paper-line bg-white text-start shadow-sm ${desktop ? 'p-6' : 'p-10'}`}>
             <h2 className="font-serif text-xl font-semibold text-navy">Pay as you go</h2>
             <p className="mt-1 text-sm text-ink-soft">
               1 credit = 1 AI analysis, chat session, or comparison. No subscription required.
@@ -275,11 +275,11 @@ function PricingPageInner() {
             {/* Free plan — sits alongside the paid plan, not hidden behind a separate tab.
                 Its feature list is exactly the segment's freeEnabled features, live from
                 the admin panel's "Features per plan" toggles. */}
-            <div className={`rounded-b-xl rounded-tr-xl border border-paper-line bg-white text-left shadow-sm sm:rounded-tl-xl ${desktop ? 'p-6' : 'p-10'}`}>
+            <div className={`rounded-b-xl rounded-se-xl border border-paper-line bg-white text-start shadow-sm sm:rounded-ss-xl ${desktop ? 'p-6' : 'p-10'}`}>
               <h2 className="font-serif text-xl font-semibold text-navy">Free</h2>
               <p className="mt-6">
                 <span className="font-serif text-4xl font-medium text-navy">$0</span>
-                <span className="ml-1 text-sm text-ink-soft">forever</span>
+                <span className="ms-1 text-sm text-ink-soft">forever</span>
               </p>
 
               <ul className="mt-6 space-y-2.5 text-sm text-ink-soft">
@@ -309,7 +309,7 @@ function PricingPageInner() {
               )}
             </div>
 
-            <div className={`rounded-xl border border-paper-line bg-white text-left shadow-sm ${desktop ? 'p-6' : 'p-10'}`}>
+            <div className={`rounded-xl border border-paper-line bg-white text-start shadow-sm ${desktop ? 'p-6' : 'p-10'}`}>
               <h2 className="font-serif text-xl font-semibold text-navy">{current?.name}</h2>
 
               <div className="mt-6 grid grid-cols-4 gap-1">
@@ -341,7 +341,7 @@ function PricingPageInner() {
                 {selectedPrice ? (
                   <p>
                     <span className="font-serif text-4xl font-medium text-navy">{formatCents(selectedPrice.priceCents)}</span>
-                    <span className="ml-1 text-sm text-ink-soft">{CYCLE_PERIOD[cycle]}</span>
+                    <span className="ms-1 text-sm text-ink-soft">{CYCLE_PERIOD[cycle]}</span>
                   </p>
                 ) : (
                   <span className="inline-block rounded-full border border-[#E4E8ED] bg-surface px-3 py-1.5 font-mono text-[11px] text-ink-soft">
@@ -392,12 +392,12 @@ function PricingPageInner() {
           </div>
         )}
 
-        <div className="mt-16 text-left">
+        <div className="mt-16 text-start">
           {faqs.map((item, i) => (
             <div key={item.q} className="border-t border-gray-200 py-4">
               <button
                 onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                className="flex w-full items-center justify-between text-left"
+                className="flex w-full items-center justify-between text-start"
               >
                 <span className="font-medium text-navy">{item.q}</span>
                 <span className="text-ink-soft">{openFaq === i ? '−' : '+'}</span>
@@ -527,7 +527,7 @@ function ComparePlansModal({
                 <span className="font-serif text-2xl font-medium text-navy">
                   {selectedPrice ? formatCents(selectedPrice.priceCents) : '—'}
                 </span>
-                <span className="ml-1 text-xs text-ink-soft">{CYCLE_PERIOD[cycle]}</span>
+                <span className="ms-1 text-xs text-ink-soft">{CYCLE_PERIOD[cycle]}</span>
               </p>
             </div>
           </div>

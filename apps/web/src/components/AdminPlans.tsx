@@ -253,7 +253,7 @@ export default function AdminPlans() {
       {error && <p className="mt-3 text-sm text-redline">{error}</p>}
 
       <div className="mt-6 overflow-x-auto rounded-lg border border-gray-200 bg-white">
-        <table className="min-w-full text-left text-sm">
+        <table className="min-w-full text-start text-sm">
           <thead className="border-b border-gray-200 text-xs uppercase text-ink-soft">
             <tr>
               <th className="px-4 py-2">Cycle</th>
@@ -368,7 +368,7 @@ export default function AdminPlans() {
         </div>
 
         <div className="mt-3 overflow-hidden rounded-lg border border-gray-200 bg-white">
-          <table className="min-w-full text-left text-sm">
+          <table className="min-w-full text-start text-sm">
             <thead className="border-b border-gray-200 text-xs uppercase text-ink-soft">
               <tr>
                 <th className="px-4 py-2">Pack size</th>
@@ -440,7 +440,7 @@ export default function AdminPlans() {
                         />
                       </button>
                     </td>
-                    <td className="px-4 py-2.5 text-right">
+                    <td className="px-4 py-2.5 text-end">
                       <button onClick={() => handleDeletePack(pack.id)} className="text-xs font-medium text-redline hover:underline">
                         Delete
                       </button>
@@ -457,7 +457,7 @@ export default function AdminPlans() {
       </div>
 
       {dirty && (
-        <div className="fixed bottom-0 left-[260px] right-0 flex items-center justify-between bg-navy px-8 py-4 shadow-2xl">
+        <div className="fixed bottom-0 start-[260px] end-0 flex items-center justify-between bg-navy px-8 py-4 shadow-2xl">
           <span className="text-sm text-white">You have unsaved changes.</span>
           <button
             onClick={handleSave}

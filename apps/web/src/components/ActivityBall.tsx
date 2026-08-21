@@ -51,7 +51,7 @@ export default function ActivityBall() {
   if (!visible) return null;
 
   return (
-    <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-3">
+    <div className="fixed bottom-6 end-6 z-40 flex flex-col items-end gap-3">
       {open && <ActivityPanel jobs={jobs} onClose={() => setOpen(false)} />}
 
       <button
@@ -70,7 +70,7 @@ export default function ActivityBall() {
           <CheckIcon size={18} color="#1E9D75" />
         )}
         {running.length > 1 && (
-          <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald font-mono text-[9px] font-bold text-white">
+          <span className="absolute -end-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-emerald font-mono text-[9px] font-bold text-white">
             {running.length}
           </span>
         )}

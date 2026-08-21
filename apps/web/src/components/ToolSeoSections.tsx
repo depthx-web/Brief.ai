@@ -92,7 +92,7 @@ export default function ToolSeoSections({ slug }: { slug: string }) {
               <div key={item.q} className="border-t border-gray-200 py-4">
                 <button
                   onClick={() => setOpenFaq(openFaq === i ? null : i)}
-                  className="flex w-full items-center justify-between text-left"
+                  className="flex w-full items-center justify-between text-start"
                 >
                   <span className="font-medium text-navy">{item.q}</span>
                   <span className="text-ink-soft">{openFaq === i ? '−' : '+'}</span>

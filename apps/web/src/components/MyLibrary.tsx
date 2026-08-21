@@ -183,9 +183,9 @@ export default function MyLibrary() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search your library by meaning…"
-            className="w-full rounded-md border border-navy-light/30 py-2.5 pl-4 pr-10 text-sm"
+            className="w-full rounded-md border border-navy-light/30 py-2.5 ps-4 pe-10 text-sm"
           />
-          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-ink-soft">⌕</span>
+          <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-ink-soft">⌕</span>
         </div>
         <button
           type="submit"
@@ -312,7 +312,7 @@ function UnsortedDocumentCard({
   return (
     <div className="shadow-level-1 flex flex-col rounded-lg border border-gray-200 bg-white p-4">
       <div className="flex items-start justify-between gap-2">
-        <button onClick={onOpen} className="min-w-0 text-left">
+        <button onClick={onOpen} className="min-w-0 text-start">
           <p className="truncate font-mono text-sm text-ink hover:text-emerald">{doc.filename}</p>
         </button>
         <FileOptionsMenu
@@ -350,7 +350,7 @@ function SearchResultCard({
 
   return (
     <div className="shadow-level-1 flex flex-col rounded-lg border border-gray-200 bg-white p-4">
-      <button onClick={onOpen} className="text-left">
+      <button onClick={onOpen} className="text-start">
         <p className="truncate font-mono text-sm text-ink hover:text-emerald">{doc.filename}</p>
       </button>
       <p className="mt-1 text-xs text-ink-soft">

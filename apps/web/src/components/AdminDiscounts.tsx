@@ -207,7 +207,7 @@ export default function AdminDiscounts() {
         ) : codes.length === 0 ? (
           <p className="px-4 py-6 text-sm text-ink-soft">No discount codes yet.</p>
         ) : (
-          <table className="min-w-full text-left text-sm">
+          <table className="min-w-full text-start text-sm">
             <thead className="border-b border-gray-200 text-xs uppercase text-ink-soft">
               <tr>
                 <th className="px-4 py-2">Code</th>
@@ -235,7 +235,7 @@ export default function AdminDiscounts() {
                     {c.usageCount}
                     {c.usageLimit ? ` / ${c.usageLimit}` : ''}
                   </td>
-                  <td className="px-4 py-2.5 text-right">
+                  <td className="px-4 py-2.5 text-end">
                     {c.status === 'active' && (
                       <button
                         onClick={() => handleRevoke(c.id)}

@@ -60,7 +60,7 @@ function RecentFileRow({ doc, isLast, onOpen }: { doc: LibraryDocumentSummary; i
   return (
     <button
       onClick={onOpen}
-      className={`flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-surface ${isLast ? '' : 'border-b border-paper-line'}`}
+      className={`flex w-full items-center gap-3 px-5 py-3 text-start hover:bg-surface ${isLast ? '' : 'border-b border-paper-line'}`}
     >
       <FileIcon size={16} />
       <span className="min-w-0 flex-1 truncate font-mono text-[13px] text-ink">{doc.filename}</span>

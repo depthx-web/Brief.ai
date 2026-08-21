@@ -345,7 +345,7 @@ function SignatureMenu({
           ) : (
             savedSignatures.map((sig) => (
               <div key={sig.id} className="group flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-emerald-soft">
-                <button onClick={() => choose(sig.imageData)} className="flex flex-1 items-center gap-2 overflow-hidden text-left">
+                <button onClick={() => choose(sig.imageData)} className="flex flex-1 items-center gap-2 overflow-hidden text-start">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={sig.imageData} alt={sig.name} className="h-6 w-12 shrink-0 rounded border border-gray-200 bg-white object-contain" />
                   <span className="truncate text-[12px] text-ink">{sig.name}</span>

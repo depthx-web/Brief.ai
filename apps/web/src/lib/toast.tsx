@@ -1,6 +1,7 @@
 'use client';
 
 import toast, { Toaster as HotToaster, type Toast } from 'react-hot-toast';
+import { useLocale } from './i18n/LocaleContext';
 
 // Platform-wide notification system (Batch 3, Section 10). Built on
 // react-hot-toast for the stacking/lifecycle machinery, but every pixel of
@@ -57,11 +58,11 @@ function ToastCard({ visible, kind, message, progress, onRetry }: CardProps) {
   return (
     <div
       role={kind === 'error' ? 'alert' : 'status'}
-      className={`relative flex w-[340px] items-start gap-3 overflow-hidden rounded-[10px] bg-white py-3 pl-4 pr-3.5 shadow-level-2 ${
+      className={`relative flex w-[340px] items-start gap-3 overflow-hidden rounded-[10px] bg-white py-3 ps-4 pe-3.5 shadow-level-2 ${
         visible ? 'animate-toast-in' : 'animate-toast-out'
       }`}
     >
-      <span className={`absolute inset-y-0 right-0 w-1 ${BAR_COLOR[kind]}`} aria-hidden />
+      <span className={`absolute inset-y-0 end-0 w-1 ${BAR_COLOR[kind]}`} aria-hidden />
       {kind === 'success' && <SuccessIcon />}
       {kind === 'error' && <ErrorIcon />}
       {kind === 'loading' && <Spinner />}
@@ -89,9 +90,13 @@ function ToastCard({ visible, kind, message, progress, onRetry }: CardProps) {
 }
 
 export function Toaster() {
+  // react-hot-toast's position prop is a physical corner, not a logical one
+  // — flip it to the trailing edge under RTL so toasts still appear where
+  // reading naturally starts, matching every other logical-direction fix.
+  const { dir } = useLocale();
   return (
     <HotToaster
-      position="top-right"
+      position={dir === 'rtl' ? 'top-left' : 'top-right'}
       gutter={10}
       toastOptions={{ style: { background: 'transparent', boxShadow: 'none', padding: 0, margin: 0 } }}
     />

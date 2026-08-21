@@ -32,7 +32,7 @@ export default function ProjectCard({ project, onExtended, onDeleted, onUpgradeN
         tabIndex={0}
         onClick={() => router.push(`/library?projectId=${project.id}`)}
         onKeyDown={(e) => e.key === 'Enter' && router.push(`/library?projectId=${project.id}`)}
-        className="w-full cursor-pointer p-4 text-left"
+        className="w-full cursor-pointer p-4 text-start"
       >
         <div className="flex items-start justify-between gap-2">
           <span aria-hidden className="text-base leading-none text-ink-soft">

@@ -108,7 +108,7 @@ export default function Wallet() {
                   <span className="shrink-0 font-mono text-xs text-ink-soft">
                     {new Date(t.createdAt).toLocaleDateString()}
                   </span>
-                  <span className={`w-12 shrink-0 text-right font-mono text-[13px] ${deltaClass(t.delta)}`}>
+                  <span className={`w-12 shrink-0 text-end font-mono text-[13px] ${deltaClass(t.delta)}`}>
                     {deltaLabel(t.delta)}
                   </span>
                 </div>
@@ -242,7 +242,7 @@ function BuyCreditsModal({ open, onClose }: { open: boolean; onClose: () => void
               {packs.map((pack) => (
                 <div key={pack.id} className={`relative rounded-xl border p-5 ${pack.isBestValue ? 'border-emerald' : 'border-gray-200'}`}>
                   {pack.isBestValue && (
-                    <span className="absolute -top-3 right-3 rounded-full bg-emerald-soft px-2 py-0.5 font-mono text-[9px] font-semibold text-emerald">
+                    <span className="absolute -top-3 end-3 rounded-full bg-emerald-soft px-2 py-0.5 font-mono text-[9px] font-semibold text-emerald">
                       Best value
                     </span>
                   )}

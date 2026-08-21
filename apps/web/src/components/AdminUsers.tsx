@@ -508,7 +508,7 @@ function UserDrawer({ userId, onClose, onChanged }: { userId: string; onClose: (
                   {detail.recentUploads.map((u) => (
                     <li key={u.id} className="flex justify-between text-sm">
                       <span className="truncate font-mono text-xs text-ink">{u.filename}</span>
-                      <span className="ml-2 shrink-0 text-xs text-ink-soft">
+                      <span className="ms-2 shrink-0 text-xs text-ink-soft">
                         {new Date(u.createdAt).toLocaleDateString()}
                       </span>
                     </li>
@@ -605,7 +605,7 @@ export default function AdminUsers() {
         ) : users.length === 0 ? (
           <p className="px-4 py-6 text-sm text-ink-soft">No users match these filters.</p>
         ) : (
-          <table className="min-w-full text-left text-sm">
+          <table className="min-w-full text-start text-sm">
             <thead className="border-b border-gray-200 text-xs uppercase text-ink-soft">
               <tr>
                 <th className="px-4 py-2">Name</th>

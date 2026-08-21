@@ -151,7 +151,7 @@ export default function BatchInvoices() {
 
       {rows.length > 0 && (
         <div className="mt-6 overflow-x-auto rounded-lg border border-gray-200 bg-white">
-          <table className="min-w-full text-left text-sm">
+          <table className="min-w-full text-start text-sm">
             <thead className="border-b border-gray-200 text-xs uppercase text-ink-soft">
               <tr>
                 <th className="px-3 py-2">File</th>

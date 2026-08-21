@@ -101,7 +101,7 @@ function EditorModal({
         </h2>
 
         <div className="mt-4 grid flex-1 grid-cols-2 gap-6 overflow-hidden">
-          <div className="flex flex-col overflow-y-auto pr-2">
+          <div className="flex flex-col overflow-y-auto pe-2">
             <label className="text-sm font-medium text-ink">Subject</label>
             <input
               value={subject}

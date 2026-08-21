@@ -220,7 +220,7 @@ function PayoutModal({
               <div className="mt-5 grid grid-cols-2 gap-4">
                 <button
                   onClick={() => setMethod('BANK_TRANSFER')}
-                  className={`rounded-xl border p-5 text-left transition-colors ${
+                  className={`rounded-xl border p-5 text-start transition-colors ${
                     method === 'BANK_TRANSFER' ? 'border-emerald bg-emerald-soft/10' : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
@@ -234,7 +234,7 @@ function PayoutModal({
                 </button>
                 <button
                   onClick={() => setMethod('PAYPAL')}
-                  className={`rounded-xl border p-5 text-left transition-colors ${
+                  className={`rounded-xl border p-5 text-start transition-colors ${
                     method === 'PAYPAL' ? 'border-emerald bg-emerald-soft/10' : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >

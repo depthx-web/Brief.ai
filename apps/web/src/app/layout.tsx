@@ -29,8 +29,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="font-sans min-h-screen bg-surface text-ink">
         <LocaleProvider>
           <AuthProvider>{children}</AuthProvider>
+          <Toaster />
         </LocaleProvider>
-        <Toaster />
       </body>
     </html>
   );

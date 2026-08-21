@@ -301,7 +301,7 @@ export default function AdminCms() {
                   <div key={section.key} className="overflow-hidden rounded-lg border border-gray-200 bg-white">
                     <button
                       onClick={() => setOpenSection(isOpen ? null : section.key)}
-                      className="flex w-full items-center justify-between px-4 py-3 text-left"
+                      className="flex w-full items-center justify-between px-4 py-3 text-start"
                     >
                       <span className="font-medium text-ink">{section.label}</span>
                       <span className="flex items-center gap-2 text-xs text-ink-soft">
@@ -429,7 +429,7 @@ function SeoField({
         />
       )}
       {maxLength && (
-        <p className={`mt-0.5 text-right font-mono text-[10px] ${overLimit ? 'text-redline' : value.length > maxLength * 0.85 ? 'text-amber-600' : 'text-ink-soft'}`}>
+        <p className={`mt-0.5 text-end font-mono text-[10px] ${overLimit ? 'text-redline' : value.length > maxLength * 0.85 ? 'text-amber-600' : 'text-ink-soft'}`}>
           {value.length}/{maxLength}
         </p>
       )}

@@ -14,15 +14,15 @@ export default function MethodologyExtractor() {
         <table className="w-full overflow-hidden rounded-lg border border-gray-200 bg-white text-sm">
           <tbody className="divide-y divide-gray-100">
             <tr>
-              <th className="w-40 bg-surface px-4 py-3 text-left align-top font-medium text-ink">Sample</th>
+              <th className="w-40 bg-surface px-4 py-3 text-start align-top font-medium text-ink">Sample</th>
               <td className="px-4 py-3 text-ink-soft">{m.sample}</td>
             </tr>
             <tr>
-              <th className="w-40 bg-surface px-4 py-3 text-left align-top font-medium text-ink">Tools</th>
+              <th className="w-40 bg-surface px-4 py-3 text-start align-top font-medium text-ink">Tools</th>
               <td className="px-4 py-3 text-ink-soft">{m.tools}</td>
             </tr>
             <tr>
-              <th className="w-40 bg-surface px-4 py-3 text-left align-top font-medium text-ink">
+              <th className="w-40 bg-surface px-4 py-3 text-start align-top font-medium text-ink">
                 Statistical analysis
               </th>
               <td className="px-4 py-3 text-ink-soft">{m.statisticalAnalysis}</td>

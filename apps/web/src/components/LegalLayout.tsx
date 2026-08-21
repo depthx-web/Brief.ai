@@ -61,7 +61,7 @@ export default function LegalLayout({ title, lastUpdated, sections }: Props) {
           </div>
         </article>
 
-        <nav className="sticky top-16 hidden h-fit w-56 shrink-0 border-l border-paper-line pl-6 lg:block">
+        <nav className="sticky top-16 hidden h-fit w-56 shrink-0 border-s border-paper-line ps-6 lg:block">
           <p className="font-mono text-[11px] uppercase tracking-wide text-ink-soft">On this page</p>
           <ul className="mt-3 space-y-2.5">
             {sections.map((section) => (

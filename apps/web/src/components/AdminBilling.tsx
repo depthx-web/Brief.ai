@@ -199,7 +199,7 @@ export default function AdminBilling() {
           {failedPayments.length === 0 ? (
             <p className="px-4 py-6 text-center text-sm text-ink-soft">No failed payments right now.</p>
           ) : (
-            <table className="min-w-full text-left text-sm">
+            <table className="min-w-full text-start text-sm">
               <thead className="border-b border-gray-200 text-xs uppercase text-ink-soft">
                 <tr>
                   <th className="px-4 py-2">User</th>
@@ -224,7 +224,7 @@ export default function AdminBilling() {
                     <td className="px-4 py-2.5 font-mono text-xs text-ink-soft">
                       {u.lastPaymentFailedAt ? new Date(u.lastPaymentFailedAt).toLocaleString() : '—'}
                     </td>
-                    <td className="px-4 py-2.5 text-right">
+                    <td className="px-4 py-2.5 text-end">
                       <button
                         onClick={() => handleRetry(u.id)}
                         disabled={retryingId === u.id}
@@ -248,7 +248,7 @@ export default function AdminBilling() {
           {transactions.length === 0 ? (
             <p className="px-4 py-6 text-center text-sm text-ink-soft">No transactions yet.</p>
           ) : (
-            <table className="min-w-full text-left text-sm">
+            <table className="min-w-full text-start text-sm">
               <thead className="border-b border-gray-200 text-xs uppercase text-ink-soft">
                 <tr>
                   <th className="px-4 py-2">User</th>

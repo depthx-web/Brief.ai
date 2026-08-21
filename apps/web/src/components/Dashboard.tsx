@@ -261,7 +261,7 @@ function RecentFileCard({
       tabIndex={0}
       onClick={onOpen}
       onKeyDown={(e) => e.key === 'Enter' && onOpen()}
-      className="shadow-level-1 cursor-pointer rounded-lg border border-gray-200 bg-white p-4 text-left transition-colors hover:border-emerald"
+      className="shadow-level-1 cursor-pointer rounded-lg border border-gray-200 bg-white p-4 text-start transition-colors hover:border-emerald"
     >
       <div className="flex items-start justify-between gap-2">
         <p className="truncate font-mono text-sm text-ink">{doc.filename}</p>

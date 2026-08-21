@@ -63,7 +63,7 @@ export default function DocumentDemo() {
 
   return (
     <div className="relative z-[2] flex justify-center">
-      <div className="absolute -top-[18px] left-9 z-[3] flex gap-1">
+      <div className="absolute -top-[18px] start-9 z-[3] flex gap-1">
         {ORDER.map((key) => (
           <button
             key={key}

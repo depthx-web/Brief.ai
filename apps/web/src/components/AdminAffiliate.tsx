@@ -390,7 +390,7 @@ export default function AdminAffiliate() {
           {affiliates.length === 0 ? (
             <p className="px-4 py-6 text-center text-sm text-ink-soft">No affiliates yet.</p>
           ) : (
-            <table className="min-w-full text-left text-sm">
+            <table className="min-w-full text-start text-sm">
               <thead className="border-b border-gray-200 text-xs uppercase text-ink-soft">
                 <tr>
                   <th className="px-4 py-2">Affiliate</th>
@@ -434,7 +434,7 @@ export default function AdminAffiliate() {
           {payouts.length === 0 ? (
             <p className="px-4 py-6 text-center text-sm text-ink-soft">No payout requests yet.</p>
           ) : (
-            <table className="min-w-full text-left text-sm">
+            <table className="min-w-full text-start text-sm">
               <thead className="border-b border-gray-200 text-xs uppercase text-ink-soft">
                 <tr>
                   <th className="px-4 py-2">Affiliate</th>
@@ -462,7 +462,7 @@ export default function AdminAffiliate() {
                         {p.status === 'COMPLETED' ? 'Completed' : 'Under review'}
                       </span>
                     </td>
-                    <td className="px-4 py-2.5 text-right">
+                    <td className="px-4 py-2.5 text-end">
                       {p.status === 'UNDER_REVIEW' &&
                         (confirmingPayoutId === p.id ? (
                           <div className="flex items-center justify-end gap-1.5">
@@ -504,7 +504,7 @@ export default function AdminAffiliate() {
           {leaderboard.length === 0 ? (
             <p className="px-4 py-6 text-center text-sm text-ink-soft">No commissions generated yet.</p>
           ) : (
-            <table className="min-w-full text-left text-sm">
+            <table className="min-w-full text-start text-sm">
               <thead className="border-b border-gray-200 text-xs uppercase text-ink-soft">
                 <tr>
                   <th className="px-4 py-2">#</th>

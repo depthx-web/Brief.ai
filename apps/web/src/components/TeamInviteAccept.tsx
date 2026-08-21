@@ -98,7 +98,7 @@ export default function TeamInviteAccept() {
               </a>{' '}
               and reopen this link afterward.
             </p>
-            <form onSubmit={handleLogin} className="mt-4 space-y-3 text-left">
+            <form onSubmit={handleLogin} className="mt-4 space-y-3 text-start">
               <input
                 type="email"
                 required

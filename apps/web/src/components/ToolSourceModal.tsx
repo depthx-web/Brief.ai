@@ -134,7 +134,7 @@ export default function ToolSourceModal({ open, href, onClose, onPick }: Props) 
                         <button
                           onClick={() => handlePickDoc(doc)}
                           disabled={loadingDocId !== null}
-                          className="flex w-full items-center justify-between gap-2 rounded-md px-2 py-2.5 text-left hover:bg-gray-50 disabled:opacity-50"
+                          className="flex w-full items-center justify-between gap-2 rounded-md px-2 py-2.5 text-start hover:bg-gray-50 disabled:opacity-50"
                         >
                           <span className="truncate font-mono text-sm text-ink">{doc.filename}</span>
                           {loadingDocId === doc.id && <span className="text-xs text-ink-soft">Loading…</span>}

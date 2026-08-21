@@ -152,21 +152,21 @@ function ToolsIndexInner() {
     const inner = (
       <>
         {isProTool(tool) ? (
-          <span className="absolute right-2 top-2 rounded bg-navy-light px-1.5 py-0.5 font-mono text-[9px] font-semibold text-white">
+          <span className="absolute end-2 top-2 rounded bg-navy-light px-1.5 py-0.5 font-mono text-[9px] font-semibold text-white">
             PRO
           </span>
         ) : (
-          <span className="absolute right-2 top-2 rounded bg-emerald-soft px-1.5 py-0.5 font-mono text-[9px] font-semibold text-emerald">
+          <span className="absolute end-2 top-2 rounded bg-emerald-soft px-1.5 py-0.5 font-mono text-[9px] font-semibold text-emerald">
             FREE
           </span>
         )}
         {isNew(tool.launchedAt) && (
-          <span className="absolute right-2 top-8 rounded bg-amber-200 px-1.5 py-0.5 font-mono text-[9px] font-semibold text-amber-800">
+          <span className="absolute end-2 top-8 rounded bg-amber-200 px-1.5 py-0.5 font-mono text-[9px] font-semibold text-amber-800">
             NEW
           </span>
         )}
         {tool.ai && (
-          <span className="absolute left-2 top-2 text-emerald" aria-hidden>
+          <span className="absolute start-2 top-2 text-emerald" aria-hidden>
             ✨
           </span>
         )}

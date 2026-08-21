@@ -137,11 +137,11 @@ function DesktopHomeInner() {
 
         {!dismissed && (
           <div className="relative overflow-hidden rounded-[14px] bg-gradient-to-br from-navy to-navy-light px-8 py-[26px] shadow-level-3">
-            <div className="pointer-events-none absolute -right-[60px] -top-20 h-[260px] w-[260px] rounded-full bg-[radial-gradient(circle,rgba(30,157,117,0.16)_0%,rgba(30,157,117,0)_70%)]" />
+            <div className="pointer-events-none absolute -end-[60px] -top-20 h-[260px] w-[260px] rounded-full bg-[radial-gradient(circle,rgba(30,157,117,0.16)_0%,rgba(30,157,117,0)_70%)]" />
             <button
               onClick={() => setDismissed(true)}
               aria-label="Dismiss"
-              className="absolute right-5 top-[18px] flex h-[26px] w-[26px] items-center justify-center rounded-md text-[#8FA1BC] hover:text-white"
+              className="absolute end-5 top-[18px] flex h-[26px] w-[26px] items-center justify-center rounded-md text-[#8FA1BC] hover:text-white"
             >
               <CloseIcon size={13} />
             </button>
@@ -253,7 +253,7 @@ function RecentFileRow({ doc, isLast }: { doc: LibraryDocumentSummary; isLast: b
       >
         {countdown.label}
       </span>
-      <span className="w-[74px] shrink-0 text-right text-[11.5px] text-ink-soft">
+      <span className="w-[74px] shrink-0 text-end text-[11.5px] text-ink-soft">
         {formatDistanceToNow(new Date(doc.createdAt), { addSuffix: true })}
       </span>
     </div>
