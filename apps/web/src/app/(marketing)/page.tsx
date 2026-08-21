@@ -21,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
 // on Vercel, simply no reachable backend yet) must never break the
 // marketing homepage. HomeContent (client) then falls back further to its
 // own locale-aware hardcoded defaults when a section is missing.
-async function fetchCmsSections(preview: boolean): Promise<CmsSections> {
+async function fetchCmsSections(preview: boolean, locale?: string): Promise<CmsSections> {
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 3000);
@@ -30,7 +30,11 @@ async function fetchCmsSections(preview: boolean): Promise<CmsSections> {
     // server to revalidate against at runtime; the web deploy is unchanged.
     const cacheMode =
       process.env.NEXT_PUBLIC_BUILD_TARGET === 'desktop' ? 'force-cache' : preview ? 'no-store' : 'no-cache';
-    const res = await fetch(`${API_URL}/cms/pages/home${preview ? '?preview=1' : ''}`, {
+    const params = new URLSearchParams();
+    if (preview) params.set('preview', '1');
+    if (locale && locale !== 'en') params.set('locale', locale);
+    const qs = params.toString();
+    const res = await fetch(`${API_URL}/cms/pages/home${qs ? `?${qs}` : ''}`, {
       signal: controller.signal,
       cache: cacheMode,
     });
@@ -46,7 +50,7 @@ async function fetchCmsSections(preview: boolean): Promise<CmsSections> {
 export default async function LandingPage({
   searchParams,
 }: {
-  searchParams: { cmsPreview?: string; ref?: string };
+  searchParams: { cmsPreview?: string; ref?: string; locale?: string };
 }) {
   // Swaps in an empty object before any property read in the desktop static
   // export — touching `searchParams` at all (cmsPreview here, ref below for
@@ -55,7 +59,7 @@ export default async function LandingPage({
   // in the installed desktop app anyway.
   const safeSearchParams = process.env.NEXT_PUBLIC_BUILD_TARGET === 'desktop' ? {} : searchParams;
   const preview = safeSearchParams.cmsPreview === '1';
-  const sections = await fetchCmsSections(preview);
+  const sections = await fetchCmsSections(preview, safeSearchParams.locale);
 
   return (
     <>

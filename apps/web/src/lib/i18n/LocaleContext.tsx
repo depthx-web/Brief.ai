@@ -60,6 +60,16 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
   const [isDetecting, setIsDetecting] = useState(true);
 
   useEffect(() => {
+    // The admin CMS preview iframe appends ?locale=<code> to preview a
+    // specific language's content — this overrides detection/cookie for
+    // this page load only, and is never itself written back to the cookie.
+    const urlLocale = new URLSearchParams(window.location.search).get('locale');
+    if (isLocale(urlLocale)) {
+      setLocaleState(urlLocale);
+      setIsDetecting(false);
+      return;
+    }
+
     const fromCookie = readCookieLocale();
     if (fromCookie) {
       setLocaleState(fromCookie);

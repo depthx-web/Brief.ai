@@ -37,6 +37,15 @@ const it: Record<DictionaryKey, string> = {
   'common.download': 'Scarica',
   'common.rename': 'Rinomina',
   'common.duplicate': 'Duplica',
+  'common.confirm': 'Conferma',
+
+  'changePlan.title': 'Cambia il tuo piano',
+  'changePlan.subtitle': 'Ciclo di fatturazione per la tua area di lavoro attuale.',
+  'changePlan.billingCycle': 'Ciclo di fatturazione',
+  'changePlan.updating': 'Aggiornamento…',
+  'changePlan.updated': 'Piano aggiornato',
+  'changePlan.save10': 'Risparmia il 10%',
+  'changePlan.save20': 'Risparmia il 20%',
 
   'auth.email': 'Indirizzo e-mail',
   'auth.password': 'Password',

@@ -94,6 +94,10 @@ function previewSegmentParam(openSection: string | null): string {
   return `&previewSegment=${openSection.slice('announcement_'.length)}`;
 }
 
+function previewLocaleParam(locale: Locale): string {
+  return locale === 'en' ? '' : `&locale=${locale}`;
+}
+
 export default function AdminCms() {
   const { token } = useAdminAuth();
   const [pages, setPages] = useState<AdminCmsPageSummary[]>([]);
@@ -354,7 +358,7 @@ export default function AdminCms() {
             <div className="mt-2 overflow-hidden rounded-lg border border-gray-200" style={{ height: '75vh' }}>
               <iframe
                 key={previewNonce}
-                src={`${PREVIEW_ORIGIN}${pathForSlug(slug)}?cmsPreview=1&_r=${previewNonce}${previewSegmentParam(openSection)}`}
+                src={`${PREVIEW_ORIGIN}${pathForSlug(slug)}?cmsPreview=1&_r=${previewNonce}${previewSegmentParam(openSection)}${previewLocaleParam(activeLocale)}`}
                 className="h-full w-full"
                 title="Live preview"
               />

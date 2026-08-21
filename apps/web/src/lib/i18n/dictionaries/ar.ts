@@ -37,6 +37,15 @@ const ar: Record<DictionaryKey, string> = {
   'common.download': 'تنزيل',
   'common.rename': 'إعادة تسمية',
   'common.duplicate': 'تكرار',
+  'common.confirm': 'تأكيد',
+
+  'changePlan.title': 'تغيير خطتك',
+  'changePlan.subtitle': 'دورة الفوترة لمساحة عملك الحالية.',
+  'changePlan.billingCycle': 'دورة الفوترة',
+  'changePlan.updating': 'جارٍ التحديث…',
+  'changePlan.updated': 'تم تحديث الخطة',
+  'changePlan.save10': 'وفّر 10%',
+  'changePlan.save20': 'وفّر 20%',
 
   'auth.email': 'البريد الإلكتروني',
   'auth.password': 'كلمة المرور',

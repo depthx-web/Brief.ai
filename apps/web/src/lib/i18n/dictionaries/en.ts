@@ -40,6 +40,16 @@ const en = {
   'common.download': 'Download',
   'common.rename': 'Rename',
   'common.duplicate': 'Duplicate',
+  'common.confirm': 'Confirm',
+
+  // Change plan modal
+  'changePlan.title': 'Change your plan',
+  'changePlan.subtitle': 'Billing cycle for your current workspace.',
+  'changePlan.billingCycle': 'Billing cycle',
+  'changePlan.updating': 'Updating…',
+  'changePlan.updated': 'Plan updated',
+  'changePlan.save10': 'Save 10%',
+  'changePlan.save20': 'Save 20%',
 
   // Auth forms
   'auth.email': 'Email address',

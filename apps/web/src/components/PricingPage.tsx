@@ -37,11 +37,15 @@ interface CmsSections {
   faq?: { items: { q: string; a: string }[] };
 }
 
-async function fetchCmsSections(preview: boolean): Promise<CmsSections> {
+async function fetchCmsSections(preview: boolean, locale?: string): Promise<CmsSections> {
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 3000);
-    const res = await fetch(`${API_URL}/cms/pages/pricing${preview ? '?preview=1' : ''}`, {
+    const params = new URLSearchParams();
+    if (preview) params.set('preview', '1');
+    if (locale && locale !== 'en') params.set('locale', locale);
+    const qs = params.toString();
+    const res = await fetch(`${API_URL}/cms/pages/pricing${qs ? `?${qs}` : ''}`, {
       signal: controller.signal,
       cache: preview ? 'no-store' : 'no-cache',
     });
@@ -111,8 +115,9 @@ function PricingPageInner() {
     fetchPublicFeatures()
       .then(setFeatures)
       .catch(() => setFeatures([]));
-    fetchCmsSections(preview).then(setCms);
-  }, [preview]);
+    fetchCmsSections(preview, locale).then(setCms);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [preview, locale]);
 
   const heading = cms.intro?.heading ?? DEFAULT_HEADING;
   const faqs = cms.faq?.items ?? DEFAULT_FAQS;
