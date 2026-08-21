@@ -14,9 +14,9 @@ WHERE `metaTitle` LIKE '%Brief.ai%' OR `metaDescription` LIKE '%Brief.ai%';
 
 UPDATE `ContentSection`
 SET
-  `draftFields` = CAST(REPLACE(CAST(`draftFields` AS CHAR), 'Brief.ai', 'Dossiera') AS JSON),
-  `publishedFields` = CAST(REPLACE(CAST(`publishedFields` AS CHAR), 'Brief.ai', 'Dossiera') AS JSON)
-WHERE CAST(`draftFields` AS CHAR) LIKE '%Brief.ai%' OR CAST(`publishedFields` AS CHAR) LIKE '%Brief.ai%';
+  `draftFields` = REPLACE(`draftFields`, 'Brief.ai', 'Dossiera'),
+  `publishedFields` = REPLACE(`publishedFields`, 'Brief.ai', 'Dossiera')
+WHERE `draftFields` LIKE '%Brief.ai%' OR `publishedFields` LIKE '%Brief.ai%';
 
 UPDATE `EmailCampaign`
 SET
