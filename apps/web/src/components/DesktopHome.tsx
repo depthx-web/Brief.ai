@@ -3,11 +3,14 @@
 import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, type Locale } from 'date-fns';
+import { de, fr, es, it, ar } from 'date-fns/locale';
 import { useAuth } from '@/lib/AuthContext';
 import { fetchCmsPage } from '@/lib/cmsApi';
 import { listDocuments, type LibraryDocumentSummary } from '@/lib/libraryApi';
 import { useGreeting } from '@/lib/greeting';
+import { useLocale } from '@/lib/i18n/LocaleContext';
+import type { DictionaryKey } from '@/lib/i18n/dictionaries/en';
 import { COUNTDOWN_BADGE_CLASS, useCountdown } from '@/lib/retentionCountdown';
 import { ConvertIcon, ProtectIcon, AiIcon, CloseIcon, FileIcon } from '@/lib/icons';
 import DesktopSidebar from './DesktopSidebar';
@@ -44,30 +47,42 @@ const SEGMENT_TO_ANNOUNCEMENT_KEY: Record<string, string> = {
   RESEARCHER: 'researcher',
 };
 
+const DATE_FNS_LOCALES: Record<string, Locale> = { de, fr, es, it, ar };
+
 // Real counts from ToolsIndex.tsx's TOOLS_BY_TAB, not placeholders — keep
 // these in sync if that catalog changes. AI count is Lawyer-segment sized
 // to match the profile card below; swap per effectiveSegment if this needs
 // to generalize beyond the single logged-in-Legal-user case.
-const QUICK_ACCESS = [
+const QUICK_ACCESS: {
+  href: string;
+  id: 'convert' | 'organize' | 'aiTools';
+  nameKey: DictionaryKey;
+  descriptionKey: DictionaryKey;
+  countKey: DictionaryKey;
+  local: boolean;
+}[] = [
   {
     href: '/tools?tab=convert',
-    name: 'Convert',
-    description: 'Office ↔ PDF, images, HTML and plain text — all in one place.',
-    count: '10 tools · runs on this device',
+    id: 'convert',
+    nameKey: 'desktopHome.convertName',
+    descriptionKey: 'desktopHome.convertDescription',
+    countKey: 'desktopHome.convertCount',
     local: true,
   },
   {
     href: '/tools?tab=organize',
-    name: 'Organize & Protect',
-    description: 'Merge, split, reorder, compress, password-protect and watermark.',
-    count: '13 tools · runs on this device',
+    id: 'organize',
+    nameKey: 'desktopHome.organizeName',
+    descriptionKey: 'desktopHome.organizeDescription',
+    countKey: 'desktopHome.organizeCount',
     local: true,
   },
   {
     href: '/tools?tab=ai-tools',
-    name: 'AI Tools',
-    description: 'Clause analysis, chat, comparisons and summaries for your field.',
-    count: '14 tools · needs internet',
+    id: 'aiTools',
+    nameKey: 'desktopHome.aiToolsName',
+    descriptionKey: 'desktopHome.aiToolsDescription',
+    countKey: 'desktopHome.aiToolsCount',
     local: false,
   },
 ];
@@ -82,6 +97,7 @@ export default function DesktopHome() {
 
 function DesktopHomeInner() {
   const { user, token } = useAuth();
+  const { locale, t } = useLocale();
   // Lets the admin's "Site Content" live-preview iframe (which loads
   // /desktop-home?cmsPreview=1) show unpublished draft edits — everywhere
   // else this is absent, so it falls through to published content.
@@ -101,11 +117,11 @@ function DesktopHomeInner() {
   const announcementKey = `announcement_${effectiveSegmentKey}`;
 
   useEffect(() => {
-    fetchCmsPage('desktop-home', preview).then((page) => {
+    fetchCmsPage('desktop-home', preview, locale).then((page) => {
       const fields = page?.sections[announcementKey] as Partial<Announcement> | undefined;
       if (fields?.headline) setAnnouncement({ ...DEFAULT_ANNOUNCEMENT, ...fields });
     });
-  }, [preview, announcementKey]);
+  }, [preview, announcementKey, locale]);
 
   useEffect(() => {
     if (!token) {
@@ -131,7 +147,7 @@ function DesktopHomeInner() {
             {greeting}{firstName ? `, ${firstName}` : ''}
           </h1>
           <span className="text-[12.5px] text-ink-soft">
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+            {new Date().toLocaleDateString(locale, { weekday: 'long', month: 'long', day: 'numeric' })}
           </span>
         </div>
 
@@ -140,7 +156,7 @@ function DesktopHomeInner() {
             <div className="pointer-events-none absolute -end-[60px] -top-20 h-[260px] w-[260px] rounded-full bg-[radial-gradient(circle,rgba(30,157,117,0.16)_0%,rgba(30,157,117,0)_70%)]" />
             <button
               onClick={() => setDismissed(true)}
-              aria-label="Dismiss"
+              aria-label={t('desktopHome.dismiss')}
               className="absolute end-5 top-[18px] flex h-[26px] w-[26px] items-center justify-center rounded-md text-[#8FA1BC] hover:text-white"
             >
               <CloseIcon size={13} />
@@ -173,29 +189,29 @@ function DesktopHomeInner() {
 
         <div className="mb-3 mt-[30px] flex items-baseline justify-between">
           <span className="font-mono text-[11px] font-semibold uppercase tracking-wider text-ink-soft">
-            Quick Access
+            {t('desktopHome.quickAccess')}
           </span>
           <Link href="/tools" className="text-[12.5px] font-medium text-emerald hover:text-emerald-dark">
-            See all tools &rarr;
+            {t('desktopHome.seeAllTools')}
           </Link>
         </div>
 
         <div className="grid grid-cols-3 gap-3.5">
           {QUICK_ACCESS.map((item) => (
             <Link
-              key={item.name}
+              key={item.id}
               href={item.href}
               className="rounded-xl border border-[#E4E8ED] bg-white p-6 shadow-level-1 transition-shadow hover:shadow-level-2"
             >
               <div className="mb-3.5 flex h-10 w-10 items-center justify-center rounded-[10px] bg-emerald-soft">
-                {item.name === 'Convert' && ConvertIcon('#1E9D75')}
-                {item.name === 'Organize & Protect' && ProtectIcon('#1E9D75')}
+                {item.id === 'convert' && ConvertIcon('#1E9D75')}
+                {item.id === 'organize' && ProtectIcon('#1E9D75')}
                 {/* AI-context icons are always --emerald, never a substitute
                     color — see brief-ai-desktop-design-details.md. */}
-                {item.name === 'AI Tools' && AiIcon('#1E9D75')}
+                {item.id === 'aiTools' && AiIcon('#1E9D75')}
               </div>
-              <div className="mb-1 font-serif text-lg font-semibold text-navy">{item.name}</div>
-              <div className="text-[13.5px] leading-relaxed text-ink-soft">{item.description}</div>
+              <div className="mb-1 font-serif text-lg font-semibold text-navy">{t(item.nameKey)}</div>
+              <div className="text-[13.5px] leading-relaxed text-ink-soft">{t(item.descriptionKey)}</div>
               <div className="mt-3.5 flex items-center gap-1.5 border-t border-[#EEF1F4] pt-3">
                 {item.local ? (
                   <span className="h-[5px] w-[5px] rounded-full bg-emerald" />
@@ -204,7 +220,7 @@ function DesktopHomeInner() {
                     <GlobeIcon />
                   </span>
                 )}
-                <span className="font-mono text-[11px] text-ink-soft">{item.count}</span>
+                <span className="font-mono text-[11px] text-ink-soft">{t(item.countKey)}</span>
               </div>
             </Link>
           ))}
@@ -212,20 +228,20 @@ function DesktopHomeInner() {
 
         <div className="mb-3 mt-7 flex items-baseline justify-between">
           <span className="font-mono text-[11px] font-semibold uppercase tracking-wider text-ink-soft">
-            Recent Files
+            {t('desktopHome.recentFiles')}
           </span>
           <Link href="/library" className="text-[12.5px] font-medium text-emerald hover:text-emerald-dark">
-            Open library &rarr;
+            {t('desktopHome.openLibrary')}
           </Link>
         </div>
 
         <div className="overflow-hidden rounded-2xl border border-paper-line bg-white shadow-level-1">
           {recentFiles === null && (
-            <div className="rounded-xl bg-surface py-12 text-center text-sm text-ink-soft">Loading&hellip;</div>
+            <div className="rounded-xl bg-surface py-12 text-center text-sm text-ink-soft">{t('desktopHome.loading')}</div>
           )}
           {recentFiles?.length === 0 && (
             <div className="rounded-xl bg-surface py-12 text-center text-sm text-ink-soft">
-              {token ? 'Nothing in your Library yet.' : 'Log in to sync files here, or use a tool to get started.'}
+              {token ? t('desktopHome.emptyLibraryLoggedIn') : t('desktopHome.emptyLibraryGuest')}
             </div>
           )}
           {recentFiles?.map((doc, i) => (
@@ -240,13 +256,14 @@ function DesktopHomeInner() {
 
 function RecentFileRow({ doc, isLast }: { doc: LibraryDocumentSummary; isLast: boolean }) {
   const countdown = useCountdown(doc.expiresAt);
+  const { t, locale } = useLocale();
 
   return (
     <div className={`flex items-center gap-3.5 px-[18px] py-3.5 ${isLast ? '' : 'border-b border-paper-line'}`}>
       <FileIcon />
       <div className="min-w-0 flex-1">
         <div className="truncate text-[13.5px] font-semibold text-navy">{doc.filename}</div>
-        <div className="mt-0.5 text-[11.5px] text-ink-soft">{doc.docType ?? 'Document'}</div>
+        <div className="mt-0.5 text-[11.5px] text-ink-soft">{doc.docType ?? t('desktopHome.document')}</div>
       </div>
       <span
         className={`shrink-0 rounded-full px-2 py-0.5 text-[10.5px] font-medium uppercase tracking-wide ${COUNTDOWN_BADGE_CLASS[countdown.urgency]}`}
@@ -254,7 +271,7 @@ function RecentFileRow({ doc, isLast }: { doc: LibraryDocumentSummary; isLast: b
         {countdown.label}
       </span>
       <span className="w-[74px] shrink-0 text-end text-[11.5px] text-ink-soft">
-        {formatDistanceToNow(new Date(doc.createdAt), { addSuffix: true })}
+        {formatDistanceToNow(new Date(doc.createdAt), { addSuffix: true, locale: DATE_FNS_LOCALES[locale] })}
       </span>
     </div>
   );

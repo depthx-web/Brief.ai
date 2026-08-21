@@ -5,12 +5,13 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { useLocale } from '@/lib/i18n/LocaleContext';
 import type { Segment } from '@/lib/authApi';
+import type { DictionaryKey } from '@/lib/i18n/dictionaries/en';
 import GoogleSignInButton from './GoogleSignInButton';
 
-const SEGMENTS: { value: Segment; label: string; description: string }[] = [
-  { value: 'LAWYER', label: 'Lawyer', description: 'Contracts, redlines, clause review' },
-  { value: 'ACCOUNTANT', label: 'Accountant', description: 'Invoices, statements, exports' },
-  { value: 'RESEARCHER', label: 'Researcher', description: 'Papers, citations, chat' },
+const SEGMENTS: { value: Segment; labelKey: DictionaryKey; descriptionKey: DictionaryKey }[] = [
+  { value: 'LAWYER', labelKey: 'settings.segmentLawyer', descriptionKey: 'auth.segmentLawyerDescription' },
+  { value: 'ACCOUNTANT', labelKey: 'settings.segmentAccountant', descriptionKey: 'auth.segmentAccountantDescription' },
+  { value: 'RESEARCHER', labelKey: 'settings.segmentResearcher', descriptionKey: 'auth.segmentResearcherDescription' },
 ];
 
 const ICONS: Record<Segment, JSX.Element> = {
@@ -50,7 +51,7 @@ export default function SignupForm() {
     e.preventDefault();
     setError(null);
     if (password.length < 8) {
-      setError('Password must be at least 8 characters.');
+      setError(t('auth.passwordMinLength'));
       return;
     }
     setStep(2);
@@ -64,7 +65,7 @@ export default function SignupForm() {
       await signup(email.trim(), password, name.trim() || undefined, segment);
       router.push('/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not create an account.');
+      setError(err instanceof Error ? err.message : t('auth.couldNotCreateAccount'));
       setStep(1);
     } finally {
       setIsSubmitting(false);
@@ -76,10 +77,10 @@ export default function SignupForm() {
       <div className="mx-auto mt-10 w-full max-w-2xl px-6">
         <div className="rounded-xl border border-gray-200 bg-white p-10 shadow-sm">
           <h1 className="text-center font-serif text-2xl font-semibold text-navy">
-            What&apos;s your field?
+            {t('auth.whatsYourField')}
           </h1>
           <p className="mt-2 text-center text-sm text-ink-soft">
-            This shapes your workspace — choose carefully, this can&apos;t be changed later.
+            {t('auth.workspaceChooseCarefully')}
           </p>
 
           <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -102,8 +103,8 @@ export default function SignupForm() {
                   <span className="mb-4 flex h-9 w-9 items-center justify-center text-navy">
                     {ICONS[s.value]}
                   </span>
-                  <p className="font-serif text-lg font-semibold text-navy">{s.label}</p>
-                  <p className="mt-1 text-xs text-ink-soft">{s.description}</p>
+                  <p className="font-serif text-lg font-semibold text-navy">{t(s.labelKey)}</p>
+                  <p className="mt-1 text-xs text-ink-soft">{t(s.descriptionKey)}</p>
                 </button>
               );
             })}
@@ -135,7 +136,7 @@ export default function SignupForm() {
             disabled={!segment || !consented || isSubmitting}
             className="mt-4 w-full rounded-lg bg-emerald px-6 py-3 font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
           >
-            {isSubmitting ? 'Creating account…' : 'Continue to Dashboard'}
+            {isSubmitting ? t('auth.creatingAccount') : t('auth.continueToDashboard')}
           </button>
         </div>
       </div>
@@ -146,14 +147,14 @@ export default function SignupForm() {
     <div className="mx-auto mt-10 w-full max-w-sm px-6">
       <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
         <h1 className="font-serif text-2xl font-semibold text-navy">{t('auth.signUpTitle')}</h1>
-        <p className="mt-2 text-sm text-ink-soft">Free to start — no credit card required.</p>
+        <p className="mt-2 text-sm text-ink-soft">{t('auth.freeToStart')}</p>
 
         <div className="mt-6">
           <GoogleSignInButton label={t('auth.continueWithGoogle')} />
         </div>
         <div className="my-5 flex items-center gap-3 text-xs text-ink-soft">
           <span className="h-px flex-1 bg-gray-200" />
-          or
+          {t('auth.or')}
           <span className="h-px flex-1 bg-gray-200" />
         </div>
 
@@ -178,10 +179,10 @@ export default function SignupForm() {
               onChange={(e) => setPassword(e.target.value)}
               className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
             />
-            <p className="mt-1 text-xs text-ink-soft">At least 8 characters.</p>
+            <p className="mt-1 text-xs text-ink-soft">{t('auth.atLeast8Chars')}</p>
           </div>
           <div>
-            <label className="block text-sm font-medium text-ink">Name (optional)</label>
+            <label className="block text-sm font-medium text-ink">{t('auth.nameOptional')}</label>
             <input
               type="text"
               value={name}
@@ -201,7 +202,7 @@ export default function SignupForm() {
         </form>
 
         <p className="mt-4 text-sm text-ink-soft">
-          Already have an account?{' '}
+          {t('auth.alreadyHaveAccount')}{' '}
           <a href="/login" className="font-medium text-navy hover:text-emerald">
             {t('nav.logIn')}
           </a>

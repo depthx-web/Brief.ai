@@ -11,9 +11,11 @@ import {
   type PayoutMethod,
 } from '@/lib/affiliateApi';
 import { showError, showSuccess } from '@/lib/toast';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 
 export default function ReferralProgram() {
   const { token } = useAuth();
+  const { t, locale } = useLocale();
   const [data, setData] = useState<AffiliateMe | null>(null);
   const [copied, setCopied] = useState(false);
   const [payoutOpen, setPayoutOpen] = useState(false);
@@ -32,14 +34,14 @@ export default function ReferralProgram() {
     setTimeout(() => setCopied(false), 2000);
   }
 
-  if (!data) return <div className="mx-auto max-w-2xl px-8 py-10 text-sm text-ink-soft">Loading…</div>;
+  if (!data) return <div className="mx-auto max-w-2xl px-8 py-10 text-sm text-ink-soft">{t('common.loading')}</div>;
 
   return (
     <div className="mx-auto max-w-2xl px-8 py-10">
-      <h1 className="font-serif text-2xl font-medium text-navy">Referral Program</h1>
+      <h1 className="font-serif text-2xl font-medium text-navy">{t('sidebar.referrals')}</h1>
 
       <div className="mt-6 rounded-2xl bg-gradient-to-br from-navy to-navy-light p-8 text-white">
-        <p className="text-sm text-[#C9D4E3]">Your referral link</p>
+        <p className="text-sm text-[#C9D4E3]">{t('referral.yourLink')}</p>
         <div className="mt-3 flex items-center gap-2">
           <div className="flex-1 truncate rounded-lg bg-[rgba(255,255,255,0.1)] px-4 py-2.5 font-mono text-sm">
             {data.referralLink}
@@ -48,23 +50,23 @@ export default function ReferralProgram() {
             onClick={handleCopy}
             className="shrink-0 rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-navy transition-colors hover:bg-gray-100"
           >
-            {copied ? '✓' : 'Copy'}
+            {copied ? '✓' : t('referral.copy')}
           </button>
         </div>
 
         <div className="mt-8 grid grid-cols-2 gap-6 sm:grid-cols-4">
-          <Stat value={data.clicks.toLocaleString()} label="Clicks" />
-          <Stat value={String(data.successfulReferrals)} label="Successful referrals" />
-          <Stat value={formatCents(data.earningsThisMonthCents)} label="Earnings this month" />
-          <Stat value={formatCents(data.totalEarningsCents)} label="Total earnings" />
+          <Stat value={data.clicks.toLocaleString(locale)} label={t('referral.clicks')} />
+          <Stat value={String(data.successfulReferrals)} label={t('referral.successfulReferrals')} />
+          <Stat value={formatCents(data.earningsThisMonthCents)} label={t('referral.earningsThisMonth')} />
+          <Stat value={formatCents(data.totalEarningsCents)} label={t('referral.totalEarnings')} />
         </div>
       </div>
 
       <div className="mt-10">
-        <h2 className="font-serif text-lg font-semibold text-navy">Referrals</h2>
+        <h2 className="font-serif text-lg font-semibold text-navy">{t('referral.referralsHeading')}</h2>
         {data.referrals.length === 0 ? (
           <div className="mt-3 rounded-xl border border-gray-200 bg-white px-6 py-10 text-center">
-            <p className="text-sm text-ink-soft">No referrals yet — share your link to start earning.</p>
+            <p className="text-sm text-ink-soft">{t('referral.noReferralsYet')}</p>
           </div>
         ) : (
           <ul className="mt-3 divide-y divide-gray-100 rounded-lg border border-gray-200 bg-white">
@@ -75,7 +77,7 @@ export default function ReferralProgram() {
                   <div>
                     <p className="text-sm text-ink">{r.maskedName}</p>
                     <p className="font-mono text-xs text-ink-soft">
-                      {new Date(r.signupDate).toLocaleDateString()} · {r.status}
+                      {new Date(r.signupDate).toLocaleDateString(locale)} · {r.status}
                     </p>
                   </div>
                 </div>
@@ -87,14 +89,14 @@ export default function ReferralProgram() {
       </div>
 
       <div className="mt-10 rounded-2xl border border-gray-200 bg-white p-6">
-        <p className="text-sm text-ink-soft">Withdraw your earnings</p>
+        <p className="text-sm text-ink-soft">{t('referral.withdrawEarnings')}</p>
         <p className="mt-1 font-serif text-4xl font-medium text-navy">{formatCents(data.withdrawableBalanceCents)}</p>
         <button
           onClick={() => setPayoutOpen(true)}
           disabled={data.withdrawableBalanceCents <= 0}
           className="mt-5 rounded-lg bg-emerald px-6 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
         >
-          Request withdrawal
+          {t('referral.requestWithdrawal')}
         </button>
 
         {data.payouts.length > 0 && (
@@ -103,7 +105,7 @@ export default function ReferralProgram() {
               <li key={p.id} className="flex items-center justify-between gap-3 py-3">
                 <div className="flex items-center gap-2.5 text-sm text-ink">
                   <span aria-hidden>{p.method === 'PAYPAL' ? '🅿️' : '🏦'}</span>
-                  <span className="font-mono text-xs text-ink-soft">{new Date(p.createdAt).toLocaleDateString()}</span>
+                  <span className="font-mono text-xs text-ink-soft">{new Date(p.createdAt).toLocaleDateString(locale)}</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="font-mono text-sm text-ink">{formatCents(p.netAmountCents)}</span>
@@ -112,7 +114,7 @@ export default function ReferralProgram() {
                       p.status === 'COMPLETED' ? 'bg-emerald-soft/20 text-emerald-dark' : 'bg-gray-100 text-ink-soft'
                     }`}
                   >
-                    {p.status === 'COMPLETED' ? 'Completed' : 'Under review'}
+                    {p.status === 'COMPLETED' ? t('referral.completed') : t('referral.underReview')}
                   </span>
                 </div>
               </li>
@@ -155,6 +157,7 @@ function PayoutModal({
   onDone: () => void;
 }) {
   const { token } = useAuth();
+  const { t } = useLocale();
   const [step, setStep] = useState<'method' | 'details'>('method');
   const [method, setMethod] = useState<PayoutMethod | null>(null);
   const [bankName, setBankName] = useState('');
@@ -185,23 +188,23 @@ function PayoutModal({
     try {
       if (method === 'BANK_TRANSFER') {
         if (!bankName.trim() || !accountNumber.trim() || !accountHolder.trim()) {
-          showError('Fill in all bank transfer details.');
+          showError(t('referral.fillBankDetails'));
           setIsSubmitting(false);
           return;
         }
         await requestAffiliatePayout(token, { method, bankName, accountNumber, accountHolder });
       } else {
         if (!paypalEmail.trim()) {
-          showError('Enter your PayPal email.');
+          showError(t('referral.enterPaypalEmail'));
           setIsSubmitting(false);
           return;
         }
         await requestAffiliatePayout(token, { method, paypalEmail });
       }
-      showSuccess('Withdrawal requested');
+      showSuccess(t('referral.withdrawalRequested'));
       onDone();
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Could not request this withdrawal.');
+      showError(err instanceof Error ? err.message : t('referral.couldNotRequestWithdrawal'));
     } finally {
       setIsSubmitting(false);
     }
@@ -212,11 +215,13 @@ function PayoutModal({
       <Dialog.Portal>
         <Dialog.Overlay className="overlay-dim fixed inset-0 z-50" />
         <Dialog.Content className="animate-modal-in fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-7 shadow-level-4">
-          <Dialog.Title className="font-serif text-xl font-medium text-navy">Request withdrawal</Dialog.Title>
+          <Dialog.Title className="font-serif text-xl font-medium text-navy">{t('referral.requestWithdrawal')}</Dialog.Title>
 
           {step === 'method' ? (
             <>
-              <p className="mt-2 text-sm text-ink-soft">Withdrawing {formatCents(balanceCents)}. Choose a method:</p>
+              <p className="mt-2 text-sm text-ink-soft">
+                {t('referral.withdrawingChooseMethod').replace('{amount}', formatCents(balanceCents))}
+              </p>
               <div className="mt-5 grid grid-cols-2 gap-4">
                 <button
                   onClick={() => setMethod('BANK_TRANSFER')}
@@ -227,9 +232,9 @@ function PayoutModal({
                   <span className="text-2xl" aria-hidden>
                     🏦
                   </span>
-                  <p className="mt-2 text-sm font-medium text-ink">Bank transfer</p>
+                  <p className="mt-2 text-sm font-medium text-ink">{t('referral.bankTransfer')}</p>
                   <span className="mt-1 inline-block rounded-full bg-emerald-soft/20 px-2 py-0.5 text-[10px] font-semibold text-emerald-dark">
-                    Free
+                    {t('referral.free')}
                   </span>
                 </button>
                 <button
@@ -241,28 +246,30 @@ function PayoutModal({
                   <span className="text-2xl" aria-hidden>
                     🅿️
                   </span>
-                  <p className="mt-2 text-sm font-medium text-ink">PayPal</p>
+                  <p className="mt-2 text-sm font-medium text-ink">{t('referral.paypal')}</p>
                   <span className="mt-1 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
-                    Transfer fee deducted
+                    {t('referral.transferFeeDeducted')}
                   </span>
                 </button>
               </div>
               {method === 'PAYPAL' && (
                 <div className="mt-4 rounded-lg bg-surface p-3 font-mono text-xs text-ink-soft">
-                  Requested amount: {formatCents(balanceCents)} · Estimated PayPal fee: −{formatCents(estimatedFeeCents)} · Net
-                  received: {formatCents(estimatedNetCents)}
+                  {t('referral.feeBreakdown')
+                    .replace('{amount}', formatCents(balanceCents))
+                    .replace('{fee}', formatCents(estimatedFeeCents))
+                    .replace('{net}', formatCents(estimatedNetCents))}
                 </div>
               )}
               <div className="mt-6 flex justify-end gap-3">
                 <button onClick={onClose} className="text-sm font-medium text-ink-soft hover:text-ink">
-                  Cancel
+                  {t('referral.cancel')}
                 </button>
                 <button
                   onClick={() => method && setStep('details')}
                   disabled={!method}
                   className="rounded-lg bg-emerald px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-dark disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Continue
+                  {t('referral.continue')}
                 </button>
               </div>
             </>
@@ -274,19 +281,19 @@ function PayoutModal({
                     <input
                       value={bankName}
                       onChange={(e) => setBankName(e.target.value)}
-                      placeholder="Bank name"
+                      placeholder={t('referral.bankName')}
                       className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                     />
                     <input
                       value={accountNumber}
                       onChange={(e) => setAccountNumber(e.target.value)}
-                      placeholder="Account number / IBAN"
+                      placeholder={t('referral.accountNumber')}
                       className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                     />
                     <input
                       value={accountHolder}
                       onChange={(e) => setAccountHolder(e.target.value)}
-                      placeholder="Account holder name"
+                      placeholder={t('referral.accountHolderName')}
                       className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                     />
                   </>
@@ -296,26 +303,28 @@ function PayoutModal({
                       type="email"
                       value={paypalEmail}
                       onChange={(e) => setPaypalEmail(e.target.value)}
-                      placeholder="PayPal account email"
+                      placeholder={t('referral.paypalEmail')}
                       className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                     />
                     <div className="rounded-lg bg-surface p-3 font-mono text-xs text-ink-soft">
-                      Requested amount: {formatCents(balanceCents)} · Estimated PayPal fee: −{formatCents(estimatedFeeCents)} ·
-                      Net received: {formatCents(estimatedNetCents)}
+                      {t('referral.feeBreakdown')
+                        .replace('{amount}', formatCents(balanceCents))
+                        .replace('{fee}', formatCents(estimatedFeeCents))
+                        .replace('{net}', formatCents(estimatedNetCents))}
                     </div>
                   </>
                 )}
               </div>
               <div className="mt-6 flex justify-end gap-3">
                 <button onClick={() => setStep('method')} className="text-sm font-medium text-ink-soft hover:text-ink">
-                  Back
+                  {t('referral.back')}
                 </button>
                 <button
                   onClick={handleSubmit}
                   disabled={isSubmitting}
                   className="rounded-lg bg-emerald px-5 py-2.5 text-sm font-medium text-white hover:bg-emerald-dark disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {isSubmitting ? 'Submitting…' : 'Confirm withdrawal request'}
+                  {isSubmitting ? t('referral.submitting') : t('referral.confirmWithdrawal')}
                 </button>
               </div>
             </>

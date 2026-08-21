@@ -10,31 +10,34 @@ import { fetchMyActivity, type AiActivity } from '@/lib/aiApi';
 import { getBillingPortalUrl } from '@/lib/billingApi';
 import { resendVerification } from '@/lib/authApi';
 import { showError, showSuccess } from '@/lib/toast';
+import { useLocale } from '@/lib/i18n/LocaleContext';
+import type { DictionaryKey } from '@/lib/i18n/dictionaries/en';
 import TeamSettings from './TeamSettings';
 
-const SEGMENTS: { value: Segment; label: string }[] = [
-  { value: 'LAWYER', label: 'Lawyer' },
-  { value: 'ACCOUNTANT', label: 'Accountant' },
-  { value: 'RESEARCHER', label: 'Researcher' },
+const SEGMENTS: { value: Segment; labelKey: DictionaryKey }[] = [
+  { value: 'LAWYER', labelKey: 'settings.segmentLawyer' },
+  { value: 'ACCOUNTANT', labelKey: 'settings.segmentAccountant' },
+  { value: 'RESEARCHER', labelKey: 'settings.segmentResearcher' },
 ];
 
-const CYCLE_LABEL: Record<string, string> = {
-  WEEKLY: 'Weekly',
-  MONTHLY: 'Monthly',
-  QUARTERLY: 'Quarterly',
-  YEARLY: 'Yearly',
+const CYCLE_LABEL_KEY: Record<string, DictionaryKey> = {
+  WEEKLY: 'settings.cycleWeekly',
+  MONTHLY: 'settings.cycleMonthly',
+  QUARTERLY: 'settings.cycleQuarterly',
+  YEARLY: 'settings.cycleYearly',
 };
 
-const OPERATION_LABELS: Record<string, string> = {
-  SUMMARIZE: 'Summarize',
-  CHAT: 'Ask a question',
-  ANALYZE_CLAUSES: 'Contract analysis',
-  EXTRACT_REFERENCES: 'Reference extraction',
-  EXTRACT_INVOICE: 'Invoice extraction',
+const OPERATION_LABEL_KEY: Record<string, DictionaryKey> = {
+  SUMMARIZE: 'settings.opSummarize',
+  CHAT: 'settings.opChat',
+  ANALYZE_CLAUSES: 'settings.opAnalyzeClauses',
+  EXTRACT_REFERENCES: 'settings.opExtractReferences',
+  EXTRACT_INVOICE: 'settings.opExtractInvoice',
 };
 
 export default function Settings() {
   const { user, token, updateProfile } = useAuth();
+  const { t, locale } = useLocale();
   const [name, setName] = useState(user?.name ?? '');
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -52,7 +55,7 @@ export default function Settings() {
         if (!cancelled) setActivity(result);
       })
       .catch((err) => {
-        if (!cancelled) setActivityError(err instanceof Error ? err.message : 'Could not load activity.');
+        if (!cancelled) setActivityError(err instanceof Error ? err.message : t('settings.couldNotLoadActivity'));
       });
     return () => {
       cancelled = true;
@@ -69,7 +72,7 @@ export default function Settings() {
       const url = await getBillingPortalUrl(token);
       window.open(url, '_blank', 'noopener');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Could not open billing.';
+      const message = err instanceof Error ? err.message : t('settings.couldNotOpenBilling');
       setPortalError(message);
       showError(message);
     } finally {
@@ -84,9 +87,9 @@ export default function Settings() {
     try {
       await updateProfile({ name: name.trim() || undefined });
       setSaved(true);
-      showSuccess('Saved successfully');
+      showSuccess(t('projectDetail.savedSuccess'));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not save changes.');
+      setError(err instanceof Error ? err.message : t('settings.couldNotSaveChanges'));
     } finally {
       setIsSaving(false);
     }
@@ -94,13 +97,13 @@ export default function Settings() {
 
   return (
     <div className={isTauri() ? 'px-8 py-7' : 'mx-auto max-w-2xl px-8 py-10'}>
-      <h1 className="font-serif text-2xl font-medium text-navy">Settings</h1>
+      <h1 className="font-serif text-2xl font-medium text-navy">{t('settings.title')}</h1>
 
       <section className="mt-8">
-        <h2 className="font-serif text-lg font-semibold text-navy">Profile</h2>
+        <h2 className="font-serif text-lg font-semibold text-navy">{t('settings.profile')}</h2>
         <div className="mt-4 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-ink">Name</label>
+            <label className="block text-sm font-medium text-ink">{t('settings.name')}</label>
             <input
               type="text"
               value={name}
@@ -112,11 +115,8 @@ export default function Settings() {
       </section>
 
       <section className="mt-8 border-t border-[#EEF1F4] pt-8">
-        <h2 className="font-serif text-lg font-semibold text-navy">Professional Workspace</h2>
-        <p className="mt-1 text-sm text-ink-soft">
-          Set at registration and locked from then on — it determines which analysis view opens in the Document
-          Workspace. You can still change your plan below.
-        </p>
+        <h2 className="font-serif text-lg font-semibold text-navy">{t('settings.professionalWorkspace')}</h2>
+        <p className="mt-1 text-sm text-ink-soft">{t('settings.workspaceLocked')}</p>
         <div className="mt-4 grid grid-cols-3 gap-3">
           {SEGMENTS.map((s) => (
             <div
@@ -125,49 +125,49 @@ export default function Settings() {
                 user.segment === s.value ? 'border-emerald bg-emerald-soft text-navy' : 'border-gray-200 text-ink-soft/50'
               }`}
             >
-              {s.label}
+              {t(s.labelKey)}
             </div>
           ))}
         </div>
       </section>
 
       {error && <p className="mt-6 text-sm text-redline">{error}</p>}
-      {saved && <p className="mt-6 text-sm text-emerald">Saved.</p>}
+      {saved && <p className="mt-6 text-sm text-emerald">{t('settings.saved')}</p>}
 
       <button
         onClick={handleSave}
         disabled={isSaving}
         className="mt-6 rounded-lg bg-emerald px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
       >
-        {isSaving ? 'Saving…' : 'Save Changes'}
+        {isSaving ? t('common.saving') : t('common.saveChanges')}
       </button>
 
       <ChangeEmailSection currentEmail={user.email} emailVerified={user.emailVerified} />
       <ChangePasswordSection />
 
       <section className="mt-8 border-t border-[#EEF1F4] pt-8">
-        <h2 className="font-serif text-lg font-semibold text-navy">Subscription</h2>
+        <h2 className="font-serif text-lg font-semibold text-navy">{t('settings.subscription')}</h2>
         <div className="mt-4 flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4">
           <div>
             <p className="text-sm font-medium text-ink">
-              {user.plan === 'PAID' ? `${CYCLE_LABEL[user.billingCycle ?? 'MONTHLY']} plan` : 'Free plan'}
+              {user.plan === 'PAID'
+                ? t('settings.planCycle').replace('{cycle}', t(CYCLE_LABEL_KEY[user.billingCycle ?? 'MONTHLY']))
+                : t('settings.freePlan')}
             </p>
             {user.plan !== 'PAID' && (
-              <p className="text-xs text-ink-soft">Billing address and payment method are set up when you subscribe.</p>
+              <p className="text-xs text-ink-soft">{t('settings.billingSetupOnSubscribe')}</p>
             )}
           </div>
           <a href="/pricing" className="text-sm font-medium text-navy hover:text-emerald">
-            {user.plan === 'PAID' ? 'Change plan' : 'View plans'}
+            {user.plan === 'PAID' ? t('settings.changePlan') : t('settings.viewPlans')}
           </a>
         </div>
 
         <div className="mt-3 flex items-center justify-between rounded-lg border border-gray-200 bg-white p-4">
           <div>
-            <p className="text-sm font-medium text-ink">Billing details</p>
+            <p className="text-sm font-medium text-ink">{t('settings.billingDetails')}</p>
             <p className="text-xs text-ink-soft">
-              {user.plan === 'PAID'
-                ? 'Payment method, billing address, and invoices — managed securely by our payment processor.'
-                : 'Available once you have an active subscription.'}
+              {user.plan === 'PAID' ? t('settings.billingDetailsBody') : t('settings.billingDetailsUnavailable')}
             </p>
           </div>
           {user.plan === 'PAID' && (
@@ -176,7 +176,7 @@ export default function Settings() {
               disabled={isOpeningPortal}
               className="text-sm font-medium text-navy hover:text-emerald disabled:cursor-not-allowed disabled:text-gray-300"
             >
-              {isOpeningPortal ? 'Opening…' : 'Manage billing →'}
+              {isOpeningPortal ? t('settings.openingPortal') : t('settings.manageBilling')}
             </button>
           )}
         </div>
@@ -184,11 +184,9 @@ export default function Settings() {
       </section>
 
       <section className="mt-8 border-t border-[#EEF1F4] pt-8">
-        <h2 className="font-serif text-lg font-semibold text-navy">Activity</h2>
+        <h2 className="font-serif text-lg font-semibold text-navy">{t('settings.activity')}</h2>
         <p className="mt-1 text-sm text-ink-soft">
-          {user.segment === 'LAWYER'
-            ? 'An audit log of AI operations run on your documents.'
-            : 'Your recent AI usage, including this month’s total.'}
+          {user.segment === 'LAWYER' ? t('settings.activityAuditLog') : t('settings.activityRecentUsage')}
         </p>
 
         {activityError && <p className="mt-4 text-sm text-redline">{activityError}</p>}
@@ -196,15 +194,18 @@ export default function Settings() {
         {activity && (
           <>
             <p className="mt-4 text-sm font-medium text-ink">
-              {activity.monthlyCount} AI {activity.monthlyCount === 1 ? 'operation' : 'operations'} in the last 30 days
+              {t(activity.monthlyCount === 1 ? 'settings.operationsCountSingular' : 'settings.operationsCountPlural').replace(
+                '{n}',
+                String(activity.monthlyCount)
+              )}
             </p>
             {activity.jobs.length === 0 ? (
-              <p className="mt-3 text-sm text-ink-soft">No AI activity yet.</p>
+              <p className="mt-3 text-sm text-ink-soft">{t('settings.noActivityYet')}</p>
             ) : (
               <ul className="mt-3 divide-y divide-gray-200 rounded-lg border border-gray-200 bg-white">
                 {activity.jobs.map((job) => (
                   <li key={job.id} className="flex items-center justify-between px-4 py-3 text-sm">
-                    <span className="text-ink">{OPERATION_LABELS[job.operation] ?? job.operation}</span>
+                    <span className="text-ink">{OPERATION_LABEL_KEY[job.operation] ? t(OPERATION_LABEL_KEY[job.operation]) : job.operation}</span>
                     <span className="flex items-center gap-3">
                       <span
                         className={
@@ -215,9 +216,13 @@ export default function Settings() {
                               : 'text-ink-soft'
                         }
                       >
-                        {job.status === 'SUCCESS' ? 'Success' : job.status === 'FAILED' ? 'Failed' : 'Processing'}
+                        {job.status === 'SUCCESS'
+                          ? t('settings.statusSuccess')
+                          : job.status === 'FAILED'
+                            ? t('settings.statusFailed')
+                            : t('settings.statusProcessing')}
                       </span>
-                      <span className="text-ink-soft">{new Date(job.createdAt).toLocaleString()}</span>
+                      <span className="text-ink-soft">{new Date(job.createdAt).toLocaleString(locale)}</span>
                     </span>
                   </li>
                 ))}
@@ -236,6 +241,7 @@ export default function Settings() {
 
 function ChangeEmailSection({ currentEmail, emailVerified }: { currentEmail: string; emailVerified: boolean }) {
   const { changeEmail, token } = useAuth();
+  const { t } = useLocale();
   const [newEmail, setNewEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -248,11 +254,11 @@ function ChangeEmailSection({ currentEmail, emailVerified }: { currentEmail: str
     setIsSaving(true);
     try {
       await changeEmail(newEmail.trim(), password);
-      showSuccess('Saved successfully');
+      showSuccess(t('projectDetail.savedSuccess'));
       setNewEmail('');
       setPassword('');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Could not change your email.';
+      const message = err instanceof Error ? err.message : t('settings.couldNotChangeEmail');
       setError(message);
       showError(message);
     } finally {
@@ -265,9 +271,9 @@ function ChangeEmailSection({ currentEmail, emailVerified }: { currentEmail: str
     setIsResending(true);
     try {
       await resendVerification(token);
-      showSuccess('Confirmation email sent');
+      showSuccess(t('settings.confirmationEmailSent'));
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Could not send a new confirmation email.');
+      showError(err instanceof Error ? err.message : t('settings.couldNotSendConfirmation'));
     } finally {
       setIsResending(false);
     }
@@ -275,23 +281,23 @@ function ChangeEmailSection({ currentEmail, emailVerified }: { currentEmail: str
 
   return (
     <section className="mt-8 border-t border-[#EEF1F4] pt-8">
-      <h2 className="font-serif text-lg font-semibold text-navy">Email address</h2>
-      <p className="mt-1 text-sm text-ink-soft">Currently {currentEmail}.</p>
+      <h2 className="font-serif text-lg font-semibold text-navy">{t('settings.emailAddress')}</h2>
+      <p className="mt-1 text-sm text-ink-soft">{t('settings.currentlyEmail').replace('{email}', currentEmail)}</p>
       {!emailVerified && (
         <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
-          <p className="text-sm text-amber-800">Your email address isn&apos;t verified yet.</p>
+          <p className="text-sm text-amber-800">{t('settings.emailNotVerified')}</p>
           <button
             onClick={handleResend}
             disabled={isResending}
             className="shrink-0 text-sm font-medium text-navy hover:text-emerald disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isResending ? 'Sending…' : 'Resend confirmation'}
+            {isResending ? t('settings.sending') : t('settings.resendConfirmation')}
           </button>
         </div>
       )}
       <form onSubmit={handleSubmit} className="mt-4 space-y-3">
         <div>
-          <label className="block text-sm font-medium text-ink">New email</label>
+          <label className="block text-sm font-medium text-ink">{t('settings.newEmail')}</label>
           <input
             type="email"
             required
@@ -301,7 +307,7 @@ function ChangeEmailSection({ currentEmail, emailVerified }: { currentEmail: str
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-ink">Current password</label>
+          <label className="block text-sm font-medium text-ink">{t('settings.currentPassword')}</label>
           <input
             type="password"
             required
@@ -316,7 +322,7 @@ function ChangeEmailSection({ currentEmail, emailVerified }: { currentEmail: str
           disabled={isSaving}
           className="rounded-lg bg-navy px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-navy-light disabled:cursor-not-allowed disabled:bg-gray-300"
         >
-          {isSaving ? 'Saving…' : 'Update email'}
+          {isSaving ? t('common.saving') : t('settings.updateEmail')}
         </button>
       </form>
     </section>
@@ -325,6 +331,7 @@ function ChangeEmailSection({ currentEmail, emailVerified }: { currentEmail: str
 
 function ChangePasswordSection() {
   const { changePassword } = useAuth();
+  const { t } = useLocale();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -335,18 +342,18 @@ function ChangePasswordSection() {
     e.preventDefault();
     setError(null);
     if (newPassword !== confirmPassword) {
-      setError('New passwords do not match.');
+      setError(t('settings.passwordsDontMatch'));
       return;
     }
     setIsSaving(true);
     try {
       await changePassword(currentPassword, newPassword);
-      showSuccess('Saved successfully');
+      showSuccess(t('projectDetail.savedSuccess'));
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Could not change your password.';
+      const message = err instanceof Error ? err.message : t('settings.couldNotChangePassword');
       setError(message);
       showError(message);
     } finally {
@@ -356,10 +363,10 @@ function ChangePasswordSection() {
 
   return (
     <section className="mt-8 border-t border-[#EEF1F4] pt-8">
-      <h2 className="font-serif text-lg font-semibold text-navy">Password</h2>
+      <h2 className="font-serif text-lg font-semibold text-navy">{t('settings.password')}</h2>
       <form onSubmit={handleSubmit} className="mt-4 space-y-3">
         <div>
-          <label className="block text-sm font-medium text-ink">Current password</label>
+          <label className="block text-sm font-medium text-ink">{t('settings.currentPassword')}</label>
           <input
             type="password"
             required
@@ -369,7 +376,7 @@ function ChangePasswordSection() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-ink">New password</label>
+          <label className="block text-sm font-medium text-ink">{t('settings.newPassword')}</label>
           <input
             type="password"
             required
@@ -380,7 +387,7 @@ function ChangePasswordSection() {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-ink">Confirm new password</label>
+          <label className="block text-sm font-medium text-ink">{t('settings.confirmNewPassword')}</label>
           <input
             type="password"
             required
@@ -396,22 +403,23 @@ function ChangePasswordSection() {
           disabled={isSaving}
           className="rounded-lg bg-navy px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-navy-light disabled:cursor-not-allowed disabled:bg-gray-300"
         >
-          {isSaving ? 'Saving…' : 'Update password'}
+          {isSaving ? t('common.saving') : t('settings.updatePassword')}
         </button>
       </form>
     </section>
   );
 }
 
-const RETENTION_OPTIONS: { value: number; label: string; proOnly?: boolean }[] = [
-  { value: 24, label: '24 hours' },
-  { value: 24 * 7, label: '7 days' },
-  { value: 24 * 30, label: '30 days' },
-  { value: 0, label: 'Never', proOnly: true },
+const RETENTION_OPTIONS: { value: number; labelKey: DictionaryKey; proOnly?: boolean }[] = [
+  { value: 24, labelKey: 'settings.retention24h' },
+  { value: 24 * 7, labelKey: 'settings.retention7d' },
+  { value: 24 * 30, labelKey: 'settings.retention30d' },
+  { value: 0, labelKey: 'settings.retentionNever', proOnly: true },
 ];
 
 function DeleteAccountSection() {
   const { user, deleteAccount, updateProfile } = useAuth();
+  const { t } = useLocale();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [confirmText, setConfirmText] = useState('');
@@ -426,7 +434,7 @@ function DeleteAccountSection() {
       await deleteAccount();
       router.push('/');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not delete your account.');
+      setError(err instanceof Error ? err.message : t('settings.couldNotDeleteAccount'));
       setIsDeleting(false);
     }
   }
@@ -435,9 +443,9 @@ function DeleteAccountSection() {
     setIsSavingRetention(true);
     try {
       await updateProfile({ defaultRetentionHours: value });
-      showSuccess('Saved successfully');
+      showSuccess(t('projectDetail.savedSuccess'));
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Could not save your default retention.');
+      showError(err instanceof Error ? err.message : t('settings.couldNotSaveRetention'));
     } finally {
       setIsSavingRetention(false);
     }
@@ -448,14 +456,11 @@ function DeleteAccountSection() {
 
   return (
     <section className="mt-8 border-t border-[#EEF1F4] pt-8">
-      <h2 className="font-serif text-lg font-semibold text-navy">Privacy</h2>
+      <h2 className="font-serif text-lg font-semibold text-navy">{t('settings.privacy')}</h2>
 
       <div className="mt-4">
-        <p className="text-sm font-medium text-ink">Default file retention</p>
-        <p className="mt-1 text-sm text-ink-soft">
-          How long a newly uploaded file is kept before it&apos;s automatically deleted. You can still
-          override this for an individual upload.
-        </p>
+        <p className="text-sm font-medium text-ink">{t('settings.defaultFileRetention')}</p>
+        <p className="mt-1 text-sm text-ink-soft">{t('settings.retentionExplanation')}</p>
         <div className="mt-3 grid grid-cols-4 gap-2">
           {RETENTION_OPTIONS.map((opt) => {
             const locked = opt.proOnly && !isPaid;
@@ -466,7 +471,7 @@ function DeleteAccountSection() {
                 type="button"
                 disabled={locked || isSavingRetention}
                 onClick={() => handleRetentionChange(opt.value)}
-                title={locked ? 'Available on paid plans' : undefined}
+                title={locked ? t('settings.availableOnPaidPlans') : undefined}
                 className={`relative rounded-lg border-2 px-3 py-2.5 text-center text-xs font-medium transition-colors ${
                   active
                     ? 'border-emerald bg-emerald-soft text-navy'
@@ -477,24 +482,22 @@ function DeleteAccountSection() {
               >
                 {locked && (
                   <span className="absolute -top-2 -end-2 rounded bg-navy-light px-1 py-0.5 font-mono text-[8px] font-semibold text-white">
-                    PRO
+                    {t('toolsIndex.pro')}
                   </span>
                 )}
-                {opt.label}
+                {t(opt.labelKey)}
               </button>
             );
           })}
         </div>
       </div>
 
-      <p className="mt-8 text-sm text-ink-soft">
-        Permanently delete your account and every document in your library.
-      </p>
+      <p className="mt-8 text-sm text-ink-soft">{t('settings.deleteAccountBody')}</p>
       <button
         onClick={() => setOpen(true)}
         className="mt-4 rounded-lg border border-redline px-5 py-2.5 text-sm font-medium text-redline transition-colors hover:bg-red-50"
       >
-        Delete account
+        {t('settings.deleteAccount')}
       </button>
 
       <Dialog.Root
@@ -508,16 +511,19 @@ function DeleteAccountSection() {
           <Dialog.Overlay className="overlay-dim fixed inset-0 z-50" />
           <Dialog.Content className="animate-modal-in fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-7 shadow-level-4">
             <Dialog.Title className="font-serif text-lg font-semibold text-redline">
-              This action is final and cannot be undone
+              {t('settings.deleteFinalWarningTitle')}
             </Dialog.Title>
             <Dialog.Description className="mt-3 text-sm text-ink-soft">
-              Deleting your account permanently removes every project and document in your library,
-              cancels any active subscription, and erases your account data. There is no way to
-              recover it afterward.
+              {t('settings.deleteFinalWarningBody')}
             </Dialog.Description>
 
             <label className="mt-6 block text-sm font-medium text-ink">
-              Type <span className="font-mono text-redline">delete</span> to confirm
+              {t('settings.typeDeleteToConfirm').split('{word}').map((part, i, arr) => (
+                <span key={i}>
+                  {part}
+                  {i < arr.length - 1 && <span className="font-mono text-redline">delete</span>}
+                </span>
+              ))}
             </label>
             <input
               type="text"
@@ -531,14 +537,14 @@ function DeleteAccountSection() {
 
             <div className="mt-6 flex justify-end gap-3">
               <Dialog.Close asChild>
-                <button className="text-sm font-medium text-ink-soft hover:text-ink">Cancel</button>
+                <button className="text-sm font-medium text-ink-soft hover:text-ink">{t('settings.cancel')}</button>
               </Dialog.Close>
               <button
                 onClick={handleConfirmDelete}
                 disabled={confirmText !== 'delete' || isDeleting}
                 className="rounded-lg bg-redline px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-gray-300"
               >
-                {isDeleting ? 'Deleting…' : 'Confirm permanent deletion'}
+                {isDeleting ? t('settings.deleting') : t('settings.confirmPermanentDeletion')}
               </button>
             </div>
           </Dialog.Content>

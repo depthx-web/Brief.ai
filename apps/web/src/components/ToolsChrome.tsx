@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import HeaderAuthLinks from '@/components/HeaderAuthLinks';
@@ -39,7 +40,9 @@ export default function ToolsChrome({ children }: { children: React.ReactNode })
         </div>
       </header>
       <main>{children}</main>
-      <ToolSeoSections slug={pathname.replace(/^\//, '')} />
+      <Suspense fallback={null}>
+        <ToolSeoSections slug={pathname.replace(/^\//, '')} />
+      </Suspense>
     </>
   );
 }

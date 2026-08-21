@@ -1,4 +1,5 @@
 import type { Segment } from './authApi';
+import type { DictionaryKey } from './i18n/dictionaries/en';
 
 // Shared with the Dashboard's quick-upload chips and the Library's new-project
 // dialog — same list, single source of truth. Fed to the AI layer as extra
@@ -16,6 +17,34 @@ export const DOC_TYPES: Record<Segment, string[]> = {
     'Research dataset info',
   ],
 };
+
+// Display-only translation of the canonical (English) values above — the
+// English string itself is still what's stored and sent to the AI layer as
+// docType, so this never changes DOC_TYPES, only how a chip is labeled.
+const DOC_TYPE_LABEL_KEY: Record<string, DictionaryKey> = {
+  Contract: 'docType.contract',
+  NDA: 'docType.nda',
+  'Court memo': 'docType.courtMemo',
+  'Official correspondence': 'docType.officialCorrespondence',
+  'Incorporation document': 'docType.incorporationDocument',
+  'Official decision': 'docType.officialDecision',
+  Invoice: 'docType.invoice',
+  'Bank statement': 'docType.bankStatement',
+  Receipt: 'docType.receipt',
+  'Payroll document': 'docType.payrollDocument',
+  'Tax filing': 'docType.taxFiling',
+  'Financial statement': 'docType.financialStatement',
+  'Academic paper': 'docType.academicPaper',
+  "Master's/PhD thesis": 'docType.thesis',
+  'Conference paper': 'docType.conferencePaper',
+  Preprint: 'docType.preprint',
+  'Literature review source': 'docType.literatureReviewSource',
+  'Research dataset info': 'docType.researchDatasetInfo',
+};
+
+export function docTypeLabelKey(docType: string): DictionaryKey | null {
+  return DOC_TYPE_LABEL_KEY[docType] ?? null;
+}
 
 // Project-card top-strip accent, subdued from the same palette family per
 // segment — contracts read navy, invoices deep green, research calm amber.

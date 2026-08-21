@@ -15,11 +15,13 @@ import {
 } from '@/lib/libraryApi';
 import { setProjectVisibility } from '@/lib/teamApi';
 import { showError, showSuccess } from '@/lib/toast';
+import { useLocale } from '@/lib/i18n/LocaleContext';
+import type { DictionaryKey } from '@/lib/i18n/dictionaries/en';
 
 const BILLING_ENFORCED = process.env.NEXT_PUBLIC_BILLING_ENFORCED === 'true';
 
-const SEGMENT_PROJECT_ACTION: Record<Segment, string | null> = {
-  LAWYER: 'Compare contracts',
+const SEGMENT_PROJECT_ACTION_KEY: Record<Segment, DictionaryKey | null> = {
+  LAWYER: 'projectMenu.compareContracts',
   ACCOUNTANT: null,
   RESEARCHER: null,
 };
@@ -33,13 +35,14 @@ interface Props {
 
 export default function ProjectOptionsMenu({ project, onExtended, onDeleted, onUpgradeNeeded }: Props) {
   const { token, user } = useAuth();
+  const { t } = useLocale();
   const router = useRouter();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [filesSubOpen, setFilesSubOpen] = useState(false);
   const [files, setFiles] = useState<LibraryDocumentSummary[] | null>(null);
 
   const locked = BILLING_ENFORCED && user?.plan !== 'PAID';
-  const segmentAction = user?.segment ? SEGMENT_PROJECT_ACTION[user.segment] : null;
+  const segmentActionKey = user?.segment ? SEGMENT_PROJECT_ACTION_KEY[user.segment] : null;
 
   async function loadFiles() {
     if (!token || files) return;
@@ -47,7 +50,7 @@ export default function ProjectOptionsMenu({ project, onExtended, onDeleted, onU
       const detail = await getProject(token, project.id);
       setFiles(detail.documents);
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Could not load the project files.');
+      showError(err instanceof Error ? err.message : t('projectMenu.couldNotLoadFiles'));
     }
   }
 
@@ -56,9 +59,9 @@ export default function ProjectOptionsMenu({ project, onExtended, onDeleted, onU
     try {
       const updated = await extendProjectRetention(token, project.id, days);
       onExtended({ ...project, nearestExpiresAt: updated.expiresAt });
-      showSuccess(`Retention extended to ${days} days`);
+      showSuccess(t('fileMenu.retentionExtended').replace('{days}', String(days)));
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Could not extend retention.');
+      showError(err instanceof Error ? err.message : t('fileMenu.couldNotExtendRetention'));
     }
   }
 
@@ -68,9 +71,9 @@ export default function ProjectOptionsMenu({ project, onExtended, onDeleted, onU
     try {
       await deleteDocument(token, docId);
       setFiles((prev) => prev?.filter((f) => f.id !== docId) ?? null);
-      showSuccess('File deleted');
+      showSuccess(t('library.fileDeleted'));
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Could not delete this file.');
+      showError(err instanceof Error ? err.message : t('fileMenu.couldNotDelete'));
     }
   }
 
@@ -80,9 +83,9 @@ export default function ProjectOptionsMenu({ project, onExtended, onDeleted, onU
     try {
       await setProjectVisibility(token, project.id, next);
       onExtended({ ...project, visibility: next });
-      showSuccess(next === 'SHARED_WITH_TEAM' ? 'Shared with your team' : 'Made private');
+      showSuccess(next === 'SHARED_WITH_TEAM' ? t('projectDetail.sharedWithTeamToast') : t('projectDetail.madePrivateToast'));
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Could not update sharing for this project.');
+      showError(err instanceof Error ? err.message : t('projectDetail.couldNotUpdateSharing'));
     }
   }
 
@@ -91,9 +94,9 @@ export default function ProjectOptionsMenu({ project, onExtended, onDeleted, onU
     try {
       await deleteProject(token, project.id);
       onDeleted(project.id);
-      showSuccess('Project deleted');
+      showSuccess(t('projectMenu.projectDeleted'));
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Could not delete this project.');
+      showError(err instanceof Error ? err.message : t('projectMenu.couldNotDeleteProject'));
     } finally {
       setConfirmOpen(false);
     }
@@ -113,7 +116,7 @@ export default function ProjectOptionsMenu({ project, onExtended, onDeleted, onU
         <DropdownMenu.Trigger asChild>
           <button
             onClick={(e) => e.stopPropagation()}
-            aria-label="Project options"
+            aria-label={t('projectMenu.projectOptions')}
             className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-ink-soft transition-colors hover:bg-gray-100 hover:text-ink"
           >
             <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
@@ -139,11 +142,11 @@ export default function ProjectOptionsMenu({ project, onExtended, onDeleted, onU
                 locked ? 'text-ink opacity-45' : 'text-ink data-[highlighted]:bg-emerald-soft'
               }`}
             >
-              <span>Summarize the whole project</span>
+              <span>{t('projectMenu.summarizeProject')}</span>
               {locked && <LockBadge />}
             </DropdownMenu.Item>
 
-            {segmentAction && (
+            {segmentActionKey && (
               <DropdownMenu.Item
                 onSelect={(e) => {
                   e.preventDefault();
@@ -153,7 +156,7 @@ export default function ProjectOptionsMenu({ project, onExtended, onDeleted, onU
                   locked ? 'text-ink opacity-45' : 'text-ink data-[highlighted]:bg-emerald-soft'
                 }`}
               >
-                <span>{segmentAction}</span>
+                <span>{t(segmentActionKey)}</span>
                 {locked && <LockBadge />}
               </DropdownMenu.Item>
             )}
@@ -165,14 +168,14 @@ export default function ProjectOptionsMenu({ project, onExtended, onDeleted, onU
               onClick={() => handleExtend(7)}
               className="cursor-pointer select-none rounded-md px-2.5 py-2 text-[13px] text-ink outline-none transition-colors data-[highlighted]:bg-emerald-soft"
             >
-              Extend retention — 7 days
+              {t('projectMenu.extendRetention7d')}
             </DropdownMenu.Item>
             <DropdownMenu.Item
               onSelect={(e) => e.preventDefault()}
               onClick={() => handleExtend(30)}
               className="cursor-pointer select-none rounded-md px-2.5 py-2 text-[13px] text-ink outline-none transition-colors data-[highlighted]:bg-emerald-soft"
             >
-              Extend retention — 30 days
+              {t('projectMenu.extendRetention30d')}
             </DropdownMenu.Item>
 
             <DropdownMenu.Sub
@@ -183,7 +186,7 @@ export default function ProjectOptionsMenu({ project, onExtended, onDeleted, onU
               }}
             >
               <DropdownMenu.SubTrigger className="flex cursor-pointer select-none items-center justify-between rounded-md px-2.5 py-2 text-[13px] text-ink outline-none transition-colors data-[highlighted]:bg-emerald-soft data-[state=open]:bg-emerald-soft">
-                Delete a file from this project
+                {t('projectMenu.deleteFileFromProject')}
                 <span aria-hidden>›</span>
               </DropdownMenu.SubTrigger>
               <DropdownMenu.Portal>
@@ -192,9 +195,9 @@ export default function ProjectOptionsMenu({ project, onExtended, onDeleted, onU
                   className="animate-dropdown-in z-20 max-h-64 w-[220px] overflow-y-auto rounded-[10px] bg-white p-1.5 shadow-level-2"
                 >
                   {!files ? (
-                    <p className="px-2.5 py-2 text-[12px] text-ink-soft">Loading…</p>
+                    <p className="px-2.5 py-2 text-[12px] text-ink-soft">{t('common.loading')}</p>
                   ) : files.length === 0 ? (
-                    <p className="px-2.5 py-2 text-[12px] text-ink-soft">No files.</p>
+                    <p className="px-2.5 py-2 text-[12px] text-ink-soft">{t('projectMenu.noFiles')}</p>
                   ) : (
                     files.map((f) => (
                       <DropdownMenu.Item
@@ -223,7 +226,7 @@ export default function ProjectOptionsMenu({ project, onExtended, onDeleted, onU
                   }}
                   className="cursor-pointer select-none rounded-md px-2.5 py-2 text-[13px] text-ink outline-none transition-colors data-[highlighted]:bg-emerald-soft"
                 >
-                  {project.visibility === 'SHARED_WITH_TEAM' ? 'Unshare from team' : 'Share with team'}
+                  {project.visibility === 'SHARED_WITH_TEAM' ? t('projectMenu.unshareFromTeam') : t('projectMenu.shareWithTeam')}
                 </DropdownMenu.Item>
               </>
             )}
@@ -236,7 +239,7 @@ export default function ProjectOptionsMenu({ project, onExtended, onDeleted, onU
               }}
               className="cursor-pointer select-none rounded-md px-2.5 py-2 text-[13px] text-redline outline-none transition-colors data-[highlighted]:bg-red-50"
             >
-              Permanently delete the project
+              {t('projectMenu.permanentlyDeleteProject')}
             </DropdownMenu.Item>
           </DropdownMenu.Content>
         </DropdownMenu.Portal>
@@ -246,20 +249,21 @@ export default function ProjectOptionsMenu({ project, onExtended, onDeleted, onU
         <Dialog.Portal>
           <Dialog.Overlay className="overlay-dim fixed inset-0 z-50" />
           <Dialog.Content className="animate-modal-in fixed left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-level-4">
-            <Dialog.Title className="font-serif text-lg font-semibold text-redline">Are you sure?</Dialog.Title>
+            <Dialog.Title className="font-serif text-lg font-semibold text-redline">{t('projectMenu.areYouSure')}</Dialog.Title>
             <Dialog.Description className="mt-2 text-sm text-ink-soft">
-              This permanently deletes &ldquo;{project.name}&rdquo; and all {project.documentCount} file
-              {project.documentCount === 1 ? '' : 's'} inside it. This cannot be undone.
+              {t(project.documentCount === 1 ? 'projectMenu.deleteConfirmSingular' : 'projectMenu.deleteConfirmPlural')
+                .replace('{name}', project.name)
+                .replace('{n}', String(project.documentCount))}
             </Dialog.Description>
             <div className="mt-6 flex justify-end gap-3">
               <Dialog.Close asChild>
-                <button className="text-sm font-medium text-ink-soft hover:text-ink">Cancel</button>
+                <button className="text-sm font-medium text-ink-soft hover:text-ink">{t('settings.cancel')}</button>
               </Dialog.Close>
               <button
                 onClick={handleDeleteProject}
                 className="rounded-lg bg-redline px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-700"
               >
-                Delete permanently
+                {t('projectMenu.deletePermanently')}
               </button>
             </div>
           </Dialog.Content>
@@ -270,12 +274,13 @@ export default function ProjectOptionsMenu({ project, onExtended, onDeleted, onU
 }
 
 function LockBadge() {
+  const { t } = useLocale();
   return (
     <span className="flex items-center gap-1">
       <span aria-hidden className="text-[10px]">
         🔒
       </span>
-      <span className="rounded bg-navy-light px-1 py-0.5 font-mono text-[8px] font-semibold text-white">PRO</span>
+      <span className="rounded bg-navy-light px-1 py-0.5 font-mono text-[8px] font-semibold text-white">{t('toolsIndex.pro')}</span>
     </span>
   );
 }

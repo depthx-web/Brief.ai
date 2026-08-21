@@ -7,7 +7,9 @@ import type { Segment } from '@/lib/authApi';
 import { fetchPublicFeatures, type PublicFeature } from '@/lib/billingApi';
 import { getCreditBalance } from '@/lib/creditsApi';
 import { isTauri } from '@/lib/platform';
-import { TABS, TAB_SLUG_TO_TAB, TOOLS_BY_TAB, type Tab, type Tool } from '@/lib/toolCatalog';
+import { TABS, TAB_SLUG_TO_TAB, TOOLS_BY_TAB, toolLabelKeys, type Tab, type Tool } from '@/lib/toolCatalog';
+import { useLocale } from '@/lib/i18n/LocaleContext';
+import type { DictionaryKey } from '@/lib/i18n/dictionaries/en';
 import ToolSourceModal from './ToolSourceModal';
 import GuestSignupModal from './GuestSignupModal';
 import UpgradePromptModal from './UpgradePromptModal';
@@ -24,12 +26,19 @@ const WORKSPACE_PARAM_TO_SEGMENT: Record<string, Segment> = {
 
 const NEW_BADGE_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 
-const SEGMENT_GROUP: Record<Segment, { icon: string; label: string }> = {
-  LAWYER: { icon: '⚖️', label: 'Legal' },
-  ACCOUNTANT: { icon: '🧮', label: 'Accounting' },
-  RESEARCHER: { icon: '📖', label: 'Research' },
+const SEGMENT_GROUP: Record<Segment, { icon: string; labelKey: DictionaryKey }> = {
+  LAWYER: { icon: '⚖️', labelKey: 'segment.legal' },
+  ACCOUNTANT: { icon: '🧮', labelKey: 'segment.accounting' },
+  RESEARCHER: { icon: '📖', labelKey: 'segment.research' },
 };
 const SEGMENT_ORDER: Segment[] = ['LAWYER', 'ACCOUNTANT', 'RESEARCHER'];
+
+const TAB_LABEL_KEY: Record<Tab, DictionaryKey> = {
+  Convert: 'sidebar.convert',
+  Organize: 'sidebar.organize',
+  Protect: 'sidebar.protect',
+  'AI tools': 'sidebar.aiTools',
+};
 
 function isNew(launchedAt: string | undefined): boolean {
   if (!launchedAt) return false;
@@ -38,6 +47,7 @@ function isNew(launchedAt: string | undefined): boolean {
 
 function ToolsIndexInner() {
   const { user, token } = useAuth();
+  const { t } = useLocale();
   const searchParams = useSearchParams();
   const workspaceParam = searchParams.get('workspace');
   const overrideSegment = workspaceParam ? WORKSPACE_PARAM_TO_SEGMENT[workspaceParam] : null;
@@ -132,6 +142,9 @@ function ToolsIndexInner() {
   }
 
   function renderToolCard(tool: Tool) {
+    const labelKeys = toolLabelKeys(tool.name);
+    const displayName = labelKeys ? t(labelKeys.nameKey) : tool.name;
+    const displayDescription = labelKeys ? t(labelKeys.descriptionKey) : tool.description;
     // "Rubber stamp" double outline — a real border plus a same-color
     // outline offset 2px out, rather than CSS `border-double` (which needs
     // ~10px of width before the two lines actually read as separate at
@@ -153,16 +166,16 @@ function ToolsIndexInner() {
       <>
         {isProTool(tool) ? (
           <span className="absolute end-2 top-2 rounded bg-navy-light px-1.5 py-0.5 font-mono text-[9px] font-semibold text-white">
-            PRO
+            {t('toolsIndex.pro')}
           </span>
         ) : (
           <span className="absolute end-2 top-2 rounded bg-emerald-soft px-1.5 py-0.5 font-mono text-[9px] font-semibold text-emerald">
-            FREE
+            {t('toolsIndex.free')}
           </span>
         )}
         {isNew(tool.launchedAt) && (
           <span className="absolute end-2 top-8 rounded bg-amber-200 px-1.5 py-0.5 font-mono text-[9px] font-semibold text-amber-800">
-            NEW
+            {t('toolsIndex.new')}
           </span>
         )}
         {tool.ai && (
@@ -171,7 +184,7 @@ function ToolsIndexInner() {
           </span>
         )}
         <span className={`font-mono text-sm font-bold uppercase tracking-wide ${stampClass}`}>{tool.stamp}</span>
-        <span className="mt-2 text-xs text-ink-soft">{tool.name}</span>
+        <span className="mt-2 text-xs text-ink-soft">{displayName}</span>
       </>
     );
 
@@ -179,11 +192,11 @@ function ToolsIndexInner() {
     // same underlying page since it already covers both, so href isn't
     // guaranteed unique across the catalog.
     return tool.singleFileSource ? (
-      <button key={tool.name} title={tool.description} onClick={(e) => handleToolClick(tool, e)} className={cardClass}>
+      <button key={tool.name} title={displayDescription} onClick={(e) => handleToolClick(tool, e)} className={cardClass}>
         {inner}
       </button>
     ) : (
-      <a key={tool.name} href={tool.href} title={tool.description} onClick={(e) => handleToolClick(tool, e)} className={cardClass}>
+      <a key={tool.name} href={tool.href} title={displayDescription} onClick={(e) => handleToolClick(tool, e)} className={cardClass}>
         {inner}
       </a>
     );
@@ -204,27 +217,27 @@ function ToolsIndexInner() {
     <div className={desktop ? 'px-9 py-7' : 'mx-auto max-w-5xl px-8 py-10'}>
       {desktop ? (
         <div className="mb-6">
-          <h1 className="font-serif text-2xl font-medium text-navy">{tab}</h1>
+          <h1 className="font-serif text-2xl font-medium text-navy">{t(TAB_LABEL_KEY[tab])}</h1>
           <div className="mt-1.5 flex items-center gap-1.5 font-mono text-xs text-ink-soft">
             {tabIsLocal ? <span className="h-[5px] w-[5px] rounded-full bg-emerald" /> : <ClockIcon />}
-            {TOOLS_BY_TAB[tab].length} tools &middot; {tabIsLocal ? 'runs on this device' : 'needs internet'}
+            {t(tabIsLocal ? 'toolsIndex.toolsCountLocal' : 'toolsIndex.toolsCountRemote').replace('{n}', String(TOOLS_BY_TAB[tab].length))}
           </div>
         </div>
       ) : (
         <>
-          <h1 className="font-serif text-2xl font-medium text-navy">All my tools in one place</h1>
+          <h1 className="font-serif text-2xl font-medium text-navy">{t('toolsIndex.allToolsHeading')}</h1>
           <div className="relative mt-8 flex gap-1">
-            {TABS.map((t) => (
+            {TABS.map((tabOption) => (
               <button
-                key={t}
-                onClick={() => setTab(t)}
+                key={tabOption}
+                onClick={() => setTab(tabOption)}
                 className={`rounded-t-lg px-5 pb-3 pt-2.5 text-sm font-medium transition-all ${
-                  tab === t
+                  tab === tabOption
                     ? 'bg-paper text-navy shadow-[0_-2px_8px_rgba(0,0,0,0.06)]'
                     : 'bg-gray-100 text-ink-soft opacity-70 hover:opacity-90'
                 }`}
               >
-                {t}
+                {t(TAB_LABEL_KEY[tabOption])}
               </button>
             ))}
           </div>
@@ -237,11 +250,11 @@ function ToolsIndexInner() {
             {SEGMENT_ORDER.map((segment) => {
               const group = tools.filter((tool) => tool.segments?.includes(segment));
               if (group.length === 0) return null;
-              const { icon, label } = SEGMENT_GROUP[segment];
+              const { icon, labelKey } = SEGMENT_GROUP[segment];
               return (
                 <div key={segment}>
                   <h2 className="mb-4 flex items-center gap-2 font-serif text-base font-semibold text-navy">
-                    <span aria-hidden>{icon}</span> {label}
+                    <span aria-hidden>{icon}</span> {t(labelKey)}
                   </h2>
                   <div className={gridClass}>{group.map(renderToolCard)}</div>
                 </div>

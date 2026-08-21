@@ -2,17 +2,22 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow, type Locale } from 'date-fns';
+import { de, fr, es, it, ar } from 'date-fns/locale';
 import { useAuth } from '@/lib/AuthContext';
 import { listDocuments, type LibraryDocumentSummary } from '@/lib/libraryApi';
 import { COUNTDOWN_BADGE_CLASS, useCountdown } from '@/lib/retentionCountdown';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 import { FileIcon } from '@/lib/icons';
+
+const DATE_FNS_LOCALES: Record<string, Locale> = { de, fr, es, it, ar };
 
 // A fast, flat "what did I just touch" list — deliberately no project
 // grouping, unlike the Library panel's project cards. See the Recent Panel
 // section of brief-ai-desktop-design-details.md.
 export default function RecentFiles() {
   const { token } = useAuth();
+  const { t } = useLocale();
   const router = useRouter();
   const [docs, setDocs] = useState<LibraryDocumentSummary[] | null>(null);
 
@@ -28,17 +33,17 @@ export default function RecentFiles() {
 
   return (
     <div className="px-9 py-7">
-      <h1 className="font-serif text-2xl font-medium text-navy">Recent</h1>
+      <h1 className="font-serif text-2xl font-medium text-navy">{t('sidebar.recent')}</h1>
       <div className="mt-1.5 flex items-center gap-1.5 font-mono text-xs text-ink-soft">
         <span className="h-[5px] w-[5px] rounded-full bg-emerald" />
-        {docs?.length ?? 0} file{docs?.length === 1 ? '' : 's'} &middot; stored on this device
+        {t((docs?.length ?? 0) === 1 ? 'library.fileCountSingular' : 'library.fileCountPlural').replace('{n}', String(docs?.length ?? 0))}
       </div>
 
       <div className="mt-6 overflow-hidden rounded-lg border border-paper-line bg-white">
-        {docs === null && <div className="px-5 py-10 text-center text-sm text-ink-soft">Loading&hellip;</div>}
+        {docs === null && <div className="px-5 py-10 text-center text-sm text-ink-soft">{t('desktopHome.loading')}</div>}
         {docs?.length === 0 && (
           <div className="px-5 py-10 text-center text-sm text-ink-soft">
-            {token ? 'Nothing here yet.' : 'Log in to sync files here, or use a tool to get started.'}
+            {token ? t('recentFiles.emptyLoggedIn') : t('desktopHome.emptyLibraryGuest')}
           </div>
         )}
         {docs?.map((doc, i) => (
@@ -56,6 +61,7 @@ export default function RecentFiles() {
 
 function RecentFileRow({ doc, isLast, onOpen }: { doc: LibraryDocumentSummary; isLast: boolean; onOpen: () => void }) {
   const countdown = useCountdown(doc.expiresAt);
+  const { locale } = useLocale();
 
   return (
     <button
@@ -70,7 +76,7 @@ function RecentFileRow({ doc, isLast, onOpen }: { doc: LibraryDocumentSummary; i
         {countdown.label}
       </span>
       <span className="shrink-0 font-mono text-xs text-ink-soft">
-        {formatDistanceToNow(new Date(doc.createdAt), { addSuffix: true })}
+        {formatDistanceToNow(new Date(doc.createdAt), { addSuffix: true, locale: DATE_FNS_LOCALES[locale] })}
       </span>
     </button>
   );

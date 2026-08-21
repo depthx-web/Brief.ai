@@ -3,11 +3,13 @@
 import { useEffect, useState } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import type { Segment } from '@/lib/authApi';
-import { DOC_TYPES } from '@/lib/docTypes';
+import { DOC_TYPES, docTypeLabelKey } from '@/lib/docTypes';
+import { useLocale } from '@/lib/i18n/LocaleContext';
+import type { DictionaryKey } from '@/lib/i18n/dictionaries/en';
 
-const EXTEND_OPTIONS: { days: 7 | 30; label: string }[] = [
-  { days: 7, label: '7 days' },
-  { days: 30, label: '30 days' },
+const EXTEND_OPTIONS: { days: 7 | 30; labelKey: DictionaryKey }[] = [
+  { days: 7, labelKey: 'settings.retention7d' },
+  { days: 30, labelKey: 'settings.retention30d' },
 ];
 
 interface Props {
@@ -26,14 +28,15 @@ function suggestName(files: File[]): string {
   return files[0].name.replace(/\.pdf$/i, '');
 }
 
-function defaultRetentionCopy(hours: number | null | undefined): string {
-  if (hours === 0) return 'Your files will be kept until you delete them — no automatic deletion.';
-  if (hours === 24 * 30) return 'Your files will be kept for 30 days then automatically deleted to protect your privacy.';
-  if (hours === 24 * 7) return 'Your files will be kept for 7 days then automatically deleted to protect your privacy.';
-  return 'Your files will be kept for 24 hours then automatically deleted to protect your privacy.';
+function defaultRetentionCopy(hours: number | null | undefined, t: (key: DictionaryKey) => string): string {
+  if (hours === 0) return t('newProjectUpload.retentionNever');
+  if (hours === 24 * 30) return t('newProjectUpload.retention30d');
+  if (hours === 24 * 7) return t('newProjectUpload.retention7d');
+  return t('newProjectUpload.retention24h');
 }
 
 export default function NewProjectUploadDialog({ open, files, segment, defaultRetentionHours, onCancel, onStart }: Props) {
+  const { t } = useLocale();
   const [step, setStep] = useState<'classify' | 'retention'>('classify');
   const [category, setCategory] = useState<string | null>(null);
   const [name, setName] = useState('');
@@ -67,15 +70,16 @@ export default function NewProjectUploadDialog({ open, files, segment, defaultRe
         <Dialog.Content className="animate-modal-in fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-8 shadow-level-4">
           {step === 'classify' ? (
             <>
-              <Dialog.Title className="font-serif text-2xl font-medium text-navy">What is this file?</Dialog.Title>
+              <Dialog.Title className="font-serif text-2xl font-medium text-navy">{t('newProjectUpload.whatIsThisFile')}</Dialog.Title>
               <Dialog.Description className="mt-1 text-sm text-ink-soft">
-                {files.length > 1 ? `${files.length} files selected` : files[0]?.name}
+                {files.length > 1 ? t('newProjectUpload.filesSelected').replace('{n}', String(files.length)) : files[0]?.name}
               </Dialog.Description>
 
               {docTypes.length > 0 && (
                 <div className="mt-6 flex flex-wrap gap-2">
                   {docTypes.map((type) => {
                     const selected = category === type;
+                    const labelKey = docTypeLabelKey(type);
                     return (
                       <button
                         key={type}
@@ -87,7 +91,7 @@ export default function NewProjectUploadDialog({ open, files, segment, defaultRe
                             : 'border-gray-200 bg-white text-ink-soft hover:border-gray-300'
                         }`}
                       >
-                        {type}
+                        {labelKey ? t(labelKey) : type}
                       </button>
                     );
                   })}
@@ -95,7 +99,7 @@ export default function NewProjectUploadDialog({ open, files, segment, defaultRe
               )}
 
               <div className="mt-6">
-                <label className="block text-sm font-medium text-ink">Project name</label>
+                <label className="block text-sm font-medium text-ink">{t('newProjectUpload.projectName')}</label>
                 <input
                   type="text"
                   value={name}
@@ -107,30 +111,30 @@ export default function NewProjectUploadDialog({ open, files, segment, defaultRe
 
               <div className="mt-8 flex justify-end gap-3">
                 <button onClick={onCancel} className="text-sm font-medium text-ink-soft hover:text-ink">
-                  Cancel
+                  {t('settings.cancel')}
                 </button>
                 <button
                   onClick={() => setStep('retention')}
                   className="rounded-lg bg-emerald px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-emerald-dark"
                 >
-                  Continue
+                  {t('common.continue')}
                 </button>
               </div>
             </>
           ) : (
             <>
-              <Dialog.Title className="font-serif text-2xl font-medium text-navy">Retention period</Dialog.Title>
+              <Dialog.Title className="font-serif text-2xl font-medium text-navy">{t('newProjectUpload.retentionPeriod')}</Dialog.Title>
 
               <div className="mt-6 rounded-xl bg-emerald-soft p-4">
                 <div className="flex gap-3">
                   <span aria-hidden className="text-lg">
                     ⏱
                   </span>
-                  <p className="text-sm text-ink">{defaultRetentionCopy(defaultRetentionHours)}</p>
+                  <p className="text-sm text-ink">{defaultRetentionCopy(defaultRetentionHours, t)}</p>
                 </div>
 
                 <label className="mt-4 flex items-center justify-between gap-3 border-t border-emerald/20 pt-4">
-                  <span className="text-sm font-medium text-ink">Extend retention period</span>
+                  <span className="text-sm font-medium text-ink">{t('newProjectUpload.extendRetentionPeriod')}</span>
                   <button
                     type="button"
                     role="switch"
@@ -161,7 +165,7 @@ export default function NewProjectUploadDialog({ open, files, segment, defaultRe
                             : 'border-gray-200 bg-white text-ink-soft hover:border-gray-300'
                         }`}
                       >
-                        {opt.label}
+                        {t(opt.labelKey)}
                       </button>
                     ))}
                   </div>
@@ -170,13 +174,13 @@ export default function NewProjectUploadDialog({ open, files, segment, defaultRe
 
               <div className="mt-8 flex justify-end gap-3">
                 <button onClick={() => setStep('classify')} className="text-sm font-medium text-ink-soft hover:text-ink">
-                  Back
+                  {t('referral.back')}
                 </button>
                 <button
                   onClick={handleStartUpload}
                   className="rounded-lg bg-emerald px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-emerald-dark"
                 >
-                  Start upload
+                  {t('newProjectUpload.startUpload')}
                 </button>
               </div>
             </>

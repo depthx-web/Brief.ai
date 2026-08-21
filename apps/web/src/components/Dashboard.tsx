@@ -7,39 +7,42 @@ import { extractPdfText } from '@/lib/extractPdfText';
 import { listDocuments, uploadDocument, type LibraryDocumentSummary } from '@/lib/libraryApi';
 import type { Segment } from '@/lib/authApi';
 import { showLoading, resolveLoading, failLoading } from '@/lib/toast';
-import { DOC_TYPES } from '@/lib/docTypes';
+import { DOC_TYPES, docTypeLabelKey } from '@/lib/docTypes';
 import { useGreeting } from '@/lib/greeting';
 import { COUNTDOWN_BADGE_CLASS, useCountdown } from '@/lib/retentionCountdown';
+import { useLocale } from '@/lib/i18n/LocaleContext';
+import type { DictionaryKey } from '@/lib/i18n/dictionaries/en';
 import FileOptionsMenu from './FileOptionsMenu';
 import ChangePlanModal from './ChangePlanModal';
 import GuestSignupModal from './GuestSignupModal';
 
-const UPLOAD_LABEL: Record<Segment, string> = {
-  LAWYER: 'Upload a contract',
-  ACCOUNTANT: 'Upload an invoice',
-  RESEARCHER: 'Upload a paper',
+const UPLOAD_LABEL_KEY: Record<Segment, DictionaryKey> = {
+  LAWYER: 'dashboard.uploadContract',
+  ACCOUNTANT: 'dashboard.uploadInvoice',
+  RESEARCHER: 'dashboard.uploadPaper',
 };
 
-const DROPZONE_LABEL: Record<Segment, string> = {
-  LAWYER: 'Drop your contract here',
-  ACCOUNTANT: 'Drop your invoice or statement',
-  RESEARCHER: 'Drop your research paper',
+const DROPZONE_LABEL_KEY: Record<Segment, DictionaryKey> = {
+  LAWYER: 'dashboard.dropContract',
+  ACCOUNTANT: 'dashboard.dropInvoice',
+  RESEARCHER: 'dashboard.dropPaper',
 };
 
-const FILE_SECTION_TITLE: Record<Segment, string> = {
-  LAWYER: 'Recent contracts',
-  ACCOUNTANT: 'Recent invoices',
-  RESEARCHER: 'Recent papers',
+const FILE_SECTION_TITLE_KEY: Record<Segment, DictionaryKey> = {
+  LAWYER: 'dashboard.recentContracts',
+  ACCOUNTANT: 'dashboard.recentInvoices',
+  RESEARCHER: 'dashboard.recentPapers',
 };
 
-const STATUS_BADGE: Record<Segment, { text: string; className: string }> = {
-  LAWYER: { text: 'Non-standard clause found', className: 'bg-amber-100 text-amber-700' },
-  ACCOUNTANT: { text: 'Data extracted', className: 'bg-emerald-soft text-emerald' },
-  RESEARCHER: { text: 'Ready to chat', className: 'bg-emerald-soft text-emerald' },
+const STATUS_BADGE_KEY: Record<Segment, { textKey: DictionaryKey; className: string }> = {
+  LAWYER: { textKey: 'dashboard.statusNonStandardClause', className: 'bg-amber-100 text-amber-700' },
+  ACCOUNTANT: { textKey: 'dashboard.statusDataExtracted', className: 'bg-emerald-soft text-emerald' },
+  RESEARCHER: { textKey: 'dashboard.statusReadyToChat', className: 'bg-emerald-soft text-emerald' },
 };
 
 export default function Dashboard() {
   const { user, token } = useAuth();
+  const { t } = useLocale();
   const router = useRouter();
   const [recent, setRecent] = useState<LibraryDocumentSummary[]>([]);
   const [isLoadingRecent, setIsLoadingRecent] = useState(true);
@@ -75,25 +78,25 @@ export default function Dashboard() {
     }
     setError(null);
     if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
-      setError('Please select a PDF file.');
+      setError(t('dashboard.selectPdfError'));
       return;
     }
     setIsUploading(true);
-    const toastId = showLoading(`Uploading ${file.name}…`);
+    const toastId = showLoading(t('dashboard.uploading').replace('{name}', file.name));
     try {
       const pages = await extractPdfText(file);
       const fullText = pages.map((p) => p.text).join('\n\n');
       if (!fullText.trim()) {
-        const message = 'No extractable text found — scanned documents need OCR first.';
+        const message = t('dashboard.noTextFound');
         setError(message);
         failLoading(toastId, message);
         return;
       }
       const doc = await uploadDocument(token, file, fullText, selectedDocType ?? undefined);
-      resolveLoading(toastId, 'Uploaded successfully');
+      resolveLoading(toastId, t('dashboard.uploadedSuccess'));
       router.push(`/workspace?doc=${doc.id}`);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Could not upload this document.';
+      const message = err instanceof Error ? err.message : t('dashboard.uploadFailed');
       setError(message);
       failLoading(toastId, message, { onRetry: () => handleFile(file) });
     } finally {
@@ -101,10 +104,12 @@ export default function Dashboard() {
     }
   }
 
-  const uploadLabel = user?.segment ? UPLOAD_LABEL[user.segment] : 'Upload a File';
-  const dropzoneLabel = user?.segment ? DROPZONE_LABEL[user.segment] : 'Drag your file here, or click to choose';
-  const fileSectionTitle = user?.segment ? FILE_SECTION_TITLE[user.segment] : 'Recent Files';
-  const statusBadge = user?.segment ? STATUS_BADGE[user.segment] : null;
+  const uploadLabel = user?.segment ? t(UPLOAD_LABEL_KEY[user.segment]) : t('dashboard.uploadFile');
+  const dropzoneLabel = user?.segment ? t(DROPZONE_LABEL_KEY[user.segment]) : t('dashboard.dropGeneric');
+  const fileSectionTitle = user?.segment ? t(FILE_SECTION_TITLE_KEY[user.segment]) : t('dashboard.recentFiles');
+  const statusBadge = user?.segment
+    ? { text: t(STATUS_BADGE_KEY[user.segment].textKey), className: STATUS_BADGE_KEY[user.segment].className }
+    : null;
   const docTypes = user?.segment ? DOC_TYPES[user.segment] : [];
   const greeting = useGreeting();
   const firstName = user?.name?.split(' ')[0] ?? null;
@@ -121,7 +126,7 @@ export default function Dashboard() {
           disabled={isUploading}
           className="fade-in-200 rounded-md bg-emerald px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
         >
-          {isUploading ? 'Uploading…' : uploadLabel}
+          {isUploading ? t('dashboard.uploadingButton') : uploadLabel}
         </button>
       </div>
 
@@ -130,7 +135,7 @@ export default function Dashboard() {
           href="/batch-invoices"
           className="mt-3 inline-block text-sm font-medium text-navy hover:text-emerald"
         >
-          Processing several invoices at once? Use Batch Invoice Export →
+          {t('dashboard.batchInvoiceCta')}
         </a>
       )}
 
@@ -164,7 +169,7 @@ export default function Dashboard() {
           <path d="M12 12v6M9.5 14.5 12 12l2.5 2.5" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         <p key={user?.segment} className="fade-in-200 text-sm text-ink-soft">
-          {isUploading ? 'Reading document…' : dropzoneLabel}
+          {isUploading ? t('dashboard.readingDocument') : dropzoneLabel}
         </p>
         <input
           ref={inputRef}
@@ -190,7 +195,10 @@ export default function Dashboard() {
                     : 'border-gray-200 bg-white text-ink-soft hover:border-gray-300'
                 }`}
               >
-                {type}
+                {(() => {
+                  const labelKey = docTypeLabelKey(type);
+                  return labelKey ? t(labelKey) : type;
+                })()}
               </button>
             );
           })}
@@ -204,13 +212,10 @@ export default function Dashboard() {
           {fileSectionTitle}
         </h2>
         {isLoadingRecent ? (
-          <p className="text-sm text-ink-soft">Loading…</p>
+          <p className="text-sm text-ink-soft">{t('common.loading')}</p>
         ) : recent.length === 0 ? (
           <div className="rounded-xl border border-gray-200 bg-white px-6 py-10 text-center">
-            <p className="text-sm text-ink-soft">
-              You haven&apos;t uploaded anything yet — drag your first document above to get
-              started.
-            </p>
+            <p className="text-sm text-ink-soft">{t('dashboard.emptyState')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -254,6 +259,7 @@ function RecentFileCard({
   onUpgradeNeeded: () => void;
 }) {
   const countdown = useCountdown(doc.expiresAt);
+  const { locale } = useLocale();
 
   return (
     <div
@@ -268,7 +274,7 @@ function RecentFileCard({
         <FileOptionsMenu doc={doc} onRenamed={onRenamed} onDeleted={onDeleted} onUpgradeNeeded={onUpgradeNeeded} />
       </div>
       <div className="mt-2 flex items-center justify-between gap-2">
-        <span className="text-xs text-ink-soft">{new Date(doc.createdAt).toLocaleDateString()}</span>
+        <span className="text-xs text-ink-soft">{new Date(doc.createdAt).toLocaleDateString(locale)}</span>
         <span className="flex items-center gap-1.5">
           <span
             className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${COUNTDOWN_BADGE_CLASS[countdown.urgency]}`}

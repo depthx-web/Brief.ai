@@ -20,14 +20,17 @@ import {
 } from '@/lib/libraryApi';
 import { setPendingToolFile } from '@/lib/pendingToolFile';
 import { TOOLS_BY_TAB, type Tool } from './ToolsIndex';
+import { toolLabelKeys } from '@/lib/toolCatalog';
 import { showError, showSuccess } from '@/lib/toast';
+import { useLocale } from '@/lib/i18n/LocaleContext';
+import type { DictionaryKey } from '@/lib/i18n/dictionaries/en';
 
 const BILLING_ENFORCED = process.env.NEXT_PUBLIC_BILLING_ENFORCED === 'true';
 
-const AI_ACTION_LABEL: Record<Segment, string> = {
-  LAWYER: 'Analyze clauses',
-  ACCOUNTANT: 'Extract invoice data',
-  RESEARCHER: 'Extract references',
+const AI_ACTION_LABEL_KEY: Record<Segment, DictionaryKey> = {
+  LAWYER: 'fileMenu.analyzeClausesAction',
+  ACCOUNTANT: 'fileMenu.extractInvoiceAction',
+  RESEARCHER: 'fileMenu.extractReferencesAction',
 };
 
 // Extra per-segment AI tools beyond the two generic Workspace actions above
@@ -49,6 +52,7 @@ interface Props {
 
 export default function FileOptionsMenu({ doc, onRenamed, onDeleted, onDuplicated, onUpgradeNeeded }: Props) {
   const { token, user } = useAuth();
+  const { t } = useLocale();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
@@ -64,7 +68,7 @@ export default function FileOptionsMenu({ doc, onRenamed, onDeleted, onDuplicate
     try {
       await downloadDocument(token, doc.id, doc.filename);
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Could not download this file.');
+      showError(err instanceof Error ? err.message : t('fileMenu.couldNotDownload'));
     }
   }
 
@@ -74,9 +78,9 @@ export default function FileOptionsMenu({ doc, onRenamed, onDeleted, onDuplicate
     try {
       await deleteDocument(token, doc.id);
       onDeleted(doc.id);
-      showSuccess('File deleted');
+      showSuccess(t('library.fileDeleted'));
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Could not delete this file.');
+      showError(err instanceof Error ? err.message : t('fileMenu.couldNotDelete'));
     }
   }
 
@@ -86,9 +90,9 @@ export default function FileOptionsMenu({ doc, onRenamed, onDeleted, onDuplicate
     try {
       const copy = await duplicateDocument(token, doc.id);
       onDuplicated?.(copy);
-      showSuccess('File duplicated');
+      showSuccess(t('fileMenu.duplicated'));
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Could not duplicate this file.');
+      showError(err instanceof Error ? err.message : t('fileMenu.couldNotDuplicate'));
     }
   }
 
@@ -97,9 +101,9 @@ export default function FileOptionsMenu({ doc, onRenamed, onDeleted, onDuplicate
     try {
       const { expiresAt } = await extendDocumentRetention(token, doc.id, days);
       onRenamed({ ...doc, expiresAt });
-      showSuccess(`Retention extended to ${days} days`);
+      showSuccess(t('fileMenu.retentionExtended').replace('{days}', String(days)));
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Could not extend retention.');
+      showError(err instanceof Error ? err.message : t('fileMenu.couldNotExtendRetention'));
     }
   }
 
@@ -108,7 +112,7 @@ export default function FileOptionsMenu({ doc, onRenamed, onDeleted, onDuplicate
     try {
       setProjects(await listProjects(token));
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Could not load your projects.');
+      showError(err instanceof Error ? err.message : t('fileMenu.couldNotLoadProjects'));
     }
   }
 
@@ -122,9 +126,9 @@ export default function FileOptionsMenu({ doc, onRenamed, onDeleted, onDuplicate
     try {
       await moveDocument(token, doc.id, projectId);
       onDeleted(doc.id);
-      showSuccess(projectId ? 'File moved' : 'File moved to Unsorted');
+      showSuccess(projectId ? t('fileMenu.fileMoved') : t('fileMenu.fileMovedToUnsorted'));
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Could not move this file.');
+      showError(err instanceof Error ? err.message : t('fileMenu.couldNotMove'));
     } finally {
       setIsBusy(false);
     }
@@ -141,7 +145,7 @@ export default function FileOptionsMenu({ doc, onRenamed, onDeleted, onDuplicate
       setPendingToolFile(file);
       router.push(tool.href);
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Could not open this file.');
+      showError(err instanceof Error ? err.message : t('fileMenu.couldNotOpen'));
     }
   }
 
@@ -162,7 +166,7 @@ export default function FileOptionsMenu({ doc, onRenamed, onDeleted, onDuplicate
         <DropdownMenu.Trigger asChild>
           <button
             onClick={(e) => e.stopPropagation()}
-            aria-label="File options"
+            aria-label={t('fileMenu.fileOptions')}
             className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-ink-soft transition-colors hover:bg-gray-100 hover:text-ink"
           >
             <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
@@ -185,30 +189,33 @@ export default function FileOptionsMenu({ doc, onRenamed, onDeleted, onDuplicate
               {user?.segment && (
                 <>
                   <MenuItem onSelect={handleWorkspaceAction} locked={locked}>
-                    Summarize
+                    {t('settings.opSummarize')}
                   </MenuItem>
                   <MenuItem onSelect={handleWorkspaceAction} locked={locked}>
-                    {AI_ACTION_LABEL[user.segment]}
+                    {t(AI_ACTION_LABEL_KEY[user.segment])}
                   </MenuItem>
-                  {aiTools.map((tool) => (
-                    <MenuItem key={tool.href + tool.name} onSelect={(e) => { e.preventDefault(); handleToolAction(tool); }} locked={locked}>
-                      {tool.name}
-                    </MenuItem>
-                  ))}
+                  {aiTools.map((tool) => {
+                    const labelKeys = toolLabelKeys(tool.name);
+                    return (
+                      <MenuItem key={tool.href + tool.name} onSelect={(e) => { e.preventDefault(); handleToolAction(tool); }} locked={locked}>
+                        {labelKeys ? t(labelKeys.nameKey) : tool.name}
+                      </MenuItem>
+                    );
+                  })}
                   <DropdownMenu.Separator className="my-1 h-px bg-gray-100" />
                 </>
               )}
 
-              <MenuItem onSelect={handleDownload}>Download</MenuItem>
+              <MenuItem onSelect={handleDownload}>{t('library.download')}</MenuItem>
               <MenuItem
                 onSelect={(e) => {
                   e.preventDefault();
                   setRenameOpen(true);
                 }}
               >
-                Rename
+                {t('common.rename')}
               </MenuItem>
-              <MenuItem onSelect={handleDuplicate}>Duplicate</MenuItem>
+              <MenuItem onSelect={handleDuplicate}>{t('common.duplicate')}</MenuItem>
 
               <DropdownMenu.Sub
                 open={moveSubOpen}
@@ -218,7 +225,7 @@ export default function FileOptionsMenu({ doc, onRenamed, onDeleted, onDuplicate
                 }}
               >
                 <DropdownMenu.SubTrigger className="flex cursor-pointer select-none items-center justify-between rounded-md px-2.5 py-2 text-[13px] text-ink outline-none transition-colors data-[highlighted]:bg-emerald-soft data-[state=open]:bg-emerald-soft">
-                  Move to Project
+                  {t('fileMenu.moveToProject')}
                   <span aria-hidden>›</span>
                 </DropdownMenu.SubTrigger>
                 <DropdownMenu.Portal>
@@ -234,13 +241,13 @@ export default function FileOptionsMenu({ doc, onRenamed, onDeleted, onDuplicate
                         }}
                         className="cursor-pointer select-none rounded-md px-2.5 py-2 text-[12px] text-ink outline-none transition-colors data-[highlighted]:bg-emerald-soft"
                       >
-                        Unsorted
+                        {t('library.unsorted')}
                       </DropdownMenu.Item>
                     )}
                     {!projects ? (
-                      <p className="px-2.5 py-2 text-[12px] text-ink-soft">Loading…</p>
+                      <p className="px-2.5 py-2 text-[12px] text-ink-soft">{t('common.loading')}</p>
                     ) : projects.filter((p) => p.id !== doc.projectId).length === 0 ? (
-                      <p className="px-2.5 py-2 text-[12px] text-ink-soft">No other projects.</p>
+                      <p className="px-2.5 py-2 text-[12px] text-ink-soft">{t('fileMenu.noOtherProjects')}</p>
                     ) : (
                       projects
                         .filter((p) => p.id !== doc.projectId)
@@ -263,7 +270,7 @@ export default function FileOptionsMenu({ doc, onRenamed, onDeleted, onDuplicate
 
               <DropdownMenu.Sub>
                 <DropdownMenu.SubTrigger className="flex cursor-pointer select-none items-center justify-between rounded-md px-2.5 py-2 text-[13px] text-ink outline-none transition-colors data-[highlighted]:bg-emerald-soft data-[state=open]:bg-emerald-soft">
-                  Extend Retention
+                  {t('fileMenu.extendRetention')}
                   <span aria-hidden>›</span>
                 </DropdownMenu.SubTrigger>
                 <DropdownMenu.Portal>
@@ -276,14 +283,14 @@ export default function FileOptionsMenu({ doc, onRenamed, onDeleted, onDuplicate
                       onClick={() => handleExtend(7)}
                       className="cursor-pointer select-none rounded-md px-2.5 py-2 text-[12px] text-ink outline-none transition-colors data-[highlighted]:bg-emerald-soft"
                     >
-                      7 days
+                      {t('settings.retention7d')}
                     </DropdownMenu.Item>
                     <DropdownMenu.Item
                       onSelect={(e) => e.preventDefault()}
                       onClick={() => handleExtend(30)}
                       className="cursor-pointer select-none rounded-md px-2.5 py-2 text-[12px] text-ink outline-none transition-colors data-[highlighted]:bg-emerald-soft"
                     >
-                      30 days
+                      {t('settings.retention30d')}
                     </DropdownMenu.Item>
                   </DropdownMenu.SubContent>
                 </DropdownMenu.Portal>
@@ -295,7 +302,7 @@ export default function FileOptionsMenu({ doc, onRenamed, onDeleted, onDuplicate
               onSelect={handleDelete}
               className="cursor-pointer select-none rounded-md px-2.5 py-2 text-[13px] text-redline outline-none transition-colors data-[highlighted]:bg-red-50"
             >
-              Delete
+              {t('library.delete')}
             </DropdownMenu.Item>
           </DropdownMenu.Content>
         </DropdownMenu.Portal>
@@ -329,12 +336,13 @@ function MenuItem({
 }
 
 function LockBadge() {
+  const { t } = useLocale();
   return (
     <span className="flex items-center gap-1">
       <span aria-hidden className="text-[10px]">
         🔒
       </span>
-      <span className="rounded bg-navy-light px-1 py-0.5 font-mono text-[8px] font-semibold text-white">PRO</span>
+      <span className="rounded bg-navy-light px-1 py-0.5 font-mono text-[8px] font-semibold text-white">{t('toolsIndex.pro')}</span>
     </span>
   );
 }
@@ -351,6 +359,7 @@ function RenameDialog({
   onRenamed: (doc: LibraryDocumentSummary) => void;
 }) {
   const { token } = useAuth();
+  const { t } = useLocale();
   const [name, setName] = useState(doc.filename);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -361,10 +370,10 @@ function RenameDialog({
     try {
       const updated = await renameDocument(token, doc.id, name.trim());
       onRenamed(updated);
-      showSuccess('File renamed');
+      showSuccess(t('fileMenu.fileRenamed'));
       onOpenChange(false);
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Could not rename this file.');
+      showError(err instanceof Error ? err.message : t('fileMenu.couldNotRename'));
     } finally {
       setIsSaving(false);
     }
@@ -381,7 +390,7 @@ function RenameDialog({
       <Dialog.Portal>
         <Dialog.Overlay className="overlay-dim fixed inset-0 z-50" />
         <Dialog.Content className="animate-modal-in fixed left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-level-4">
-          <Dialog.Title className="font-serif text-lg font-semibold text-navy">Rename file</Dialog.Title>
+          <Dialog.Title className="font-serif text-lg font-semibold text-navy">{t('fileMenu.renameFileTitle')}</Dialog.Title>
           <form onSubmit={handleSave} className="mt-4">
             <input
               type="text"
@@ -393,7 +402,7 @@ function RenameDialog({
             <div className="mt-5 flex justify-end gap-3">
               <Dialog.Close asChild>
                 <button type="button" className="text-sm font-medium text-ink-soft hover:text-ink">
-                  Cancel
+                  {t('settings.cancel')}
                 </button>
               </Dialog.Close>
               <button
@@ -401,7 +410,7 @@ function RenameDialog({
                 disabled={isSaving || !name.trim()}
                 className="rounded-lg bg-emerald px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
               >
-                {isSaving ? 'Saving…' : 'Save'}
+                {isSaving ? t('common.saving') : t('common.save')}
               </button>
             </div>
           </form>

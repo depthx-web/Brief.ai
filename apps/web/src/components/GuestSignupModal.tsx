@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import * as Dialog from '@radix-ui/react-dialog';
 import { useAuth } from '@/lib/AuthContext';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 import GoogleSignInButton from './GoogleSignInButton';
 
 interface Props {
@@ -18,6 +19,7 @@ interface Props {
 // them to a separate flow.
 export default function GuestSignupModal({ open, onClose, toolName }: Props) {
   const { signup } = useAuth();
+  const { t } = useLocale();
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -29,7 +31,7 @@ export default function GuestSignupModal({ open, onClose, toolName }: Props) {
     e.preventDefault();
     setError(null);
     if (password.length < 8) {
-      setError('Password must be at least 8 characters.');
+      setError(t('auth.passwordMinLength'));
       return;
     }
     setIsSubmitting(true);
@@ -38,7 +40,7 @@ export default function GuestSignupModal({ open, onClose, toolName }: Props) {
       onClose();
       router.push('/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not create an account.');
+      setError(err instanceof Error ? err.message : t('auth.couldNotCreateAccount'));
     } finally {
       setIsSubmitting(false);
     }
@@ -50,18 +52,18 @@ export default function GuestSignupModal({ open, onClose, toolName }: Props) {
         <Dialog.Overlay className="overlay-dim fixed inset-0 z-50" />
         <Dialog.Content className="animate-modal-in fixed left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-7 shadow-level-4">
           <Dialog.Title className="font-serif text-xl font-medium text-navy">
-            Create a free account
+            {t('guestSignup.title')}
           </Dialog.Title>
           <Dialog.Description className="mt-1 text-sm text-ink-soft">
-            {toolName ? `${toolName} needs an account with an active plan.` : 'This tool needs an account with an active plan.'}
+            {toolName ? t('guestSignup.toolNeedsAccount').replace('{tool}', toolName) : t('guestSignup.thisToolNeedsAccount')}
           </Dialog.Description>
 
           <div className="mt-5">
-            <GoogleSignInButton label="Continue with Google" />
+            <GoogleSignInButton label={t('auth.continueWithGoogle')} />
           </div>
           <div className="my-4 flex items-center gap-3 text-xs text-ink-soft">
             <span className="h-px flex-1 bg-gray-200" />
-            or
+            {t('auth.or')}
             <span className="h-px flex-1 bg-gray-200" />
           </div>
 
@@ -69,7 +71,7 @@ export default function GuestSignupModal({ open, onClose, toolName }: Props) {
             <input
               type="email"
               required
-              placeholder="Email"
+              placeholder={t('guestSignup.emailPlaceholder')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
@@ -78,7 +80,7 @@ export default function GuestSignupModal({ open, onClose, toolName }: Props) {
               type="password"
               required
               minLength={8}
-              placeholder="Password (8+ characters)"
+              placeholder={t('guestSignup.passwordPlaceholder')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
@@ -93,13 +95,13 @@ export default function GuestSignupModal({ open, onClose, toolName }: Props) {
                 className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-300 text-emerald focus:ring-emerald"
               />
               <span>
-                I agree to the{' '}
+                {t('auth.consentPrefix')}{' '}
                 <a href="/privacy" target="_blank" rel="noopener noreferrer" className="font-medium text-navy hover:text-emerald">
-                  Privacy Policy
+                  {t('auth.privacyPolicy')}
                 </a>{' '}
-                and{' '}
+                {t('auth.and')}{' '}
                 <a href="/terms" target="_blank" rel="noopener noreferrer" className="font-medium text-navy hover:text-emerald">
-                  Terms of Service
+                  {t('auth.termsOfService')}
                 </a>
               </span>
             </label>
@@ -109,14 +111,14 @@ export default function GuestSignupModal({ open, onClose, toolName }: Props) {
               disabled={!consented || isSubmitting}
               className="w-full rounded-lg bg-emerald px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
             >
-              {isSubmitting ? 'Creating account…' : 'Create account'}
+              {isSubmitting ? t('auth.creatingAccount') : t('guestSignup.createAccount')}
             </button>
           </form>
 
           <p className="mt-4 text-center text-xs text-ink-soft">
-            Already have an account?{' '}
+            {t('auth.alreadyHaveAccount')}{' '}
             <a href="/login" className="font-medium text-navy hover:text-emerald">
-              Log in
+              {t('nav.logIn')}
             </a>
           </p>
         </Dialog.Content>

@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { CATEGORY_ACCENT } from '@/lib/docTypes';
 import { COUNTDOWN_BADGE_CLASS, useCountdown } from '@/lib/retentionCountdown';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 import type { ProjectSummary } from '@/lib/libraryApi';
 import ProjectOptionsMenu from './ProjectOptionsMenu';
 
@@ -19,6 +20,7 @@ interface Props {
 // actions menu now, instead of the two interactions being merged.
 export default function ProjectCard({ project, onExtended, onDeleted, onUpgradeNeeded }: Props) {
   const { user } = useAuth();
+  const { t } = useLocale();
   const router = useRouter();
 
   const accent = user?.segment ? CATEGORY_ACCENT[user.segment] : '#0F2340';
@@ -54,7 +56,7 @@ export default function ProjectCard({ project, onExtended, onDeleted, onUpgradeN
         </div>
         <p className="mt-3 truncate font-serif text-base text-navy">{project.name}</p>
         <p className="mt-1 font-mono text-xs text-ink-soft">
-          {project.documentCount} file{project.documentCount === 1 ? '' : 's'}
+          {t(project.documentCount === 1 ? 'library.fileCountBareSingular' : 'library.fileCountBarePlural').replace('{n}', String(project.documentCount))}
         </p>
       </div>
     </div>

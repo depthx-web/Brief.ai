@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { fetchCmsPage } from '@/lib/cmsApi';
 import { useLocale } from '@/lib/i18n/LocaleContext';
 import { getToolSeoContent, type ToolFaqItem } from '@/lib/toolSeoContent';
@@ -24,13 +25,14 @@ function findTool(slug: string): { tool: Tool; tab: Tab } | null {
 export default function ToolSeoSections({ slug }: { slug: string }) {
   const found = findTool(slug);
   const { locale } = useLocale();
+  const preview = useSearchParams().get('cmsPreview') === '1';
   const defaults = getToolSeoContent(slug, locale);
   const [features, setFeatures] = useState<string[]>(defaults?.features ?? []);
   const [faq, setFaq] = useState<ToolFaqItem[]>(defaults?.faq ?? []);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   useEffect(() => {
-    fetchCmsPage(`tools-${slug}`, false, locale).then((page) => {
+    fetchCmsPage(`tools-${slug}`, preview, locale).then((page) => {
       const localizedDefaults = getToolSeoContent(slug, locale);
       const featuresSection = page?.sections.features as { items?: string[] } | undefined;
       setFeatures(featuresSection?.items?.length ? featuresSection.items : localizedDefaults?.features ?? []);
@@ -38,7 +40,7 @@ export default function ToolSeoSections({ slug }: { slug: string }) {
       setFaq(faqSection?.items?.length ? faqSection.items : localizedDefaults?.faq ?? []);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug, locale]);
+  }, [slug, locale, preview]);
 
   if (!found) return null;
 

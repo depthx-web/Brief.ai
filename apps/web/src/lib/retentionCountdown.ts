@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { useLocale } from './i18n/LocaleContext';
+import type { DictionaryKey } from './i18n/dictionaries/en';
 
 export type CountdownUrgency = 'plenty' | 'soon' | 'critical' | 'expired' | 'none';
 
@@ -21,21 +23,21 @@ export const COUNTDOWN_BADGE_CLASS: Record<CountdownUrgency, string> = {
 // (24h by default, 7d/30d if extended) nears zero. null means the
 // file/project carries no expiry at all (e.g. an empty project, or an
 // Unsorted document with no project).
-export function formatCountdown(expiresAt: string | Date | null): Countdown {
-  if (expiresAt === null) return { label: 'No expiry', urgency: 'none' };
+function formatCountdown(expiresAt: string | Date | null, t: (key: DictionaryKey) => string): Countdown {
+  if (expiresAt === null) return { label: t('countdown.noExpiry'), urgency: 'none' };
   const msLeft = new Date(expiresAt).getTime() - Date.now();
 
-  if (msLeft <= 0) return { label: 'Expired', urgency: 'expired' };
+  if (msLeft <= 0) return { label: t('countdown.expired'), urgency: 'expired' };
 
   const hoursLeft = msLeft / (60 * 60 * 1000);
   const urgency: CountdownUrgency = hoursLeft <= 1 ? 'critical' : hoursLeft <= 6 ? 'soon' : 'plenty';
 
   if (hoursLeft >= 24) {
     const days = Math.ceil(hoursLeft / 24);
-    return { label: `${days}d left`, urgency };
+    return { label: t('countdown.daysLeft').replace('{n}', String(days)), urgency };
   }
   if (hoursLeft >= 1) {
-    return { label: `${Math.ceil(hoursLeft)}h left`, urgency };
+    return { label: t('countdown.hoursLeft').replace('{n}', String(Math.ceil(hoursLeft))), urgency };
   }
   const totalMinutes = Math.max(1, Math.ceil(msLeft / (60 * 1000)));
   const hh = String(Math.floor(totalMinutes / 60)).padStart(2, '0');
@@ -48,18 +50,20 @@ export function formatCountdown(expiresAt: string | Date | null): Countdown {
 // counting down to deletion). Ticks every 30s once under an hour remains
 // (so the minutes figure stays accurate), otherwise every 60s.
 export function useCountdown(expiresAt: string | Date | null): Countdown {
-  const [countdown, setCountdown] = useState<Countdown>(() => formatCountdown(expiresAt));
+  const { t } = useLocale();
+  const [countdown, setCountdown] = useState<Countdown>(() => formatCountdown(expiresAt, t));
 
   useEffect(() => {
-    setCountdown(formatCountdown(expiresAt));
+    setCountdown(formatCountdown(expiresAt, t));
     if (expiresAt === null) return;
 
     const msLeft = new Date(expiresAt).getTime() - Date.now();
     if (msLeft <= 0) return;
     const intervalMs = msLeft <= 60 * 60 * 1000 ? 30_000 : 60_000;
-    const id = setInterval(() => setCountdown(formatCountdown(expiresAt)), intervalMs);
+    const id = setInterval(() => setCountdown(formatCountdown(expiresAt, t)), intervalMs);
     return () => clearInterval(id);
-  }, [expiresAt]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expiresAt, t]);
 
   return countdown;
 }

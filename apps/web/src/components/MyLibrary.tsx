@@ -19,6 +19,7 @@ import {
 } from '@/lib/libraryApi';
 import { showError, showSuccess, showLoading, updateLoading, resolveLoading, failLoading } from '@/lib/toast';
 import { COUNTDOWN_BADGE_CLASS, useCountdown } from '@/lib/retentionCountdown';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 import ProjectCard from './ProjectCard';
 import NewProjectUploadDialog from './NewProjectUploadDialog';
 import FileOptionsMenu from './FileOptionsMenu';
@@ -26,6 +27,7 @@ import ChangePlanModal from './ChangePlanModal';
 
 export default function MyLibrary() {
   const { token, user } = useAuth();
+  const { t } = useLocale();
   const router = useRouter();
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [unsorted, setUnsorted] = useState<LibraryDocumentSummary[]>([]);
@@ -51,7 +53,7 @@ export default function MyLibrary() {
       setProjects(projectList);
       setUnsorted(docList.filter((d) => !d.projectId));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not load your library.');
+      setError(err instanceof Error ? err.message : t('library.couldNotLoad'));
     } finally {
       setIsLoading(false);
     }
@@ -62,7 +64,7 @@ export default function MyLibrary() {
       (f) => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf')
     );
     if (files.length === 0) {
-      setError('Please select at least one PDF file.');
+      setError(t('library.selectPdfError'));
       return;
     }
     setError(null);
@@ -74,7 +76,9 @@ export default function MyLibrary() {
     const files = pendingFiles ?? [];
     setPendingFiles(null);
     const toastId = showLoading(
-      files.length > 1 ? `Uploading 1 of ${files.length} files…` : `Uploading ${files[0].name}…`,
+      files.length > 1
+        ? t('library.uploadingOneOf').replace('{n}', String(files.length))
+        : t('library.uploadingSingleFile').replace('{name}', files[0].name),
       files.length > 1 ? 0 : undefined
     );
     try {
@@ -82,17 +86,21 @@ export default function MyLibrary() {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         if (files.length > 1) {
-          updateLoading(toastId, `Uploading ${i + 1} of ${files.length} files…`, (i / files.length) * 100);
+          updateLoading(
+            toastId,
+            t('library.uploadingProgress').replace('{i}', String(i + 1)).replace('{n}', String(files.length)),
+            (i / files.length) * 100
+          );
         }
         const pages = await extractPdfText(file);
         const fullText = pages.map((p) => p.text).join('\n\n');
         if (!fullText.trim()) continue;
         await uploadDocument(token, file, fullText, details.category, project.id, details.retentionDays);
       }
-      resolveLoading(toastId, `${details.name} uploaded`);
+      resolveLoading(toastId, t('library.uploadedNamed').replace('{name}', details.name));
       await refreshLibrary(token);
     } catch (err) {
-      failLoading(toastId, err instanceof Error ? err.message : 'Could not upload these files.');
+      failLoading(toastId, err instanceof Error ? err.message : t('library.couldNotUploadFiles'));
     }
   }
 
@@ -102,9 +110,9 @@ export default function MyLibrary() {
       await deleteDocument(token, id);
       setUnsorted((prev) => prev.filter((d) => d.id !== id));
       setResults((prev) => (prev ? prev.filter((d) => d.id !== id) : prev));
-      showSuccess('File deleted');
+      showSuccess(t('library.fileDeleted'));
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Could not delete this document.');
+      showError(err instanceof Error ? err.message : t('library.couldNotDelete'));
     }
   }
 
@@ -113,7 +121,7 @@ export default function MyLibrary() {
     try {
       await downloadDocument(token, id, filename);
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Could not download this document.');
+      showError(err instanceof Error ? err.message : t('library.couldNotDownload'));
     }
   }
 
@@ -125,7 +133,7 @@ export default function MyLibrary() {
     try {
       setResults(await searchLibrary(token, query.trim()));
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Search failed.');
+      setError(err instanceof Error ? err.message : t('library.searchFailed'));
     } finally {
       setIsSearching(false);
     }
@@ -144,25 +152,23 @@ export default function MyLibrary() {
       <div className="flex items-center justify-between">
         {desktop ? (
           <div>
-            <h1 className="font-serif text-2xl font-medium text-navy">Library</h1>
+            <h1 className="font-serif text-2xl font-medium text-navy">{t('library.desktopTitle')}</h1>
             <div className="mt-1.5 flex items-center gap-1.5 font-mono text-xs text-ink-soft">
               <span className="h-[5px] w-[5px] rounded-full bg-emerald" />
-              {totalFiles} file{totalFiles === 1 ? '' : 's'} &middot; stored on this device
+              {t(totalFiles === 1 ? 'library.fileCountSingular' : 'library.fileCountPlural').replace('{n}', String(totalFiles))}
             </div>
           </div>
         ) : (
           <div>
-            <h1 className="font-serif text-2xl font-medium text-navy">My Library</h1>
-            <p className="mt-1 text-sm text-ink-soft">
-              Files are grouped into projects — search across everything by meaning, not just keywords.
-            </p>
+            <h1 className="font-serif text-2xl font-medium text-navy">{t('library.webTitle')}</h1>
+            <p className="mt-1 text-sm text-ink-soft">{t('library.webSubtitle')}</p>
           </div>
         )}
         <button
           onClick={() => inputRef.current?.click()}
           className="rounded-md bg-emerald px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-dark"
         >
-          New Project
+          {t('library.newProject')}
         </button>
         <input
           ref={inputRef}
@@ -182,7 +188,7 @@ export default function MyLibrary() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search your library by meaning…"
+            placeholder={t('library.searchPlaceholder')}
             className="w-full rounded-md border border-navy-light/30 py-2.5 ps-4 pe-10 text-sm"
           />
           <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-ink-soft">⌕</span>
@@ -192,7 +198,7 @@ export default function MyLibrary() {
           disabled={isSearching || !query.trim()}
           className="rounded-md bg-navy px-4 py-2 text-sm font-medium text-white hover:bg-navy-light disabled:cursor-not-allowed disabled:bg-gray-300"
         >
-          {isSearching ? 'Searching…' : 'Search'}
+          {isSearching ? t('library.searching') : t('library.search')}
         </button>
         {results && (
           <button
@@ -203,7 +209,7 @@ export default function MyLibrary() {
             }}
             className="rounded-md border border-gray-300 px-4 py-2 text-sm text-ink-soft hover:bg-gray-50"
           >
-            Clear
+            {t('library.clear')}
           </button>
         )}
       </form>
@@ -211,11 +217,11 @@ export default function MyLibrary() {
       {results ? (
         <div className="mt-8">
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-ink-soft">
-            Results for &ldquo;{query}&rdquo;
+            {t('library.resultsFor').replace('{query}', query)}
           </h2>
           {results.length === 0 ? (
             <div className="shadow-level-1 rounded-xl border border-gray-200 bg-white px-6 py-10 text-center">
-              <p className="text-sm text-ink-soft">No matches.</p>
+              <p className="text-sm text-ink-soft">{t('library.noMatches')}</p>
             </div>
           ) : (
             <div className={cardGridClass}>
@@ -234,15 +240,13 @@ export default function MyLibrary() {
       ) : (
         <div className="mt-8">
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-ink-soft">
-            {projects.length} Project{projects.length === 1 ? '' : 's'}
+            {t(projects.length === 1 ? 'library.projectCountSingular' : 'library.projectCountPlural').replace('{n}', String(projects.length))}
           </h2>
           {isLoading ? (
-            <p className="text-sm text-ink-soft">Loading…</p>
+            <p className="text-sm text-ink-soft">{t('common.loading')}</p>
           ) : projects.length === 0 && unsorted.length === 0 ? (
             <div className="shadow-level-1 rounded-xl border border-gray-200 bg-white px-6 py-10 text-center">
-              <p className="text-sm text-ink-soft">
-                No projects yet — add your first document above to get started.
-              </p>
+              <p className="text-sm text-ink-soft">{t('library.noProjectsYet')}</p>
             </div>
           ) : (
             <div className={cardGridClass}>
@@ -260,7 +264,7 @@ export default function MyLibrary() {
 
           {unsorted.length > 0 && (
             <div className="mt-10">
-              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-ink-soft">Unsorted</h2>
+              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-ink-soft">{t('library.unsorted')}</h2>
               <div className={cardGridClass}>
                 {unsorted.map((doc) => (
                   <UnsortedDocumentCard
@@ -308,6 +312,7 @@ function UnsortedDocumentCard({
   onUpgradeNeeded: () => void;
 }) {
   const countdown = useCountdown(doc.expiresAt);
+  const { locale } = useLocale();
 
   return (
     <div className="shadow-level-1 flex flex-col rounded-lg border border-gray-200 bg-white p-4">
@@ -324,7 +329,7 @@ function UnsortedDocumentCard({
         />
       </div>
       <div className="mt-3 flex items-center justify-between gap-2">
-        <span className="text-xs text-ink-soft">{new Date(doc.createdAt).toLocaleDateString()}</span>
+        <span className="text-xs text-ink-soft">{new Date(doc.createdAt).toLocaleDateString(locale)}</span>
         <span
           className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${COUNTDOWN_BADGE_CLASS[countdown.urgency]}`}
         >
@@ -347,6 +352,7 @@ function SearchResultCard({
   onDelete: () => void;
 }) {
   const countdown = useCountdown(doc.expiresAt);
+  const { t, locale } = useLocale();
 
   return (
     <div className="shadow-level-1 flex flex-col rounded-lg border border-gray-200 bg-white p-4">
@@ -358,11 +364,11 @@ function SearchResultCard({
       </p>
       {!doc.isOwn && (
         <span className="mt-1 w-fit rounded-full bg-emerald-soft px-2 py-0.5 text-[10px] font-medium text-emerald">
-          Shared with you
+          {t('library.sharedWithYou')}
         </span>
       )}
       <div className="mt-3 flex items-center justify-between gap-2">
-        <span className="text-xs text-ink-soft">{new Date(doc.createdAt).toLocaleDateString()}</span>
+        <span className="text-xs text-ink-soft">{new Date(doc.createdAt).toLocaleDateString(locale)}</span>
         <span
           className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${COUNTDOWN_BADGE_CLASS[countdown.urgency]}`}
         >
@@ -371,11 +377,11 @@ function SearchResultCard({
       </div>
       <div className="mt-2 flex gap-3 text-xs">
         <button onClick={onDownload} className="font-medium text-navy hover:text-emerald">
-          Download
+          {t('library.download')}
         </button>
         {doc.isOwn && (
           <button onClick={onDelete} className="font-medium text-ink-soft hover:text-redline">
-            Delete
+            {t('library.delete')}
           </button>
         )}
       </div>

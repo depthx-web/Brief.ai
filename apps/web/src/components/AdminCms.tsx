@@ -82,7 +82,13 @@ const PREVIEW_ORIGIN = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000
 // the root path, every other page's slug matches its route 1:1.
 const PAGE_PATH: Record<string, string> = { home: '/' };
 function pathForSlug(slug: string): string {
-  return PAGE_PATH[slug] ?? `/${slug}`;
+  if (PAGE_PATH[slug]) return PAGE_PATH[slug];
+  // Every individual tool page is stored under CMS slug `tools-<route>` (see
+  // cms.service.ts's TOOL_PAGE_SLUGS) but actually lives at `/<route>`, not
+  // `/tools-<route>` — this affected 35 of the ~39 CMS-managed pages, i.e.
+  // "most pages", until fixed.
+  if (slug.startsWith('tools-')) return `/${slug.slice('tools-'.length)}`;
+  return `/${slug}`;
 }
 
 // The desktop-home preview otherwise shows whichever segment's announcement

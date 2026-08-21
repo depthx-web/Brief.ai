@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { listDocuments, listProjects, fetchDocumentFile, type LibraryDocumentSummary } from '@/lib/libraryApi';
 import { setPendingToolFile } from '@/lib/pendingToolFile';
 import { showError } from '@/lib/toast';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 
 interface Props {
   open: boolean;
@@ -21,6 +22,7 @@ interface Props {
 
 export default function ToolSourceModal({ open, href, onClose, onPick }: Props) {
   const { token } = useAuth();
+  const { t } = useLocale();
   const router = useRouter();
   const [step, setStep] = useState<'choose' | 'library'>('choose');
   const [projectCount, setProjectCount] = useState<number | null>(null);
@@ -56,7 +58,7 @@ export default function ToolSourceModal({ open, href, onClose, onPick }: Props) 
       try {
         setDocs(await listDocuments(token));
       } catch (err) {
-        showError(err instanceof Error ? err.message : 'Could not load your library.');
+        showError(err instanceof Error ? err.message : t('library.couldNotLoad'));
       }
     }
   }
@@ -68,7 +70,7 @@ export default function ToolSourceModal({ open, href, onClose, onPick }: Props) 
       const file = await fetchDocumentFile(token, doc.id, doc.filename);
       handleFileChosen(file);
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Could not load this file.');
+      showError(err instanceof Error ? err.message : t('fileMenu.couldNotOpen'));
     } finally {
       setLoadingDocId(null);
     }
@@ -81,7 +83,7 @@ export default function ToolSourceModal({ open, href, onClose, onPick }: Props) 
         <Dialog.Content className="animate-modal-in fixed left-1/2 top-1/2 z-50 w-full max-w-[480px] -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-7 shadow-level-4">
           {step === 'choose' ? (
             <>
-              <Dialog.Title className="font-serif text-xl font-medium text-navy">Choose a file</Dialog.Title>
+              <Dialog.Title className="font-serif text-xl font-medium text-navy">{t('toolSource.chooseFile')}</Dialog.Title>
               <div className="mt-6 grid grid-cols-2 gap-3">
                 <button
                   onClick={() => fileInputRef.current?.click()}
@@ -90,8 +92,8 @@ export default function ToolSourceModal({ open, href, onClose, onPick }: Props) 
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-7 w-7 text-navy">
                     <path d="M7 18a4.6 4.4 0 0 1 0-9 5 4.5 0 0 1 9.8-1.5A4.5 4.5 0 0 1 18 18H7Z" strokeLinejoin="round" />
                   </svg>
-                  <span className="text-sm font-medium text-ink">Upload a new file</span>
-                  <span className="text-xs text-ink-soft">From your device</span>
+                  <span className="text-sm font-medium text-ink">{t('toolSource.uploadNewFile')}</span>
+                  <span className="text-xs text-ink-soft">{t('toolSource.fromYourDevice')}</span>
                 </button>
                 <button
                   onClick={openLibraryStep}
@@ -100,9 +102,9 @@ export default function ToolSourceModal({ open, href, onClose, onPick }: Props) 
                   <span aria-hidden className="text-2xl">
                     📎
                   </span>
-                  <span className="text-sm font-medium text-ink">Choose from Library</span>
+                  <span className="text-sm font-medium text-ink">{t('toolSource.chooseFromLibrary')}</span>
                   <span className="text-xs text-ink-soft">
-                    From your projects{projectCount !== null ? ` (${projectCount})` : ''}
+                    {t('toolSource.fromYourProjects')}{projectCount !== null ? ` (${projectCount})` : ''}
                   </span>
                 </button>
               </div>
@@ -117,16 +119,16 @@ export default function ToolSourceModal({ open, href, onClose, onPick }: Props) 
           ) : (
             <>
               <div className="flex items-center gap-2">
-                <button onClick={() => setStep('choose')} className="text-ink-soft hover:text-ink" aria-label="Back">
+                <button onClick={() => setStep('choose')} className="text-ink-soft hover:text-ink" aria-label={t('referral.back')}>
                   ←
                 </button>
-                <Dialog.Title className="font-serif text-xl font-medium text-navy">Choose from Library</Dialog.Title>
+                <Dialog.Title className="font-serif text-xl font-medium text-navy">{t('toolSource.chooseFromLibrary')}</Dialog.Title>
               </div>
               <div className="mt-4 max-h-72 overflow-y-auto">
                 {!docs ? (
-                  <p className="text-sm text-ink-soft">Loading…</p>
+                  <p className="text-sm text-ink-soft">{t('common.loading')}</p>
                 ) : docs.length === 0 ? (
-                  <p className="text-sm text-ink-soft">Your library is empty.</p>
+                  <p className="text-sm text-ink-soft">{t('toolSource.libraryEmpty')}</p>
                 ) : (
                   <ul className="divide-y divide-gray-100">
                     {docs.map((doc) => (
@@ -137,7 +139,7 @@ export default function ToolSourceModal({ open, href, onClose, onPick }: Props) 
                           className="flex w-full items-center justify-between gap-2 rounded-md px-2 py-2.5 text-start hover:bg-gray-50 disabled:opacity-50"
                         >
                           <span className="truncate font-mono text-sm text-ink">{doc.filename}</span>
-                          {loadingDocId === doc.id && <span className="text-xs text-ink-soft">Loading…</span>}
+                          {loadingDocId === doc.id && <span className="text-xs text-ink-soft">{t('common.loading')}</span>}
                         </button>
                       </li>
                     ))}

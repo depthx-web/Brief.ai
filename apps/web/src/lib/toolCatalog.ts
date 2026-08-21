@@ -1,4 +1,5 @@
 import type { Segment } from './authApi';
+import type { DictionaryKey } from './i18n/dictionaries/en';
 
 // Plain data, deliberately NOT in ToolsIndex.tsx ('use client') — a server
 // context (e.g. a page's generateMetadata) importing a named export from a
@@ -240,3 +241,51 @@ export const TOOLS_BY_TAB: Record<Tab, Tool[]> = {
     },
   ],
 };
+
+// Display-only translation of each tool's name/description above, keyed by
+// the canonical (English) name — the English name/description themselves
+// stay put since server code (generateMetadata, SEO) reads them directly;
+// this only changes what a client component like ToolsIndex renders.
+const TOOL_LABEL_KEY: Record<string, { nameKey: DictionaryKey; descriptionKey: DictionaryKey }> = {
+  'PDF to Images': { nameKey: 'tool.pdfToImages.name', descriptionKey: 'tool.pdfToImages.description' },
+  'Images to PDF': { nameKey: 'tool.imagesToPdf.name', descriptionKey: 'tool.imagesToPdf.description' },
+  'Word to PDF': { nameKey: 'tool.wordToPdf.name', descriptionKey: 'tool.wordToPdf.description' },
+  'PDF to Word': { nameKey: 'tool.pdfToWord.name', descriptionKey: 'tool.pdfToWord.description' },
+  'Excel to PDF': { nameKey: 'tool.excelToPdf.name', descriptionKey: 'tool.excelToPdf.description' },
+  'PDF to Excel': { nameKey: 'tool.pdfToExcel.name', descriptionKey: 'tool.pdfToExcel.description' },
+  'PowerPoint to PDF': { nameKey: 'tool.powerpointToPdf.name', descriptionKey: 'tool.powerpointToPdf.description' },
+  'PDF to PowerPoint': { nameKey: 'tool.pdfToPowerpoint.name', descriptionKey: 'tool.pdfToPowerpoint.description' },
+  'PDF to Text': { nameKey: 'tool.pdfToText.name', descriptionKey: 'tool.pdfToText.description' },
+  'PDF to Web Page': { nameKey: 'tool.pdfToHtml.name', descriptionKey: 'tool.pdfToHtml.description' },
+  Merge: { nameKey: 'tool.merge.name', descriptionKey: 'tool.merge.description' },
+  Split: { nameKey: 'tool.split.name', descriptionKey: 'tool.split.description' },
+  Reorder: { nameKey: 'tool.reorder.name', descriptionKey: 'tool.reorder.description' },
+  'Delete Pages': { nameKey: 'tool.deletePages.name', descriptionKey: 'tool.deletePages.description' },
+  Rotate: { nameKey: 'tool.rotate.name', descriptionKey: 'tool.rotate.description' },
+  'Page Numbers': { nameKey: 'tool.pageNumbers.name', descriptionKey: 'tool.pageNumbers.description' },
+  Compress: { nameKey: 'tool.compress.name', descriptionKey: 'tool.compress.description' },
+  'Compress (High Ratio)': { nameKey: 'tool.compressHighRatio.name', descriptionKey: 'tool.compressHighRatio.description' },
+  OCR: { nameKey: 'tool.ocr.name', descriptionKey: 'tool.ocr.description' },
+  Sign: { nameKey: 'tool.sign.name', descriptionKey: 'tool.sign.description' },
+  Protect: { nameKey: 'tool.protect.name', descriptionKey: 'tool.protect.description' },
+  'Remove Password': { nameKey: 'tool.removePassword.name', descriptionKey: 'tool.removePassword.description' },
+  Watermark: { nameKey: 'tool.watermark.name', descriptionKey: 'tool.watermark.description' },
+  'Batch Invoice Export': { nameKey: 'tool.batchInvoiceExport.name', descriptionKey: 'tool.batchInvoiceExport.description' },
+  'Contract Compare': { nameKey: 'tool.contractCompare.name', descriptionKey: 'tool.contractCompare.description' },
+  'High-Risk Clause Detector': { nameKey: 'tool.highRiskClauses.name', descriptionKey: 'tool.highRiskClauses.description' },
+  'Plain-Language Summary Generator': { nameKey: 'tool.plainSummary.name', descriptionKey: 'tool.plainSummary.description' },
+  'Quick NDA Auditor': { nameKey: 'tool.ndaAudit.name', descriptionKey: 'tool.ndaAudit.description' },
+  'Auto-Redaction of Sensitive Data': { nameKey: 'tool.redactionDetector.name', descriptionKey: 'tool.redactionDetector.description' },
+  'Duplicate Payment Detector': { nameKey: 'tool.duplicatePayments.name', descriptionKey: 'tool.duplicatePayments.description' },
+  'Financial Ratio Analyzer': { nameKey: 'tool.financialRatios.name', descriptionKey: 'tool.financialRatios.description' },
+  'Bank Reconciliation Assistant': { nameKey: 'tool.bankReconciliation.name', descriptionKey: 'tool.bankReconciliation.description' },
+  'Tax-Deductible Expense Flagger': { nameKey: 'tool.taxDeductible.name', descriptionKey: 'tool.taxDeductible.description' },
+  'Chat with the Paper': { nameKey: 'tool.chatWithPaper.name', descriptionKey: 'tool.chatWithPaper.description' },
+  'Multi-Paper Compare': { nameKey: 'tool.multiPaperCompare.name', descriptionKey: 'tool.multiPaperCompare.description' },
+  'Methodology Extractor': { nameKey: 'tool.methodologyExtractor.name', descriptionKey: 'tool.methodologyExtractor.description' },
+  'Presentation Outline Generator': { nameKey: 'tool.presentationOutline.name', descriptionKey: 'tool.presentationOutline.description' },
+};
+
+export function toolLabelKeys(toolName: string): { nameKey: DictionaryKey; descriptionKey: DictionaryKey } | null {
+  return TOOL_LABEL_KEY[toolName] ?? null;
+}

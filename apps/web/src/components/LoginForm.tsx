@@ -23,7 +23,7 @@ export default function LoginForm() {
       await login(email.trim(), password);
       router.push('/dashboard');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not log in.');
+      setError(err instanceof Error ? err.message : t('auth.couldNotLogIn'));
     } finally {
       setIsSubmitting(false);
     }
@@ -39,7 +39,7 @@ export default function LoginForm() {
         </div>
         <div className="my-5 flex items-center gap-3 text-xs text-ink-soft">
           <span className="h-px flex-1 bg-gray-200" />
-          or
+          {t('auth.or')}
           <span className="h-px flex-1 bg-gray-200" />
         </div>
 
@@ -72,12 +72,12 @@ export default function LoginForm() {
             disabled={isSubmitting}
             className="w-full rounded-lg bg-emerald px-6 py-3 font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
           >
-            {isSubmitting ? 'Logging in…' : t('auth.logInTitle')}
+            {isSubmitting ? t('auth.loggingIn') : t('auth.logInTitle')}
           </button>
         </form>
 
         <p className="mt-4 text-sm text-ink-soft">
-          Don&apos;t have an account?{' '}
+          {t('auth.dontHaveAccount')}{' '}
           <a href="/signup" className="font-medium text-navy hover:text-emerald">
             {t('nav.signUp')}
           </a>

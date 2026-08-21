@@ -17,9 +17,11 @@ import {
   type MemberProject,
 } from '@/lib/teamApi';
 import { showError, showSuccess } from '@/lib/toast';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 
 export default function TeamSettings() {
   const { user, token } = useAuth();
+  const { t } = useLocale();
   const [team, setTeam] = useState<MyTeam | null | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
   const [managingMember, setManagingMember] = useState<TeamMemberSummary | null>(null);
@@ -29,7 +31,7 @@ export default function TeamSettings() {
     fetchMyTeam(token)
       .then(setTeam)
       .catch((err) => {
-        setError(err instanceof Error ? err.message : 'Could not load your team.');
+        setError(err instanceof Error ? err.message : t('team.couldNotLoad'));
         setTeam(null);
       });
   }
@@ -40,7 +42,7 @@ export default function TeamSettings() {
 
   return (
     <section className="mt-8 border-t border-[#EEF1F4] pt-8">
-      <h2 className="font-serif text-lg font-semibold text-navy">Team</h2>
+      <h2 className="font-serif text-lg font-semibold text-navy">{t('settings.team')}</h2>
       {error && <p className="mt-2 text-sm text-redline">{error}</p>}
 
       {!team ? (
@@ -63,6 +65,7 @@ export default function TeamSettings() {
 
 function CreateTeamCard({ isPaid, onCreated }: { isPaid: boolean; onCreated: () => void }) {
   const { token } = useAuth();
+  const { t } = useLocale();
   const [name, setName] = useState('');
   const [isCreating, setIsCreating] = useState(false);
 
@@ -71,10 +74,10 @@ function CreateTeamCard({ isPaid, onCreated }: { isPaid: boolean; onCreated: () 
     setIsCreating(true);
     try {
       await createTeam(token, name.trim());
-      showSuccess('Team created');
+      showSuccess(t('team.teamCreated'));
       onCreated();
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Could not create a team.');
+      showError(err instanceof Error ? err.message : t('team.couldNotCreateTeam'));
     } finally {
       setIsCreating(false);
     }
@@ -83,7 +86,7 @@ function CreateTeamCard({ isPaid, onCreated }: { isPaid: boolean; onCreated: () 
   if (!isPaid) {
     return (
       <p className="mt-2 text-sm text-ink-soft">
-        Team accounts are included with a paid plan — upgrade to invite teammates and share projects.
+        {t('team.paidPlanRequired')}
       </p>
     );
   }
@@ -94,7 +97,7 @@ function CreateTeamCard({ isPaid, onCreated }: { isPaid: boolean; onCreated: () 
         type="text"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder="Team name"
+        placeholder={t('team.teamNamePlaceholder')}
         className="w-64 rounded-md border border-gray-300 px-3 py-2 text-sm"
       />
       <button
@@ -102,7 +105,7 @@ function CreateTeamCard({ isPaid, onCreated }: { isPaid: boolean; onCreated: () 
         disabled={isCreating || !name.trim()}
         className="rounded-lg bg-emerald px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
       >
-        {isCreating ? 'Creating…' : 'Create team'}
+        {isCreating ? t('team.creating') : t('team.createTeam')}
       </button>
     </div>
   );
@@ -118,6 +121,7 @@ function TeamCard({
   onManageMember: (m: TeamMemberSummary) => void;
 }) {
   const { token } = useAuth();
+  const { t, locale } = useLocale();
   const [inviteEmail, setInviteEmail] = useState('');
   const [isInviting, setIsInviting] = useState(false);
 
@@ -127,11 +131,11 @@ function TeamCard({
     setIsInviting(true);
     try {
       await inviteTeamMember(token, team.id, inviteEmail.trim());
-      showSuccess('Invitation sent');
+      showSuccess(t('team.invitationSent'));
       setInviteEmail('');
       onChanged();
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Could not send this invitation.');
+      showError(err instanceof Error ? err.message : t('team.couldNotSendInvitation'));
     } finally {
       setIsInviting(false);
     }
@@ -141,10 +145,10 @@ function TeamCard({
     if (!token) return;
     try {
       await revokeInvitation(token, id);
-      showSuccess('Invitation revoked');
+      showSuccess(t('team.invitationRevoked'));
       onChanged();
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Could not revoke this invitation.');
+      showError(err instanceof Error ? err.message : t('team.couldNotRevokeInvitation'));
     }
   }
 
@@ -158,13 +162,15 @@ function TeamCard({
             <div>
               <p className="text-ink">{m.name || m.email}</p>
               <p className="text-xs text-ink-soft">
-                {m.role === 'OWNER' ? 'Owner' : 'Member'} · joined {new Date(m.joinedAt).toLocaleDateString()}
-                {m.monthlyUsage !== null && ` · ${m.monthlyUsage} credit${m.monthlyUsage === 1 ? '' : 's'} this month`}
+                {m.role === 'OWNER' ? t('team.roleOwner') : t('team.roleMember')} ·{' '}
+                {t('team.joined').replace('{date}', new Date(m.joinedAt).toLocaleDateString(locale))}
+                {m.monthlyUsage !== null &&
+                  ` · ${t(m.monthlyUsage === 1 ? 'team.creditsThisMonthSingular' : 'team.creditsThisMonthPlural').replace('{n}', String(m.monthlyUsage))}`}
               </p>
             </div>
             {team.isOwner && m.role !== 'OWNER' && (
               <button onClick={() => onManageMember(m)} className="text-xs font-medium text-navy hover:text-emerald">
-                Manage
+                {t('team.manage')}
               </button>
             )}
           </div>
@@ -178,7 +184,7 @@ function TeamCard({
               type="email"
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
-              placeholder="teammate@email.com"
+              placeholder={t('team.teammateEmailPlaceholder')}
               className="w-64 rounded-md border border-gray-300 px-3 py-2 text-sm"
             />
             <button
@@ -186,7 +192,7 @@ function TeamCard({
               disabled={isInviting || !inviteEmail.trim()}
               className="rounded-lg bg-emerald px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
             >
-              {isInviting ? 'Sending…' : 'Send invite'}
+              {isInviting ? t('settings.sending') : t('team.sendInvite')}
             </button>
           </form>
 
@@ -196,10 +202,12 @@ function TeamCard({
                 <div key={inv.id} className="flex items-center justify-between border-b border-gray-100 px-4 py-2.5 text-sm last:border-b-0">
                   <div>
                     <p className="text-ink">{inv.email}</p>
-                    <p className="text-xs text-ink-soft">Sent {new Date(inv.createdAt).toLocaleDateString()} · Pending</p>
+                    <p className="text-xs text-ink-soft">
+                      {t('team.sentPending').replace('{date}', new Date(inv.createdAt).toLocaleDateString(locale))}
+                    </p>
                   </div>
                   <button onClick={() => handleRevoke(inv.id)} className="text-xs font-medium text-redline hover:underline">
-                    Revoke
+                    {t('team.revoke')}
                   </button>
                 </div>
               ))}
@@ -223,6 +231,7 @@ function MemberDrawer({
   onChanged: () => void;
 }) {
   const { token } = useAuth();
+  const { t } = useLocale();
   const [budgetDraft, setBudgetDraft] = useState(member.tokenBudgetOverride?.toString() ?? '');
   const [canShare, setCanShare] = useState(member.canShareProjects);
   const [projects, setProjects] = useState<MemberProject[] | null>(null);
@@ -241,9 +250,9 @@ function MemberDrawer({
     try {
       const value = budgetDraft.trim() === '' ? null : Number(budgetDraft);
       await setMemberBudget(token, teamId, member.userId, Number.isFinite(value) ? value : null);
-      showSuccess('Saved successfully');
+      showSuccess(t('projectDetail.savedSuccess'));
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Could not save the budget.');
+      showError(err instanceof Error ? err.message : t('team.couldNotSaveBudget'));
     } finally {
       setIsSaving(false);
     }
@@ -257,7 +266,7 @@ function MemberDrawer({
       await setCanShareProjects(token, teamId, member.userId, next);
     } catch (err) {
       setCanShare(!next);
-      showError(err instanceof Error ? err.message : 'Could not update this setting.');
+      showError(err instanceof Error ? err.message : t('team.couldNotUpdateSetting'));
     }
   }
 
@@ -269,7 +278,7 @@ function MemberDrawer({
       setProjects((prev) => prev?.map((p) => (p.id === project.id ? { ...p, visibility: next } : p)) ?? null);
       onChanged();
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Could not update this project.');
+      showError(err instanceof Error ? err.message : t('team.couldNotUpdateProject'));
     }
   }
 
@@ -282,15 +291,15 @@ function MemberDrawer({
           <Dialog.Description className="mt-1 text-sm text-ink-soft">{member.email}</Dialog.Description>
 
           <div className="mt-6">
-            <label className="block text-sm font-medium text-ink">Monthly token budget cap</label>
-            <p className="mt-1 text-xs text-ink-soft">Leave blank for no cap.</p>
+            <label className="block text-sm font-medium text-ink">{t('team.monthlyBudgetCap')}</label>
+            <p className="mt-1 text-xs text-ink-soft">{t('team.leaveBlankNoCap')}</p>
             <div className="mt-2 flex items-center gap-2">
               <input
                 type="number"
                 min={0}
                 value={budgetDraft}
                 onChange={(e) => setBudgetDraft(e.target.value)}
-                placeholder="No cap"
+                placeholder={t('team.noCap')}
                 className="w-32 rounded-md border border-gray-300 px-3 py-2 text-sm"
               />
               <button
@@ -298,13 +307,13 @@ function MemberDrawer({
                 disabled={isSaving}
                 className="rounded-lg bg-navy px-4 py-2 text-sm font-medium text-white hover:bg-navy-light disabled:cursor-not-allowed disabled:bg-gray-300"
               >
-                Save
+                {t('common.save')}
               </button>
             </div>
           </div>
 
           <label className="mt-6 flex items-center justify-between gap-3 border-t border-[#EEF1F4] pt-6">
-            <span className="text-sm font-medium text-ink">Allow this member to share their own projects</span>
+            <span className="text-sm font-medium text-ink">{t('team.allowShareOwnProjects')}</span>
             <button
               onClick={handleToggleShare}
               className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${canShare ? 'bg-emerald' : 'bg-gray-300'}`}
@@ -318,16 +327,15 @@ function MemberDrawer({
           </label>
 
           <div className="mt-6 border-t border-[#EEF1F4] pt-6">
-            <p className="text-sm font-medium text-ink">Projects</p>
+            <p className="text-sm font-medium text-ink">{t('team.projectsHeading')}</p>
             <p className="mt-1 text-xs text-ink-soft">
-              You can share or hide any of this member&apos;s projects — sharing exposes its files to you; hiding
-              always overrides their own setting.
+              {t('team.projectsShareExplanation')}
             </p>
             <div className="mt-3 space-y-2">
               {projects === null ? (
-                <p className="text-sm text-ink-soft">Loading…</p>
+                <p className="text-sm text-ink-soft">{t('common.loading')}</p>
               ) : projects.length === 0 ? (
-                <p className="text-sm text-ink-soft">No projects yet.</p>
+                <p className="text-sm text-ink-soft">{t('team.noProjectsYet')}</p>
               ) : (
                 projects.map((p) => (
                   <div key={p.id} className="flex items-center justify-between rounded-md border border-gray-200 px-3 py-2 text-sm">
@@ -338,7 +346,7 @@ function MemberDrawer({
                         p.visibility === 'SHARED_WITH_TEAM' ? 'bg-emerald-soft text-emerald' : 'bg-gray-100 text-ink-soft'
                       }`}
                     >
-                      {p.visibility === 'SHARED_WITH_TEAM' ? 'Shared →' : 'Private →'}
+                      {p.visibility === 'SHARED_WITH_TEAM' ? t('team.sharedArrow') : t('team.privateArrow')}
                     </button>
                   </div>
                 ))
@@ -347,7 +355,7 @@ function MemberDrawer({
           </div>
 
           <button onClick={onClose} className="mt-8 text-sm font-medium text-ink-soft hover:text-ink">
-            Close
+            {t('wallet.close')}
           </button>
         </Dialog.Content>
       </Dialog.Portal>

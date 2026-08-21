@@ -8,12 +8,14 @@ import { COUNTDOWN_BADGE_CLASS, useCountdown } from '@/lib/retentionCountdown';
 import { CATEGORY_ACCENT } from '@/lib/docTypes';
 import { setProjectVisibility } from '@/lib/teamApi';
 import { showError, showSuccess } from '@/lib/toast';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 import FileOptionsMenu from './FileOptionsMenu';
 import AddFilesToProjectDialog from './AddFilesToProjectDialog';
 import ChangePlanModal from './ChangePlanModal';
 
 export default function ProjectDetail({ projectId }: { projectId: string }) {
   const { token, user } = useAuth();
+  const { t } = useLocale();
   const router = useRouter();
   const [project, setProject] = useState<ProjectDetailData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -37,7 +39,7 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
       setProject(detail);
       setNameDraft(detail.name);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not load this project.');
+      setError(err instanceof Error ? err.message : t('projectDetail.couldNotLoad'));
     } finally {
       setIsLoading(false);
     }
@@ -49,9 +51,9 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
     try {
       await setProjectVisibility(token, project.id, next);
       setProject((prev) => (prev ? { ...prev, visibility: next } : prev));
-      showSuccess(next === 'SHARED_WITH_TEAM' ? 'Shared with your team' : 'Made private');
+      showSuccess(next === 'SHARED_WITH_TEAM' ? t('projectDetail.sharedWithTeamToast') : t('projectDetail.madePrivateToast'));
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Could not update sharing for this project.');
+      showError(err instanceof Error ? err.message : t('projectDetail.couldNotUpdateSharing'));
     }
   }
 
@@ -64,9 +66,9 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
     try {
       await renameProject(token, project.id, nameDraft.trim());
       setProject((prev) => (prev ? { ...prev, name: nameDraft.trim() } : prev));
-      showSuccess('Saved successfully');
+      showSuccess(t('projectDetail.savedSuccess'));
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Could not rename this project.');
+      showError(err instanceof Error ? err.message : t('projectDetail.couldNotRename'));
       setNameDraft(project.name);
     }
   }
@@ -81,15 +83,15 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
   const countdown = useCountdown(nearestExpiresAt);
 
   if (isLoading) {
-    return <div className="mx-auto max-w-5xl px-8 py-10 text-sm text-ink-soft">Loading…</div>;
+    return <div className="mx-auto max-w-5xl px-8 py-10 text-sm text-ink-soft">{t('common.loading')}</div>;
   }
 
   if (error || !project) {
     return (
       <div className="mx-auto max-w-5xl px-8 py-10">
-        <p className="text-sm text-redline">{error ?? 'Project not found.'}</p>
+        <p className="text-sm text-redline">{error ?? t('projectDetail.notFound')}</p>
         <button onClick={() => router.push('/library')} className="mt-4 text-sm font-medium text-navy hover:text-emerald">
-          ← Back to Library
+          {t('projectDetail.backToLibrary')}
         </button>
       </div>
     );
@@ -100,7 +102,7 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
   return (
     <div className="mx-auto max-w-5xl px-8 py-10">
       <div className="flex items-center gap-3">
-        <button onClick={() => router.push('/library')} className="text-ink-soft hover:text-ink" aria-label="Back to Library">
+        <button onClick={() => router.push('/library')} className="text-ink-soft hover:text-ink" aria-label={t('projectDetail.backToLibrary')}>
           ←
         </button>
 
@@ -114,7 +116,7 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
             className="rounded-md border border-emerald px-2 py-1 font-serif text-2xl font-medium text-navy outline-none"
           />
         ) : (
-          <button onClick={() => setIsEditingName(true)} className="font-serif text-2xl font-medium text-navy hover:text-emerald" title="Click to rename">
+          <button onClick={() => setIsEditingName(true)} className="font-serif text-2xl font-medium text-navy hover:text-emerald" title={t('projectDetail.clickToRename')}>
             {project.name}
           </button>
         )}
@@ -135,7 +137,7 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
               project.visibility === 'SHARED_WITH_TEAM' ? 'bg-emerald-soft text-emerald' : 'bg-gray-100 text-ink-soft'
             }`}
           >
-            {project.visibility === 'SHARED_WITH_TEAM' ? 'Shared with team' : 'Private — Share with team'}
+            {project.visibility === 'SHARED_WITH_TEAM' ? t('projectDetail.sharedWithTeam') : t('projectDetail.privateShareWithTeam')}
           </button>
         )}
 
@@ -152,7 +154,7 @@ export default function ProjectDetail({ projectId }: { projectId: string }) {
           className="flex aspect-[4/3] flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-navy-light/40 bg-white/60 text-center transition-colors hover:border-emerald hover:shadow-level-1 sm:aspect-auto sm:min-h-[132px]"
         >
           <span className="text-[28px] leading-none text-emerald">+</span>
-          <span className="text-sm text-ink-soft">Add files to this project</span>
+          <span className="text-sm text-ink-soft">{t('projectDetail.addFiles')}</span>
         </button>
 
         {project.documents.map((doc) => (
@@ -201,6 +203,7 @@ function ProjectDocumentCard({
   onUpgradeNeeded: () => void;
 }) {
   const countdown = useCountdown(doc.expiresAt);
+  const { locale } = useLocale();
 
   return (
     <div className="shadow-level-1 flex flex-col rounded-lg border border-gray-200 bg-white p-4">
@@ -217,7 +220,7 @@ function ProjectDocumentCard({
         />
       </div>
       <div className="mt-3 flex items-center justify-between gap-2">
-        <span className="text-xs text-ink-soft">{new Date(doc.createdAt).toLocaleDateString()}</span>
+        <span className="text-xs text-ink-soft">{new Date(doc.createdAt).toLocaleDateString(locale)}</span>
         <span
           className={`rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${COUNTDOWN_BADGE_CLASS[countdown.urgency]}`}
         >
