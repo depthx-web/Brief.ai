@@ -796,6 +796,42 @@ const en = {
   'toolPage.watermark.applying': 'Applying…',
   'toolPage.watermark.applyAndDownload': 'Apply Watermark & Download',
 
+  // Shared compare view (Contract Compare, Multi-Paper Compare)
+  'compareView.riskHigh': '⚠ High',
+  'compareView.riskMedium': '⚠ Medium',
+  'compareView.riskLow': 'ⓘ Low',
+  'compareView.statsLineSingular': '{additions} additions · {deletions} deletions · {reworded} clause reworded',
+  'compareView.statsLinePlural': '{additions} additions · {deletions} deletions · {reworded} clauses reworded',
+  'compareView.flaggedChanges': 'Flagged changes:',
+  'compareView.noChangesFlagged': 'No notable changes flagged.',
+  'compareView.hideExport': 'Hide export',
+  'compareView.exportReport': 'Export comparison report',
+
+  'toolPage.compare.clickToChoosePdf': 'Click to choose a PDF',
+  'toolPage.compare.couldNotReadPdf': 'Could not read this PDF.',
+
+  'toolPage.contractCompare.description': 'Upload two versions of the same contract to see exactly what changed, with AI-flagged risk on the changes that matter.',
+  'toolPage.contractCompare.oldVersion': 'Old version',
+  'toolPage.contractCompare.newVersion': 'New version',
+  'toolPage.contractCompare.comparing': 'Comparing…',
+  'toolPage.contractCompare.compareVersions': 'Compare Versions',
+  'toolPage.contractCompare.couldNotCompare': 'Could not compare these contracts.',
+  'toolPage.contractCompare.oldVersionLabel': 'Old version — {name}',
+  'toolPage.contractCompare.newVersionLabel': 'New version — {name}',
+  'toolPage.contractCompare.reportTitle': 'Contract Comparison Report',
+  'toolPage.contractCompare.compareDifferentFiles': '← Compare different files',
+
+  'toolPage.multiPaperCompare.description': 'Compare the methodology and results of two papers side by side, with AI-flagged differences that affect how the findings should be read.',
+  'toolPage.multiPaperCompare.paperA': 'Paper A',
+  'toolPage.multiPaperCompare.paperB': 'Paper B',
+  'toolPage.multiPaperCompare.comparing': 'Comparing…',
+  'toolPage.multiPaperCompare.comparePapers': 'Compare Papers',
+  'toolPage.multiPaperCompare.couldNotCompare': 'Could not compare these papers.',
+  'toolPage.multiPaperCompare.paperALabel': 'Paper A — {name}',
+  'toolPage.multiPaperCompare.paperBLabel': 'Paper B — {name}',
+  'toolPage.multiPaperCompare.reportTitle': 'Paper Comparison Report',
+  'toolPage.multiPaperCompare.compareDifferentPapers': '← Compare different papers',
+
   // Retention extend confirmation
   'retentionConfirm.title': 'Extend retention?',
   'retentionConfirm.body': 'This will be kept for {days} more days before it’s automatically deleted. Continue?',
