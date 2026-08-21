@@ -13,6 +13,7 @@ import {
   cancelUserSubscription,
   extendUserSubscription,
   refundUserLastPayment,
+  setUserPlan,
   type AdminUserSummary,
   type AdminUserDetail,
   type AdminSegment,
@@ -65,6 +66,7 @@ function UserDrawer({ userId, onClose, onChanged }: { userId: string; onClose: (
   const [extending, setExtending] = useState(false);
   const [extendDate, setExtendDate] = useState('');
   const [confirmingRefund, setConfirmingRefund] = useState(false);
+  const [settingPlan, setSettingPlan] = useState(false);
 
   useEffect(() => {
     if (!token) return;
@@ -158,6 +160,22 @@ function UserDrawer({ userId, onClose, onChanged }: { userId: string; onClose: (
       showSuccess('Renewal date updated');
     } catch (err) {
       showError(err instanceof Error ? err.message : 'Could not extend this subscription.');
+    } finally {
+      setIsActing(false);
+    }
+  }
+
+  async function handleSetPlan(plan: 'FREE' | 'PAID') {
+    if (!token) return;
+    setIsActing(true);
+    try {
+      await setUserPlan(token, userId, plan, plan === 'PAID' ? 'MONTHLY' : undefined);
+      setDetail(await fetchAdminUser(token, userId));
+      setSettingPlan(false);
+      onChanged();
+      showSuccess(`Plan set to ${plan}`);
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Could not update this plan.');
     } finally {
       setIsActing(false);
     }
@@ -357,6 +375,43 @@ function UserDrawer({ userId, onClose, onChanged }: { userId: string; onClose: (
                     className="w-full rounded-lg border border-navy-light px-4 py-2.5 text-sm font-medium text-navy-light transition-colors hover:bg-navy-light/5"
                   >
                     Manual extension
+                  </button>
+                )}
+
+                {settingPlan ? (
+                  <div className="rounded-lg border border-navy-light/40 p-3">
+                    <p className="text-xs text-ink-soft">
+                      Sets the plan directly — no Lemon Squeezy subscription is created. For comps/testing only.
+                    </p>
+                    <div className="mt-2 flex gap-2">
+                      <button
+                        onClick={() => handleSetPlan('PAID')}
+                        disabled={isActing}
+                        className="flex-1 rounded-md bg-navy px-3 py-1.5 text-xs font-medium text-white hover:bg-navy-light disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        Set PAID
+                      </button>
+                      <button
+                        onClick={() => handleSetPlan('FREE')}
+                        disabled={isActing}
+                        className="flex-1 rounded-md bg-gray-200 px-3 py-1.5 text-xs font-medium text-ink hover:bg-gray-300 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        Set FREE
+                      </button>
+                      <button
+                        onClick={() => setSettingPlan(false)}
+                        className="rounded-md px-3 py-1.5 text-xs text-ink-soft hover:text-ink"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setSettingPlan(true)}
+                    className="w-full rounded-lg border border-navy-light px-4 py-2.5 text-sm font-medium text-navy-light transition-colors hover:bg-navy-light/5"
+                  >
+                    Set plan manually (comp/testing)
                   </button>
                 )}
 

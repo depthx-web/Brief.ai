@@ -520,6 +520,17 @@ export async function refundUserLastPayment(token: string, userId: string): Prom
   return adminFetch(token, `/admin/users/${userId}/subscription/refund`, { method: 'POST' });
 }
 
+// Manual plan override — no Lemon Squeezy subscription is created, so this
+// is for comps/testing only; a real upgrade always goes through checkout.
+export async function setUserPlan(
+  token: string,
+  userId: string,
+  plan: AdminPlan,
+  billingCycle?: AdminBillingCycle
+): Promise<void> {
+  await adminFetch(token, `/admin/users/${userId}/plan`, { method: 'POST', body: { plan, billingCycle } });
+}
+
 // --- Affiliate program admin (Part 9 §4.4) ---
 
 export type AdminAffiliateLinkStatus = 'ACTIVE' | 'BLOCKED';
