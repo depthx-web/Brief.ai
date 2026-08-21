@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { fetchCmsPage } from '@/lib/cmsApi';
 import { useLocale } from '@/lib/i18n/LocaleContext';
-import { TOOL_SEO_CONTENT, type ToolFaqItem } from '@/lib/toolSeoContent';
+import { getToolSeoContent, type ToolFaqItem } from '@/lib/toolSeoContent';
 import { TOOLS_BY_TAB, type Tab, type Tool } from './ToolsIndex';
 
 function findTool(slug: string): { tool: Tool; tab: Tab } | null {
@@ -23,18 +23,19 @@ function findTool(slug: string): { tool: Tool; tab: Tab } | null {
 // fallback shown until/unless an admin publishes an override.
 export default function ToolSeoSections({ slug }: { slug: string }) {
   const found = findTool(slug);
-  const defaults = TOOL_SEO_CONTENT[slug];
   const { locale } = useLocale();
+  const defaults = getToolSeoContent(slug, locale);
   const [features, setFeatures] = useState<string[]>(defaults?.features ?? []);
   const [faq, setFaq] = useState<ToolFaqItem[]>(defaults?.faq ?? []);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   useEffect(() => {
     fetchCmsPage(`tools-${slug}`, false, locale).then((page) => {
+      const localizedDefaults = getToolSeoContent(slug, locale);
       const featuresSection = page?.sections.features as { items?: string[] } | undefined;
-      setFeatures(featuresSection?.items?.length ? featuresSection.items : defaults?.features ?? []);
+      setFeatures(featuresSection?.items?.length ? featuresSection.items : localizedDefaults?.features ?? []);
       const faqSection = page?.sections.faq as { items?: ToolFaqItem[] } | undefined;
-      setFaq(faqSection?.items?.length ? faqSection.items : defaults?.faq ?? []);
+      setFaq(faqSection?.items?.length ? faqSection.items : localizedDefaults?.faq ?? []);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug, locale]);
