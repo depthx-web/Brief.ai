@@ -45,7 +45,11 @@ async function handleResponse<T>(response: Response): Promise<T> {
     }
     throw new Error(message);
   }
-  return response.json() as Promise<T>;
+  // A controller returning `null` (e.g. GET /team/me with no team) is sent
+  // as an empty body, not the JSON literal "null" — response.json() would
+  // throw on that, so parse manually and treat empty as null.
+  const text = await response.text();
+  return (text ? JSON.parse(text) : null) as T;
 }
 
 function authHeaders(token: string): HeadersInit {

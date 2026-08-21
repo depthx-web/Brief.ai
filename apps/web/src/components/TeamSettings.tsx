@@ -28,7 +28,10 @@ export default function TeamSettings() {
     if (!token) return;
     fetchMyTeam(token)
       .then(setTeam)
-      .catch((err) => setError(err instanceof Error ? err.message : 'Could not load your team.'));
+      .catch((err) => {
+        setError(err instanceof Error ? err.message : 'Could not load your team.');
+        setTeam(null);
+      });
   }
 
   useEffect(load, [token]);
