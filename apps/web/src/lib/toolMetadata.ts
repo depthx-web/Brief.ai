@@ -29,10 +29,18 @@ export async function getToolMetadata(slug: string): Promise<Metadata> {
 
   let page: { metaTitle: string | null; metaDescription: string | null; ogImageUrl: string | null } | null = null;
   try {
-    const res = await fetch(`${API_URL}/cms/pages/tools-${slug}`, { cache: 'force-cache' });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    const res = await fetch(`${API_URL}/cms/pages/tools-${slug}`, { cache: 'force-cache', signal: controller.signal });
+    clearTimeout(timeout);
     if (res.ok) page = await res.json();
   } catch {
-    // CMS unreachable at build time — fall back to the plain defaults below.
+    // CMS unreachable (or slow/down) at build time — fall back to the plain
+    // defaults below. Without this timeout, a single unresponsive API call
+    // hangs generateMetadata() indefinitely, and since every one of these 35
+    // tool pages makes the same call, an API outage stalls the ENTIRE static
+    // export in lockstep — every page timing out and restarting together —
+    // no matter how high staticPageGenerationTimeout is raised.
   }
 
   return {
