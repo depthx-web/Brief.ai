@@ -140,7 +140,7 @@ export default function DesktopSidebar({ active }: { active: DesktopNavKey }) {
     <aside className="flex h-full w-60 shrink-0 flex-col bg-navy py-[22px] text-white">
       <Link href="/desktop-home" className="block px-5 pb-[22px]">
         <div className="font-serif text-[18px] font-semibold tracking-tight">
-          brief<span className="text-emerald">.ai</span>
+          dossier<span className="text-emerald">a</span>
         </div>
         <div className="mt-1 font-mono text-[10px] tracking-wide" style={{ color: MUTED }}>
           v1.0 &middot; desktop

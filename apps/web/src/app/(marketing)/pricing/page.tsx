@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import PricingPage from '@/components/PricingPage';
 import { fetchCmsPage } from '@/lib/cmsApi';
 
-const DEFAULT_META_TITLE = 'Pricing — Brief.ai';
+const DEFAULT_META_TITLE = 'Pricing — Dossiera';
 const DEFAULT_META_DESCRIPTION =
   'Plans for legal, accounting, and research professionals — free core tools, paid AI features per workspace.';
 

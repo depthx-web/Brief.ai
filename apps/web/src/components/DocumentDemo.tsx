@@ -21,7 +21,7 @@ const CONTENT: Record<SegmentKey, DemoContent> = {
     tabLabel: 'Legal',
     filename: 'Contract_Draft.pdf',
     page: 'p. 3/12',
-    title: "Brief.ai's Analysis",
+    title: "Dossiera's Analysis",
     lines: [
       { html: 'Termination clause <mark class="hl">30 days</mark><span class="note">shorter than typical for similar contracts</span>' },
       { html: 'Second party <span class="circ">1</span> not clearly defined on page 2' },
@@ -33,7 +33,7 @@ const CONTENT: Record<SegmentKey, DemoContent> = {
     tabLabel: 'Accounting',
     filename: 'Invoice_Q3.pdf',
     page: 'p. 1/4',
-    title: "Brief.ai's Analysis",
+    title: "Dossiera's Analysis",
     lines: [
       { html: 'Total expenses <mark class="hl">$14,230</mark> for August<span class="note">matches bank statement</span>' },
       { html: 'Office rent item <span class="circ">1</span> auto-categorized under "Operational"' },
@@ -45,7 +45,7 @@ const CONTENT: Record<SegmentKey, DemoContent> = {
     tabLabel: 'Research',
     filename: 'Research_Paper.pdf',
     page: 'p. 1/22',
-    title: "Brief.ai's Analysis",
+    title: "Dossiera's Analysis",
     lines: [
       { html: 'Core hypothesis <mark class="hl">supported by 3 prior studies</mark>' },
       { html: 'Sampling methodology <span class="circ">1</span> noted in section 2.1' },

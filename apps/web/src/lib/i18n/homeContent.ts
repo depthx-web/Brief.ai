@@ -73,7 +73,7 @@ const en: HomeContent = {
     headingLine1: 'Your documents speak.',
     headingLine2: 'You just listen.',
     subtext:
-      'Professional PDF tools built for three different worlds — contracts, invoices, and research papers. Brief.ai understands what each one means to an expert in that field.',
+      'Professional PDF tools built for three different worlds — contracts, invoices, and research papers. Dossiera understands what each one means to an expert in that field.',
     ctaPrimary: 'Try Free Now',
     ctaSecondary: 'See How It Works',
     bullets: ['⬤ Auto-delete within an hour', '⬤ Local processing in your browser', '⬤ No training on your data', '◆ Core tools free, forever — no AI features needed to get started'],
@@ -157,7 +157,7 @@ const en: HomeContent = {
     heading: 'Start with one document, see the difference for yourself',
     paragraph1: 'No credit card, no long signup — try the workspace built for your profession right now.',
     paragraph2: 'Free forever for merge, split, compress & rotate. Paid plans unlock AI analysis, chat, and comparisons.',
-    cta: 'Try Brief.ai Free',
+    cta: 'Try Dossiera Free',
   },
 };
 
@@ -167,7 +167,7 @@ const de: HomeContent = {
     headingLine1: 'Ihre Dokumente sprechen.',
     headingLine2: 'Sie hören einfach zu.',
     subtext:
-      'Professionelle PDF-Werkzeuge für drei unterschiedliche Welten — Verträge, Rechnungen und Forschungsarbeiten. Brief.ai versteht, was jedes davon für eine Fachperson bedeutet.',
+      'Professionelle PDF-Werkzeuge für drei unterschiedliche Welten — Verträge, Rechnungen und Forschungsarbeiten. Dossiera versteht, was jedes davon für eine Fachperson bedeutet.',
     ctaPrimary: 'Jetzt kostenlos testen',
     ctaSecondary: 'So funktioniert es',
     bullets: ['⬤ Automatische Löschung innerhalb einer Stunde', '⬤ Lokale Verarbeitung in Ihrem Browser', '⬤ Kein Training mit Ihren Daten', '◆ Kernfunktionen für immer kostenlos — kein KI-Feature zum Start nötig'],
@@ -251,7 +251,7 @@ const de: HomeContent = {
     heading: 'Starten Sie mit einem Dokument und überzeugen Sie sich selbst',
     paragraph1: 'Keine Kreditkarte, keine lange Anmeldung — testen Sie jetzt den auf Ihren Beruf zugeschnittenen Arbeitsbereich.',
     paragraph2: 'Für immer kostenlos für Zusammenführen, Teilen, Komprimieren & Drehen. Bezahlpläne schalten KI-Analyse, Chat und Vergleiche frei.',
-    cta: 'Brief.ai kostenlos testen',
+    cta: 'Dossiera kostenlos testen',
   },
 };
 
@@ -261,7 +261,7 @@ const fr: HomeContent = {
     headingLine1: 'Vos documents parlent.',
     headingLine2: 'Vous n’avez qu’à écouter.',
     subtext:
-      'Des outils PDF professionnels conçus pour trois univers différents — contrats, factures et articles de recherche. Brief.ai comprend ce que chacun signifie pour un expert du domaine.',
+      'Des outils PDF professionnels conçus pour trois univers différents — contrats, factures et articles de recherche. Dossiera comprend ce que chacun signifie pour un expert du domaine.',
     ctaPrimary: 'Essayer gratuitement',
     ctaSecondary: 'Voir comment ça marche',
     bullets: ['⬤ Suppression automatique en moins d’une heure', '⬤ Traitement local dans votre navigateur', '⬤ Aucun entraînement sur vos données', '◆ Outils de base gratuits pour toujours — aucune fonctionnalité IA requise pour commencer'],
@@ -345,7 +345,7 @@ const fr: HomeContent = {
     heading: 'Commencez avec un seul document, constatez la différence par vous-même',
     paragraph1: 'Pas de carte bancaire, pas d’inscription longue — essayez dès maintenant l’espace de travail conçu pour votre métier.',
     paragraph2: 'Gratuit pour toujours pour fusionner, diviser, compresser & pivoter. Les forfaits payants débloquent l’analyse IA, le chat et les comparaisons.',
-    cta: 'Essayer Brief.ai gratuitement',
+    cta: 'Essayer Dossiera gratuitement',
   },
 };
 
@@ -355,7 +355,7 @@ const es: HomeContent = {
     headingLine1: 'Tus documentos hablan.',
     headingLine2: 'Tú solo escuchas.',
     subtext:
-      'Herramientas PDF profesionales creadas para tres mundos distintos: contratos, facturas y artículos de investigación. Brief.ai entiende lo que cada uno significa para un experto en ese campo.',
+      'Herramientas PDF profesionales creadas para tres mundos distintos: contratos, facturas y artículos de investigación. Dossiera entiende lo que cada uno significa para un experto en ese campo.',
     ctaPrimary: 'Probar gratis ahora',
     ctaSecondary: 'Ver cómo funciona',
     bullets: ['⬤ Eliminación automática en menos de una hora', '⬤ Procesamiento local en tu navegador', '⬤ Sin entrenamiento con tus datos', '◆ Herramientas básicas gratis para siempre — no necesitas funciones de IA para empezar'],
@@ -439,7 +439,7 @@ const es: HomeContent = {
     heading: 'Empieza con un documento y comprueba la diferencia tú mismo',
     paragraph1: 'Sin tarjeta de crédito, sin registro largo — prueba ahora mismo el espacio de trabajo creado para tu profesión.',
     paragraph2: 'Gratis para siempre para combinar, dividir, comprimir y rotar. Los planes de pago desbloquean análisis con IA, chat y comparaciones.',
-    cta: 'Probar Brief.ai gratis',
+    cta: 'Probar Dossiera gratis',
   },
 };
 
@@ -449,7 +449,7 @@ const it: HomeContent = {
     headingLine1: 'I tuoi documenti parlano.',
     headingLine2: 'Tu devi solo ascoltare.',
     subtext:
-      'Strumenti PDF professionali pensati per tre mondi diversi — contratti, fatture e articoli di ricerca. Brief.ai capisce cosa significa ciascuno per un esperto del settore.',
+      'Strumenti PDF professionali pensati per tre mondi diversi — contratti, fatture e articoli di ricerca. Dossiera capisce cosa significa ciascuno per un esperto del settore.',
     ctaPrimary: 'Prova gratis ora',
     ctaSecondary: 'Scopri come funziona',
     bullets: ['⬤ Eliminazione automatica entro un’ora', '⬤ Elaborazione locale nel tuo browser', '⬤ Nessun addestramento sui tuoi dati', '◆ Strumenti di base gratuiti per sempre — nessuna funzione IA necessaria per iniziare'],
@@ -533,7 +533,7 @@ const it: HomeContent = {
     heading: 'Inizia con un documento, scopri tu stesso la differenza',
     paragraph1: 'Nessuna carta di credito, nessuna registrazione lunga — prova subito l’area di lavoro pensata per la tua professione.',
     paragraph2: 'Gratis per sempre per unire, dividere, comprimere e ruotare. I piani a pagamento sbloccano analisi IA, chat e confronti.',
-    cta: 'Prova Brief.ai gratis',
+    cta: 'Prova Dossiera gratis',
   },
 };
 
@@ -543,7 +543,7 @@ const ar: HomeContent = {
     headingLine1: 'مستنداتك تتحدث.',
     headingLine2: 'وأنت فقط تستمع.',
     subtext:
-      'أدوات PDF احترافية مصممة لثلاثة عوالم مختلفة — العقود والفواتير وأوراق البحث. يفهم Brief.ai ما يعنيه كل منها لخبير في ذلك المجال.',
+      'أدوات PDF احترافية مصممة لثلاثة عوالم مختلفة — العقود والفواتير وأوراق البحث. يفهم Dossiera ما يعنيه كل منها لخبير في ذلك المجال.',
     ctaPrimary: 'جرّب مجانًا الآن',
     ctaSecondary: 'شاهد كيف يعمل',
     bullets: ['⬤ حذف تلقائي خلال ساعة واحدة', '⬤ معالجة محلية داخل متصفحك', '⬤ لا تدريب على بياناتك أبدًا', '◆ الأدوات الأساسية مجانية إلى الأبد — لا حاجة لميزات الذكاء الاصطناعي للبدء'],
@@ -627,7 +627,7 @@ const ar: HomeContent = {
     heading: 'ابدأ بمستند واحد، وشاهد الفرق بنفسك',
     paragraph1: 'دون بطاقة ائتمان، ودون تسجيل طويل — جرّب الآن مساحة العمل المصممة لمهنتك.',
     paragraph2: 'مجاني إلى الأبد للدمج والتقسيم والضغط والتدوير. تفتح الخطط المدفوعة تحليل الذكاء الاصطناعي والمحادثة والمقارنات.',
-    cta: 'جرّب Brief.ai مجانًا',
+    cta: 'جرّب Dossiera مجانًا',
   },
 };
 

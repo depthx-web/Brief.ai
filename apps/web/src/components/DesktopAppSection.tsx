@@ -65,7 +65,7 @@ export default function DesktopAppSection() {
               <div className="flex gap-1.5">
                 <WindowControls os={os} />
               </div>
-              <span className="text-xs text-ink-soft">Brief.ai</span>
+              <span className="text-xs text-ink-soft">Dossiera</span>
               <span />
             </div>
             {/* eslint-disable-next-line @next/next/no-img-element */}

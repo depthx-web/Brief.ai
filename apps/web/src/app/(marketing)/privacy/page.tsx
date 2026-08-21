@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import LegalLayout, { type LegalSection } from '@/components/LegalLayout';
 import { fetchCmsPage } from '@/lib/cmsApi';
 
-const DEFAULT_META_TITLE = 'Privacy Policy — Brief.ai';
+const DEFAULT_META_TITLE = 'Privacy Policy — Dossiera';
 const DEFAULT_META_DESCRIPTION =
-  'How Brief.ai collects, processes, retains, and deletes your account and document data.';
+  'How Dossiera collects, processes, retains, and deletes your account and document data.';
 
 const DEFAULT_SECTIONS: LegalSection[] = [
   {
@@ -12,7 +12,7 @@ const DEFAULT_SECTIONS: LegalSection[] = [
     title: 'Overview',
     body: (
       <p>
-        Brief.ai is a document tool built around a simple rule: your files are yours, and we keep as
+        Dossiera is a document tool built around a simple rule: your files are yours, and we keep as
         little of them as we can. This policy explains what we collect, how long we keep it, and
         when your documents are processed on our servers versus entirely inside your own browser.
       </p>
@@ -72,7 +72,7 @@ const DEFAULT_SECTIONS: LegalSection[] = [
     body: (
       <p>
         AI features are powered by third-party language model providers. The relevant page or
-        question text is sent to the provider to generate a response and is not retained by Brief.ai
+        question text is sent to the provider to generate a response and is not retained by Dossiera
         beyond that request. We do not permit these providers to use your content to train their
         models.
       </p>

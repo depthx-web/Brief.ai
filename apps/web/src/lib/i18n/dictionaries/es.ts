@@ -882,10 +882,10 @@ const es: Record<DictionaryKey, string> = {
   'desktopAppSection.downloadMac': 'Descargar para Mac',
   'desktopAppSection.downloadLinux': 'Descargar para Linux',
   'desktopAppSection.signedInstaller': 'Instalador firmado · Las mismas garantías de privacidad que la app web',
-  'desktopAppSection.screenshotAlt': 'Aplicación de escritorio Brief.ai — Pantalla de inicio',
+  'desktopAppSection.screenshotAlt': 'Aplicación de escritorio Dossiera — Pantalla de inicio',
 
   'download.kicker': 'Aplicación de escritorio',
-  'download.heading': 'Brief.ai para {os} está a punto de llegar',
+  'download.heading': 'Dossiera para {os} está a punto de llegar',
   'download.osNameWindows': 'Windows',
   'download.osNameMac': 'Mac',
   'download.osNameLinux': 'Linux',
@@ -895,7 +895,7 @@ const es: Record<DictionaryKey, string> = {
   'download.notifyButton': 'Avísame cuando esté lista',
   'download.setupHeading': 'Configuración',
   'download.faqHeading': 'Preguntas frecuentes',
-  'download.screenshotAlt': 'Aplicación de escritorio Brief.ai — Pantalla de inicio',
+  'download.screenshotAlt': 'Aplicación de escritorio Dossiera — Pantalla de inicio',
 
   'retentionConfirm.title': '¿Ampliar la retención?',
   'retentionConfirm.body': 'Esto se conservará {days} días más antes de eliminarse automáticamente. ¿Continuar?',

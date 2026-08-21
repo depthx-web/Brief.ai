@@ -882,10 +882,10 @@ const de: Record<DictionaryKey, string> = {
   'desktopAppSection.downloadMac': 'Für Mac herunterladen',
   'desktopAppSection.downloadLinux': 'Für Linux herunterladen',
   'desktopAppSection.signedInstaller': 'Signierter Installer · Gleiche Datenschutzgarantien wie die Web-App',
-  'desktopAppSection.screenshotAlt': 'Brief.ai Desktop-App — Startbildschirm',
+  'desktopAppSection.screenshotAlt': 'Dossiera Desktop-App — Startbildschirm',
 
   'download.kicker': 'Desktop-App',
-  'download.heading': 'Brief.ai für {os} ist bald verfügbar',
+  'download.heading': 'Dossiera für {os} ist bald verfügbar',
   'download.osNameWindows': 'Windows',
   'download.osNameMac': 'Mac',
   'download.osNameLinux': 'Linux',
@@ -895,7 +895,7 @@ const de: Record<DictionaryKey, string> = {
   'download.notifyButton': 'Benachrichtigen Sie mich, wenn es bereit ist',
   'download.setupHeading': 'Einrichtung',
   'download.faqHeading': 'FAQ',
-  'download.screenshotAlt': 'Brief.ai Desktop-App — Startbildschirm',
+  'download.screenshotAlt': 'Dossiera Desktop-App — Startbildschirm',
 
   'retentionConfirm.title': 'Aufbewahrung verlängern?',
   'retentionConfirm.body': 'Dies wird {days} weitere Tage aufbewahrt, bevor es automatisch gelöscht wird. Fortfahren?',

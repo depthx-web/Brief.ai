@@ -76,7 +76,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
       <aside className="fixed inset-y-0 start-0 z-10 flex h-screen w-[260px] shrink-0 flex-col overflow-y-auto bg-navy text-white">
         <div className="flex items-center gap-2 px-6 py-6">
           <Link href="/admin" className="font-serif text-xl font-semibold">
-            brief<span className="text-emerald">.ai</span>
+            dossier<span className="text-emerald">a</span>
           </Link>
           <span className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-wide text-[#C9D4E3]">
             Admin

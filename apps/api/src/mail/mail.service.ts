@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const MAIL_FROM = process.env.MAIL_FROM ?? 'Brief.ai <noreply@brief.ai>';
+const MAIL_FROM = process.env.MAIL_FROM ?? 'Dossiera <noreply@brief.ai>';
 
 export interface MailMessage {
   to: string;

@@ -13,7 +13,7 @@ export default function MarketingNav() {
   return (
     <nav className="sticky top-0 z-50 flex items-center justify-between bg-navy/95 px-6 py-5 text-white backdrop-blur-md sm:px-12">
       <HomeLogoLink className="font-serif text-2xl font-semibold tracking-tight">
-        brief<span className="text-emerald">.ai</span>
+        dossier<span className="text-emerald">a</span>
       </HomeLogoLink>
       <div className="hidden gap-9 text-sm text-[#C9D4E3] sm:flex">
         <a href="/#workspaces" className="transition-colors hover:text-white">

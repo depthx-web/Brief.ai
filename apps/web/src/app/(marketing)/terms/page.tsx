@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import LegalLayout, { type LegalSection } from '@/components/LegalLayout';
 import { fetchCmsPage } from '@/lib/cmsApi';
 
-const DEFAULT_META_TITLE = 'Terms of Service — Brief.ai';
+const DEFAULT_META_TITLE = 'Terms of Service — Dossiera';
 const DEFAULT_META_DESCRIPTION =
-  "The terms that govern use of Brief.ai's free and paid PDF and AI-powered document tools.";
+  "The terms that govern use of Dossiera's free and paid PDF and AI-powered document tools.";
 
 const DEFAULT_SECTIONS: LegalSection[] = [
   {
@@ -12,7 +12,7 @@ const DEFAULT_SECTIONS: LegalSection[] = [
     title: 'Acceptance of terms',
     body: (
       <p>
-        By creating an account or using any tool on Brief.ai, you agree to these terms. If you do
+        By creating an account or using any tool on Dossiera, you agree to these terms. If you do
         not agree, please don't use the service.
       </p>
     ),
@@ -22,7 +22,7 @@ const DEFAULT_SECTIONS: LegalSection[] = [
     title: 'Description of service',
     body: (
       <p>
-        Brief.ai provides PDF tools and AI-powered document analysis for legal, accounting, and
+        Dossiera provides PDF tools and AI-powered document analysis for legal, accounting, and
         research workflows. Some tools run entirely in your browser; others require uploading a
         file to our servers for processing, as described in our{' '}
         <a href="/privacy" className="text-emerald hover:underline">
@@ -62,7 +62,7 @@ const DEFAULT_SECTIONS: LegalSection[] = [
       <p>
         You agree not to upload content you don't have the right to process, use the service to
         break the law, or attempt to disrupt, reverse-engineer, or gain unauthorized access to any
-        part of Brief.ai.
+        part of Dossiera.
       </p>
     ),
   },
@@ -72,7 +72,7 @@ const DEFAULT_SECTIONS: LegalSection[] = [
     body: (
       <p>
         You retain full ownership of every document you upload and every file our tools generate
-        for you. Brief.ai and its branding are our property; using the service doesn't grant you
+        for you. Dossiera and its branding are our property; using the service doesn't grant you
         rights to either.
       </p>
     ),
@@ -92,9 +92,9 @@ const DEFAULT_SECTIONS: LegalSection[] = [
     title: 'Disclaimers & limitation of liability',
     body: (
       <p>
-        Brief.ai is provided "as is." AI-generated analysis is a starting point, not professional
+        Dossiera is provided "as is." AI-generated analysis is a starting point, not professional
         legal, accounting, or research advice — always verify results before relying on them. To the
-        extent permitted by law, Brief.ai isn't liable for indirect or consequential damages arising
+        extent permitted by law, Dossiera isn't liable for indirect or consequential damages arising
         from use of the service.
       </p>
     ),

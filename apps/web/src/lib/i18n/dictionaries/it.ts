@@ -882,10 +882,10 @@ const it: Record<DictionaryKey, string> = {
   'desktopAppSection.downloadMac': 'Scarica per Mac',
   'desktopAppSection.downloadLinux': 'Scarica per Linux',
   'desktopAppSection.signedInstaller': 'Installer firmato · Stesse garanzie di privacy dell’app web',
-  'desktopAppSection.screenshotAlt': 'App desktop Brief.ai — Schermata iniziale',
+  'desktopAppSection.screenshotAlt': 'App desktop Dossiera — Schermata iniziale',
 
   'download.kicker': 'App desktop',
-  'download.heading': 'Brief.ai per {os} sta per arrivare',
+  'download.heading': 'Dossiera per {os} sta per arrivare',
   'download.osNameWindows': 'Windows',
   'download.osNameMac': 'Mac',
   'download.osNameLinux': 'Linux',
@@ -895,7 +895,7 @@ const it: Record<DictionaryKey, string> = {
   'download.notifyButton': 'Avvisami quando è pronto',
   'download.setupHeading': 'Configurazione',
   'download.faqHeading': 'Domande frequenti',
-  'download.screenshotAlt': 'App desktop Brief.ai — Schermata iniziale',
+  'download.screenshotAlt': 'App desktop Dossiera — Schermata iniziale',
 
   'retentionConfirm.title': 'Estendere la conservazione?',
   'retentionConfirm.body': 'Questo verrà conservato per altri {days} giorni prima di essere eliminato automaticamente. Continuare?',

@@ -90,7 +90,7 @@ export default function DownloadContent() {
                 </svg>
               )}
             </div>
-            <span className="text-xs text-ink-soft">Brief.ai</span>
+            <span className="text-xs text-ink-soft">Dossiera</span>
             <span />
           </div>
           {/* eslint-disable-next-line @next/next/no-img-element */}

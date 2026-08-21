@@ -29,7 +29,7 @@ export default function Sidebar({ onOpenSwitchModal }: { onOpenSwitchModal: () =
   return (
     <aside className="fixed inset-y-0 start-0 z-10 flex h-screen w-60 shrink-0 flex-col overflow-y-auto bg-navy text-white">
       <HomeLogoLink className="px-6 py-6 font-serif text-xl font-semibold">
-        brief<span className="text-emerald">.ai</span>
+        dossier<span className="text-emerald">a</span>
       </HomeLogoLink>
 
       <nav className="flex flex-col gap-1 px-3">

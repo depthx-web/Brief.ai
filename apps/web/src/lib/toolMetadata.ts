@@ -24,7 +24,7 @@ function findTool(slug: string): Tool | null {
 // for content an admin edit only needs to reach on the next deploy anyway.
 export async function getToolMetadata(slug: string): Promise<Metadata> {
   const tool = findTool(slug);
-  const defaultTitle = tool ? `${tool.name} — Brief.ai` : 'Brief.ai — PDF Tools';
+  const defaultTitle = tool ? `${tool.name} — Dossiera` : 'Dossiera — PDF Tools';
   const defaultDescription = tool?.description ?? 'Professional PDF tools with AI-powered document intelligence.';
 
   let page: { metaTitle: string | null; metaDescription: string | null; ogImageUrl: string | null } | null = null;

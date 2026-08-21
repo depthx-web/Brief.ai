@@ -882,10 +882,10 @@ const ar: Record<DictionaryKey, string> = {
   'desktopAppSection.downloadMac': 'التنزيل لنظام Mac',
   'desktopAppSection.downloadLinux': 'التنزيل لنظام Linux',
   'desktopAppSection.signedInstaller': 'مثبّت موقّع · نفس ضمانات الخصوصية الخاصة بتطبيق الويب',
-  'desktopAppSection.screenshotAlt': 'تطبيق سطح المكتب Brief.ai — الشاشة الرئيسية',
+  'desktopAppSection.screenshotAlt': 'تطبيق سطح المكتب Dossiera — الشاشة الرئيسية',
 
   'download.kicker': 'تطبيق سطح المكتب',
-  'download.heading': 'تطبيق Brief.ai لنظام {os} على وشك الوصول',
+  'download.heading': 'تطبيق Dossiera لنظام {os} على وشك الوصول',
   'download.osNameWindows': 'Windows',
   'download.osNameMac': 'Mac',
   'download.osNameLinux': 'Linux',
@@ -895,7 +895,7 @@ const ar: Record<DictionaryKey, string> = {
   'download.notifyButton': 'أعلمني عندما يصبح جاهزًا',
   'download.setupHeading': 'الإعداد',
   'download.faqHeading': 'الأسئلة الشائعة',
-  'download.screenshotAlt': 'تطبيق سطح المكتب Brief.ai — الشاشة الرئيسية',
+  'download.screenshotAlt': 'تطبيق سطح المكتب Dossiera — الشاشة الرئيسية',
 
   'retentionConfirm.title': 'تمديد مدة الاحتفاظ؟',
   'retentionConfirm.body': 'سيُحفظ هذا لمدة {days} يومًا إضافيًا قبل حذفه تلقائيًا. هل تريد المتابعة؟',

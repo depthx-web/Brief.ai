@@ -33,7 +33,7 @@ function StatusBadge({ status }: { status: AdminDiscountCode['status'] }) {
 
 function NewCodeModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const { token } = useAdminAuth();
-  const [code, setCode] = useState(`BRIEF${Math.floor(10 + Math.random() * 90)}`);
+  const [code, setCode] = useState(`DOSSIERA${Math.floor(10 + Math.random() * 90)}`);
   const [type, setType] = useState<AdminDiscountType>('PERCENT');
   const [value, setValue] = useState('20');
   const [expiresAt, setExpiresAt] = useState('');

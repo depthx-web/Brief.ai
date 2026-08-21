@@ -28,7 +28,7 @@ export default function ToolsChrome({ children }: { children: React.ReactNode })
       <header className="border-b border-paper-line bg-white">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <HomeLogoLink className="font-serif text-lg font-semibold text-navy">
-            brief<span className="text-emerald">.ai</span>
+            dossier<span className="text-emerald">a</span>
           </HomeLogoLink>
           <div className="flex items-center gap-6">
             <Link href="/dashboard" className="text-sm font-medium text-navy transition-colors hover:text-emerald">

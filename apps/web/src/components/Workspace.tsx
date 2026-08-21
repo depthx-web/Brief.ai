@@ -325,7 +325,7 @@ export default function Workspace() {
                 )}
                 {isAnalyzing ? (
                   <div className="space-y-3">
-                    <p className="font-mono text-xs text-ink-soft">Brief.ai is analyzing the document…</p>
+                    <p className="font-mono text-xs text-ink-soft">Dossiera is analyzing the document…</p>
                     <div className="h-3 animate-pulse rounded bg-gray-200" />
                     <div className="h-3 w-5/6 animate-pulse rounded bg-gray-200" />
                     <div className="h-3 w-4/6 animate-pulse rounded bg-gray-200" />

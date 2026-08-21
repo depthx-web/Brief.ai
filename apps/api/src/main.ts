@@ -31,9 +31,9 @@ async function bootstrap() {
   app.enableCors({ origin: allowedOrigins });
 
   const swaggerConfig = new DocumentBuilder()
-    .setTitle('Brief.ai API')
+    .setTitle('Dossiera API')
     .setDescription(
-      'PDF tools, AI document assistance, and library endpoints for the Brief.ai platform. ' +
+      'PDF tools, AI document assistance, and library endpoints for the Dossiera platform. ' +
         'Most PDF processing happens client-side; these endpoints cover AI operations, ' +
         'server-side conversions (Office↔PDF, password protect), auth, and the library.'
     )

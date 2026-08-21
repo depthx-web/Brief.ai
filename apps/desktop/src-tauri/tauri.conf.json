@@ -1,6 +1,6 @@
 {
   "$schema": "../../../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "Brief.ai",
+  "productName": "Dossiera",
   "version": "0.1.0",
   "identifier": "ai.brief.desktop",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Brief.ai",
+        "title": "Dossiera",
         "url": "desktop-home.html",
         "width": 1280,
         "height": 832,
@@ -36,10 +36,10 @@
   "bundle": {
     "active": true,
     "targets": "all",
-    "publisher": "Brief.ai",
-    "copyright": "Copyright © 2026 Brief.ai",
+    "publisher": "Dossiera",
+    "copyright": "Copyright © 2026 Dossiera",
     "shortDescription": "Local PDF and document tools",
-    "longDescription": "Brief.ai desktop — protect, unlock, compress, and convert PDF and office documents locally, with no upload required.",
+    "longDescription": "Dossiera desktop — protect, unlock, compress, and convert PDF and office documents locally, with no upload required.",
     "windows": {
       "nsis": {
         "languages": ["English", "German", "French", "Spanish", "Italian", "Arabic"],

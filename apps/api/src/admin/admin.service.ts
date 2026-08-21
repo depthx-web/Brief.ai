@@ -203,9 +203,9 @@ export class AdminService {
 
     await this.mail.send({
       to: user.email,
-      subject: 'Your Brief.ai password has been reset',
+      subject: 'Your Dossiera password has been reset',
       html:
-        `<p>An administrator reset your Brief.ai password.</p>` +
+        `<p>An administrator reset your Dossiera password.</p>` +
         `<p>Your temporary password is: <strong>${tempPassword}</strong></p>` +
         `<p>Please log in and change it as soon as possible.</p>`,
     });

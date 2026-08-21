@@ -4,7 +4,7 @@ import HomeContent, { type CmsSections } from '@/components/HomeContent';
 import { fetchCmsPage } from '@/lib/cmsApi';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
-const DEFAULT_META_TITLE = 'Brief.ai — PDF Tools';
+const DEFAULT_META_TITLE = 'Dossiera — PDF Tools';
 const DEFAULT_META_DESCRIPTION =
   'Professional PDF tools built for legal, accounting, and research professionals.';
 

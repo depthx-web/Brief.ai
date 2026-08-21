@@ -914,10 +914,10 @@ const en = {
   'desktopAppSection.downloadMac': 'Download for Mac',
   'desktopAppSection.downloadLinux': 'Download for Linux',
   'desktopAppSection.signedInstaller': 'Signed installer · Same privacy guarantees as the web app',
-  'desktopAppSection.screenshotAlt': 'Brief.ai desktop app — Home screen',
+  'desktopAppSection.screenshotAlt': 'Dossiera desktop app — Home screen',
 
   'download.kicker': 'Desktop App',
-  'download.heading': 'Brief.ai for {os} is almost here',
+  'download.heading': 'Dossiera for {os} is almost here',
   'download.osNameWindows': 'Windows',
   'download.osNameMac': 'Mac',
   'download.osNameLinux': 'Linux',
@@ -927,7 +927,7 @@ const en = {
   'download.notifyButton': 'Notify me when it’s ready',
   'download.setupHeading': 'Setup',
   'download.faqHeading': 'FAQ',
-  'download.screenshotAlt': 'Brief.ai desktop app — Home screen',
+  'download.screenshotAlt': 'Dossiera desktop app — Home screen',
 
   // Retention extend confirmation
   'retentionConfirm.title': 'Extend retention?',
