@@ -125,6 +125,14 @@ const CMS_PAGES: { slug: string; label: string; sections: { key: string; label: 
     ],
   },
   {
+    // SEO fields only — the tools catalog's actual content (the tool grid)
+    // isn't admin-editable content, just this page's meta title/description/
+    // keywords, same as every other page's SEO box.
+    slug: 'tools',
+    label: 'Tools Catalog',
+    sections: [],
+  },
+  {
     slug: 'privacy',
     label: 'Privacy Policy',
     sections: [{ key: 'body', label: 'Body' }],
