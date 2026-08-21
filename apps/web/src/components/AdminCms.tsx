@@ -76,6 +76,10 @@ interface AnnouncementFields {
   ctaHref: string;
 }
 
+interface ScreenshotFields {
+  url: string;
+}
+
 const PREVIEW_ORIGIN = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
 
 // Maps a CMS slug to the public route that actually renders it — "home" is
@@ -498,7 +502,8 @@ function SectionEditor({
   if (sectionKey === 'workspaces') return <WorkspacesEditor fields={fields as { items: WorkspaceItem[] }} onChange={onChange} />;
   if (sectionKey === 'faq') return <FaqEditor fields={fields as { items: FaqItem[] }} onChange={onChange} />;
   if (sectionKey === 'features') return <BulletListEditor fields={fields as { items: string[] }} onChange={onChange} />;
-  if (sectionKey === 'body') return <LegalSectionsEditor fields={fields as { items: LegalSectionItem[] }} onChange={onChange} />;
+  if (sectionKey === 'body' || sectionKey === 'instructions') return <LegalSectionsEditor fields={fields as { items: LegalSectionItem[] }} onChange={onChange} />;
+  if (sectionKey === 'screenshot') return <ScreenshotEditor fields={fields as ScreenshotFields} onChange={onChange} />;
   if (sectionKey.startsWith('announcement')) return <AnnouncementEditor fields={fields as AnnouncementFields} onChange={onChange} />;
   return <p className="text-sm text-ink-soft">No editor available for this section yet.</p>;
 }
@@ -546,6 +551,22 @@ function TrustEditor({ fields, onChange }: { fields: TrustFields; onChange: (f: 
 
 function IntroEditor({ fields, onChange }: { fields: IntroFields; onChange: (f: IntroFields) => void }) {
   return <TextField label="Heading" value={fields.heading} onChange={(v) => onChange({ heading: v })} />;
+}
+
+// Blank means "use the built-in per-language screenshot" — see the
+// migration's comment on why this section isn't locale-aware like the
+// text sections above it (an image isn't translatable text, same reason
+// Page.ogImageUrl is a single non-localized column).
+function ScreenshotEditor({ fields, onChange }: { fields: ScreenshotFields; onChange: (f: ScreenshotFields) => void }) {
+  return (
+    <div>
+      <TextField label="Screenshot URL (blank = built-in per-language screenshot)" value={fields.url} onChange={(v) => onChange({ url: v })} />
+      {fields.url && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={fields.url} alt="Screenshot preview" className="mt-2 max-h-40 rounded border border-gray-200" />
+      )}
+    </div>
+  );
 }
 
 function WorkspacesEditor({ fields, onChange }: { fields: { items: WorkspaceItem[] }; onChange: (f: { items: WorkspaceItem[] }) => void }) {

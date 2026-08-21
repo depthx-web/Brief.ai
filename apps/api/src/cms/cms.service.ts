@@ -116,6 +116,15 @@ const CMS_PAGES: { slug: string; label: string; sections: { key: string; label: 
     ],
   },
   {
+    slug: 'download',
+    label: 'Download',
+    sections: [
+      { key: 'instructions', label: 'Setup Instructions' },
+      { key: 'screenshot', label: 'Screenshot' },
+      { key: 'faq', label: 'FAQ' },
+    ],
+  },
+  {
     slug: 'privacy',
     label: 'Privacy Policy',
     sections: [{ key: 'body', label: 'Body' }],

@@ -916,6 +916,19 @@ const en = {
   'desktopAppSection.signedInstaller': 'Signed installer · Same privacy guarantees as the web app',
   'desktopAppSection.screenshotAlt': 'Brief.ai desktop app — Home screen',
 
+  'download.kicker': 'Desktop App',
+  'download.heading': 'Brief.ai for {os} is almost here',
+  'download.osNameWindows': 'Windows',
+  'download.osNameMac': 'Mac',
+  'download.osNameLinux': 'Linux',
+  'download.osNameUnknown': 'your desktop',
+  'download.descriptionPre': 'We’re finishing up packaging and signing before making the installer public. In the meantime, every core tool — protect, unlock, compress, and convert — already works fully offline in your browser at',
+  'download.descriptionLinkText': 'brief.ai/tools',
+  'download.notifyButton': 'Notify me when it’s ready',
+  'download.setupHeading': 'Setup',
+  'download.faqHeading': 'FAQ',
+  'download.screenshotAlt': 'Brief.ai desktop app — Home screen',
+
   // Retention extend confirmation
   'retentionConfirm.title': 'Extend retention?',
   'retentionConfirm.body': 'This will be kept for {days} more days before it’s automatically deleted. Continue?',
