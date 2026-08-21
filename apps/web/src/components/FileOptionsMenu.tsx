@@ -24,6 +24,7 @@ import { toolLabelKeys } from '@/lib/toolCatalog';
 import { showError, showSuccess } from '@/lib/toast';
 import { useLocale } from '@/lib/i18n/LocaleContext';
 import type { DictionaryKey } from '@/lib/i18n/dictionaries/en';
+import RetentionConfirmDialog from './RetentionConfirmDialog';
 
 const BILLING_ENFORCED = process.env.NEXT_PUBLIC_BILLING_ENFORCED === 'true';
 
@@ -59,6 +60,7 @@ export default function FileOptionsMenu({ doc, onRenamed, onDeleted, onDuplicate
   const [moveSubOpen, setMoveSubOpen] = useState(false);
   const [projects, setProjects] = useState<ProjectSummary[] | null>(null);
   const [isBusy, setIsBusy] = useState(false);
+  const [confirmExtendDays, setConfirmExtendDays] = useState<7 | 30 | null>(null);
 
   const locked = BILLING_ENFORCED && user?.plan !== 'PAID';
 
@@ -104,6 +106,8 @@ export default function FileOptionsMenu({ doc, onRenamed, onDeleted, onDuplicate
       showSuccess(t('fileMenu.retentionExtended').replace('{days}', String(days)));
     } catch (err) {
       showError(err instanceof Error ? err.message : t('fileMenu.couldNotExtendRetention'));
+    } finally {
+      setConfirmExtendDays(null);
     }
   }
 
@@ -280,14 +284,14 @@ export default function FileOptionsMenu({ doc, onRenamed, onDeleted, onDuplicate
                   >
                     <DropdownMenu.Item
                       onSelect={(e) => e.preventDefault()}
-                      onClick={() => handleExtend(7)}
+                      onClick={() => setConfirmExtendDays(7)}
                       className="cursor-pointer select-none rounded-md px-2.5 py-2 text-[12px] text-ink outline-none transition-colors data-[highlighted]:bg-emerald-soft"
                     >
                       {t('settings.retention7d')}
                     </DropdownMenu.Item>
                     <DropdownMenu.Item
                       onSelect={(e) => e.preventDefault()}
-                      onClick={() => handleExtend(30)}
+                      onClick={() => setConfirmExtendDays(30)}
                       className="cursor-pointer select-none rounded-md px-2.5 py-2 text-[12px] text-ink outline-none transition-colors data-[highlighted]:bg-emerald-soft"
                     >
                       {t('settings.retention30d')}
@@ -309,6 +313,11 @@ export default function FileOptionsMenu({ doc, onRenamed, onDeleted, onDuplicate
       </DropdownMenu.Root>
 
       <RenameDialog open={renameOpen} onOpenChange={setRenameOpen} doc={doc} onRenamed={onRenamed} />
+      <RetentionConfirmDialog
+        days={confirmExtendDays}
+        onCancel={() => setConfirmExtendDays(null)}
+        onConfirm={handleExtend}
+      />
     </>
   );
 }

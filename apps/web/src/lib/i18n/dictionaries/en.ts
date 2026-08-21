@@ -570,6 +570,25 @@ const en = {
   'tool.methodologyExtractor.description': 'Summarizes methodology into a structured sample/tools/analysis table.',
   'tool.presentationOutline.name': 'Presentation Outline Generator',
   'tool.presentationOutline.description': 'Turns the paper into a set of slide-ready talking points.',
+
+  // Workspace plan card (web sidebar)
+  'workspace.legalWorkspace': 'Legal Workspace',
+  'workspace.accountingWorkspace': 'Accounting Workspace',
+  'workspace.researchWorkspace': 'Research Workspace',
+  'workspace.cycleWeekly': 'Weekly',
+  'workspace.cycleMonthly': 'Monthly',
+  'workspace.cycleQuarterly': 'Quarterly',
+  'workspace.cycleYearly': 'Yearly',
+  'workspace.active': 'Active',
+  'workspace.freePlan': 'Free plan',
+  'workspace.creditsRemainingSingular': '{n} credit remaining →',
+  'workspace.creditsRemainingPlural': '{n} credits remaining →',
+  'workspace.changePlan': 'Change plan →',
+
+  // Retention extend confirmation
+  'retentionConfirm.title': 'Extend retention?',
+  'retentionConfirm.body': 'This will be kept for {days} more days before it’s automatically deleted. Continue?',
+  'retentionConfirm.confirm': 'Extend',
 } as const;
 
 export default en;

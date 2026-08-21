@@ -59,6 +59,62 @@ export function CloseIcon({ size = 14 }: { size?: number } = {}) {
   );
 }
 
+export function DashboardIcon(color: string) {
+  return (
+    <svg {...strokeIconProps(color)}>
+      <path d="M3 10.5 12 3l9 7.5" />
+      <path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5" />
+    </svg>
+  );
+}
+
+export function LibraryIcon(color: string) {
+  return (
+    <svg {...strokeIconProps(color)}>
+      <path d="M4 6a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6z" />
+    </svg>
+  );
+}
+
+export function WalletIcon(color: string) {
+  return (
+    <svg {...strokeIconProps(color)}>
+      <path d="M3 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z" />
+      <path d="M16 12h3v3h-3a1.5 1.5 0 0 1 0-3z" />
+    </svg>
+  );
+}
+
+export function ReferralIcon(color: string) {
+  return (
+    <svg {...strokeIconProps(color)}>
+      <circle cx="7" cy="7" r="3" />
+      <circle cx="17" cy="17" r="3" />
+      <path d="M9.5 9.5l5 5" />
+    </svg>
+  );
+}
+
+export function ToolsGroupIcon(color: string) {
+  return (
+    <svg {...strokeIconProps(color)}>
+      <rect x="4" y="4" width="7" height="7" rx="1.5" />
+      <rect x="13" y="4" width="7" height="7" rx="1.5" />
+      <path d="M13 17.5l2 2 4.5-4.5" />
+      <path d="M4 17.5l2 2 4.5-4.5" />
+    </svg>
+  );
+}
+
+export function SettingsIcon(color: string) {
+  return (
+    <svg {...strokeIconProps(color)}>
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    </svg>
+  );
+}
+
 export function CheckIcon({
   size = 14,
   color = 'currentColor',

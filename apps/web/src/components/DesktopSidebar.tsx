@@ -234,7 +234,7 @@ export default function DesktopSidebar({ active }: { active: DesktopNavKey }) {
         {balance !== null && (
           <Link href="/wallet" className="mb-2 flex items-center gap-1.5 px-2 font-mono text-[10px] hover:text-white" style={{ color: MUTED }}>
             {WalletIcon(MUTED)}
-            {balance} credit{balance === 1 ? '' : 's'}
+            {t('wallet.creditsCount').replace('{n}', String(balance))}
           </Link>
         )}
 

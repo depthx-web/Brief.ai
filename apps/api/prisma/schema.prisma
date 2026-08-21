@@ -535,6 +535,9 @@ model Page {
   metaTitle       String?
   metaDescription String?           @db.Text
   metaKeywords    Json?
+  // Per-locale overrides: { [locale]: { metaTitle?, metaDescription?, metaKeywords? } }.
+  // Null/missing locale falls back to the plain columns above.
+  metaLocales     Json?
   ogImageUrl      String?
   sections        ContentSection[]
 }

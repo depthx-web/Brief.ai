@@ -543,6 +543,23 @@ const fr: Record<DictionaryKey, string> = {
   'tool.methodologyExtractor.description': 'Résume la méthodologie dans un tableau structuré échantillon/outils/analyse.',
   'tool.presentationOutline.name': 'Générateur de plan de présentation',
   'tool.presentationOutline.description': 'Transforme l’article en un ensemble de points prêts pour une présentation.',
+
+  'workspace.legalWorkspace': 'Espace Juridique',
+  'workspace.accountingWorkspace': 'Espace Comptabilité',
+  'workspace.researchWorkspace': 'Espace Recherche',
+  'workspace.cycleWeekly': 'Hebdomadaire',
+  'workspace.cycleMonthly': 'Mensuel',
+  'workspace.cycleQuarterly': 'Trimestriel',
+  'workspace.cycleYearly': 'Annuel',
+  'workspace.active': 'Actif',
+  'workspace.freePlan': 'Forfait gratuit',
+  'workspace.creditsRemainingSingular': '{n} crédit restant →',
+  'workspace.creditsRemainingPlural': '{n} crédits restants →',
+  'workspace.changePlan': 'Changer de forfait →',
+
+  'retentionConfirm.title': 'Prolonger la conservation ?',
+  'retentionConfirm.body': 'Ce fichier sera conservé {days} jours de plus avant sa suppression automatique. Continuer ?',
+  'retentionConfirm.confirm': 'Prolonger',
 };
 
 export default fr;

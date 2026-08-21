@@ -24,6 +24,29 @@ function resolveLocaleFields(raw: unknown, locale: string): unknown {
   return { ...(base as object), ...(override as object) };
 }
 
+interface SeoFields {
+  metaTitle: string | null;
+  metaDescription: string | null;
+  metaKeywords: string[] | null;
+}
+
+// Same additive-override idea as section _locales, but applied to the three
+// plain SEO columns instead of a section's JSON blob: a non-English locale
+// overrides only the keys present in metaLocales[locale], English (or no
+// stored override) falls back to the top-level column values.
+function resolveSeoLocale(page: { metaTitle: string | null; metaDescription: string | null; metaKeywords: unknown; metaLocales: unknown }, locale: string): SeoFields {
+  const base: SeoFields = { metaTitle: page.metaTitle, metaDescription: page.metaDescription, metaKeywords: (page.metaKeywords as string[] | null) ?? null };
+  if (locale === 'en') return base;
+  const localesMap = (page.metaLocales as Record<string, Partial<SeoFields>> | null) ?? {};
+  const override = localesMap[locale];
+  if (!override) return base;
+  return {
+    metaTitle: override.metaTitle ?? base.metaTitle,
+    metaDescription: override.metaDescription ?? base.metaDescription,
+    metaKeywords: override.metaKeywords ?? base.metaKeywords,
+  };
+}
+
 // Every individual tool page (route slug -> display name), each getting its
 // own `tools-<slug>` CMS page with Features/FAQ sections (SEO template,
 // ToolSeoSections.tsx). Kept as its own list since the seed migration
@@ -151,9 +174,7 @@ export class CmsService {
     }
 
     return {
-      metaTitle: page.metaTitle,
-      metaDescription: page.metaDescription,
-      metaKeywords: page.metaKeywords as string[] | null,
+      ...resolveSeoLocale(page, locale),
       ogImageUrl: page.ogImageUrl,
       sections,
     };
@@ -170,6 +191,7 @@ export class CmsService {
       metaTitle: page.metaTitle,
       metaDescription: page.metaDescription,
       metaKeywords: (page.metaKeywords as string[] | null) ?? [],
+      metaLocales: (page.metaLocales as Record<string, Partial<SeoFields>> | null) ?? {},
       ogImageUrl: page.ogImageUrl,
       sections: page.sections.map((s) => ({
         key: s.sectionKey,
@@ -203,11 +225,27 @@ export class CmsService {
 
   async updateSeo(
     slug: string,
-    data: { metaTitle?: string; metaDescription?: string; metaKeywords?: string[]; ogImageUrl?: string }
+    data: { metaTitle?: string; metaDescription?: string; metaKeywords?: string[]; ogImageUrl?: string },
+    locale: string = 'en'
   ) {
     const page = await this.prisma.page.findUnique({ where: { slug } });
     if (!page) throw new NotFoundException('Page not found.');
-    return this.prisma.page.update({ where: { slug }, data });
+
+    if (locale === 'en') {
+      const { ogImageUrl, ...seo } = data;
+      return this.prisma.page.update({ where: { slug }, data: { ...seo, ...(ogImageUrl !== undefined ? { ogImageUrl } : {}) } });
+    }
+
+    // ogImageUrl isn't translatable content — a non-English locale only ever
+    // overrides metaTitle/metaDescription/metaKeywords, same fields the SEO
+    // editor's locale tabs expose.
+    const existingLocales = (page.metaLocales as Record<string, Partial<SeoFields>> | null) ?? {};
+    const { metaTitle, metaDescription, metaKeywords } = data;
+    const nextLocales = {
+      ...existingLocales,
+      [locale]: { ...existingLocales[locale], ...(metaTitle !== undefined ? { metaTitle } : {}), ...(metaDescription !== undefined ? { metaDescription } : {}), ...(metaKeywords !== undefined ? { metaKeywords } : {}) },
+    };
+    return this.prisma.page.update({ where: { slug }, data: { metaLocales: nextLocales as Prisma.InputJsonValue } });
   }
 
   // Publishes every section on the page at once — the spec's confirmation

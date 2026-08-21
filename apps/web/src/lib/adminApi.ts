@@ -408,11 +408,18 @@ export interface AdminCmsSection {
   updatedAt: string;
 }
 
+export interface AdminCmsSeoLocaleOverride {
+  metaTitle?: string;
+  metaDescription?: string;
+  metaKeywords?: string[];
+}
+
 export interface AdminCmsPageDraft {
   slug: string;
   metaTitle: string | null;
   metaDescription: string | null;
   metaKeywords: string[];
+  metaLocales: Record<string, AdminCmsSeoLocaleOverride>;
   ogImageUrl: string | null;
   sections: AdminCmsSection[];
 }
@@ -432,9 +439,10 @@ export async function updateAdminCmsSection(token: string, slug: string, key: st
 export async function updateAdminCmsSeo(
   token: string,
   slug: string,
-  data: { metaTitle?: string; metaDescription?: string; metaKeywords?: string[]; ogImageUrl?: string }
+  data: { metaTitle?: string; metaDescription?: string; metaKeywords?: string[]; ogImageUrl?: string },
+  locale: string = 'en'
 ): Promise<void> {
-  await adminFetch(token, `/admin/cms/pages/${slug}/seo`, { method: 'PATCH', body: data });
+  await adminFetch(token, `/admin/cms/pages/${slug}/seo`, { method: 'PATCH', body: { ...data, locale } });
 }
 
 export async function publishAdminCmsPage(token: string, slug: string): Promise<{ publishedCount: number }> {

@@ -188,10 +188,24 @@ export default function AdminCms() {
     }, 500);
   }
 
+  // ogImageUrl isn't translatable (one image for the page, not text), so it
+  // always saves against 'en' regardless of which locale tab is active —
+  // otherwise editing it on a non-English tab would silently write into
+  // that locale's override object, which the backend never reads for images.
   async function handleSeoBlur(field: 'metaTitle' | 'metaDescription' | 'ogImageUrl', value: string) {
     if (!token || !draft) return;
     try {
-      await updateAdminCmsSeo(token, slug, { [field]: value });
+      await updateAdminCmsSeo(token, slug, { [field]: value }, field === 'ogImageUrl' ? 'en' : activeLocale);
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Could not save SEO settings.');
+    }
+  }
+
+  async function handleKeywordsBlur(value: string) {
+    if (!token || !draft) return;
+    const metaKeywords = value.split(',').map((k) => k.trim()).filter(Boolean);
+    try {
+      await updateAdminCmsSeo(token, slug, { metaKeywords }, activeLocale);
     } catch (err) {
       showError(err instanceof Error ? err.message : 'Could not save SEO settings.');
     }
@@ -252,21 +266,32 @@ export default function AdminCms() {
             {/* SEO Settings — fixed, non-collapsible, always visible above the sections */}
             <div className="rounded-lg border border-emerald/20 bg-emerald-soft/[0.08] p-4">
               <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-soft">SEO Settings</h2>
+              {activeLocale !== 'en' && (
+                <p className="mt-1 text-[11px] text-ink-soft">
+                  Editing the {LOCALE_LABELS[activeLocale]} title/description/keywords — falls back to English until saved.
+                </p>
+              )}
               <div className="mt-3 space-y-3">
                 <SeoField
-                  key={`${slug}-metaTitle`}
+                  key={`${slug}-metaTitle-${activeLocale}`}
                   label="Page title (Meta Title)"
-                  defaultValue={draft.metaTitle ?? ''}
+                  defaultValue={(activeLocale === 'en' ? draft.metaTitle : draft.metaLocales[activeLocale]?.metaTitle ?? draft.metaTitle) ?? ''}
                   maxLength={60}
                   onBlur={(v) => handleSeoBlur('metaTitle', v)}
                 />
                 <SeoField
-                  key={`${slug}-metaDescription`}
+                  key={`${slug}-metaDescription-${activeLocale}`}
                   label="Description (Meta Description)"
-                  defaultValue={draft.metaDescription ?? ''}
+                  defaultValue={(activeLocale === 'en' ? draft.metaDescription : draft.metaLocales[activeLocale]?.metaDescription ?? draft.metaDescription) ?? ''}
                   maxLength={160}
                   multiline
                   onBlur={(v) => handleSeoBlur('metaDescription', v)}
+                />
+                <SeoField
+                  key={`${slug}-metaKeywords-${activeLocale}`}
+                  label="Keywords (comma-separated)"
+                  defaultValue={(activeLocale === 'en' ? draft.metaKeywords : draft.metaLocales[activeLocale]?.metaKeywords ?? draft.metaKeywords).join(', ')}
+                  onBlur={handleKeywordsBlur}
                 />
                 <SeoField
                   key={`${slug}-ogImageUrl`}

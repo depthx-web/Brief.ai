@@ -543,6 +543,23 @@ const de: Record<DictionaryKey, string> = {
   'tool.methodologyExtractor.description': 'Fasst die Methodik in einer strukturierten Stichproben-/Werkzeug-/Analysetabelle zusammen.',
   'tool.presentationOutline.name': 'Präsentationsgliederung-Generator',
   'tool.presentationOutline.description': 'Verwandelt die Arbeit in eine Reihe präsentationsfertiger Gesprächspunkte.',
+
+  'workspace.legalWorkspace': 'Rechtsbereich',
+  'workspace.accountingWorkspace': 'Buchhaltungsbereich',
+  'workspace.researchWorkspace': 'Forschungsbereich',
+  'workspace.cycleWeekly': 'Wöchentlich',
+  'workspace.cycleMonthly': 'Monatlich',
+  'workspace.cycleQuarterly': 'Vierteljährlich',
+  'workspace.cycleYearly': 'Jährlich',
+  'workspace.active': 'Aktiv',
+  'workspace.freePlan': 'Kostenloser Plan',
+  'workspace.creditsRemainingSingular': 'Noch {n} Guthaben →',
+  'workspace.creditsRemainingPlural': 'Noch {n} Guthaben →',
+  'workspace.changePlan': 'Plan ändern →',
+
+  'retentionConfirm.title': 'Aufbewahrung verlängern?',
+  'retentionConfirm.body': 'Dies wird {days} weitere Tage aufbewahrt, bevor es automatisch gelöscht wird. Fortfahren?',
+  'retentionConfirm.confirm': 'Verlängern',
 };
 
 export default de;

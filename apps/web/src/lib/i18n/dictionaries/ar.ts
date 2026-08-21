@@ -543,6 +543,23 @@ const ar: Record<DictionaryKey, string> = {
   'tool.methodologyExtractor.description': 'يلخص المنهجية في جدول منظم للعينة/الأدوات/التحليل.',
   'tool.presentationOutline.name': 'مولّد مخطط العرض التقديمي',
   'tool.presentationOutline.description': 'يحوّل الورقة البحثية إلى مجموعة نقاط جاهزة للعرض التقديمي.',
+
+  'workspace.legalWorkspace': 'مساحة العمل القانونية',
+  'workspace.accountingWorkspace': 'مساحة العمل المحاسبية',
+  'workspace.researchWorkspace': 'مساحة العمل البحثية',
+  'workspace.cycleWeekly': 'أسبوعي',
+  'workspace.cycleMonthly': 'شهري',
+  'workspace.cycleQuarterly': 'ربع سنوي',
+  'workspace.cycleYearly': 'سنوي',
+  'workspace.active': 'نشط',
+  'workspace.freePlan': 'خطة مجانية',
+  'workspace.creditsRemainingSingular': '→ رصيد واحد متبقٍ',
+  'workspace.creditsRemainingPlural': '→ {n} أرصدة متبقية',
+  'workspace.changePlan': '→ تغيير الخطة',
+
+  'retentionConfirm.title': 'تمديد مدة الاحتفاظ؟',
+  'retentionConfirm.body': 'سيُحفظ هذا لمدة {days} يومًا إضافيًا قبل حذفه تلقائيًا. هل تريد المتابعة؟',
+  'retentionConfirm.confirm': 'تمديد',
 };
 
 export default ar;

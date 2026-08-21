@@ -8,15 +8,18 @@ import type { DictionaryKey } from '@/lib/i18n/dictionaries/en';
 import HomeLogoLink from './HomeLogoLink';
 import LanguageSwitcher from './LanguageSwitcher';
 import WorkspacePlanCard from './WorkspacePlanCard';
+import { DashboardIcon, LibraryIcon, WalletIcon, ReferralIcon, ToolsGroupIcon, SettingsIcon } from '@/lib/icons';
 
-const NAV_ITEMS: { href: string; labelKey: DictionaryKey; emoji?: string }[] = [
-  { href: '/dashboard', labelKey: 'sidebar.dashboard' },
-  { href: '/library', labelKey: 'sidebar.myLibrary' },
-  { href: '/wallet', labelKey: 'sidebar.myWallet', emoji: '👛' },
-  { href: '/referrals', labelKey: 'sidebar.referrals', emoji: '🔗' },
-  { href: '/tools', labelKey: 'sidebar.tools' },
-  { href: '/settings', labelKey: 'sidebar.settings' },
+const NAV_ITEMS: { href: string; labelKey: DictionaryKey; icon: (color: string) => React.ReactNode }[] = [
+  { href: '/dashboard', labelKey: 'sidebar.dashboard', icon: DashboardIcon },
+  { href: '/library', labelKey: 'sidebar.myLibrary', icon: LibraryIcon },
+  { href: '/wallet', labelKey: 'sidebar.myWallet', icon: WalletIcon },
+  { href: '/referrals', labelKey: 'sidebar.referrals', icon: ReferralIcon },
+  { href: '/tools', labelKey: 'sidebar.tools', icon: ToolsGroupIcon },
+  { href: '/settings', labelKey: 'sidebar.settings', icon: SettingsIcon },
 ];
+
+const NAV_INACTIVE = '#C9D4E3';
 
 export default function Sidebar({ onOpenSwitchModal }: { onOpenSwitchModal: () => void }) {
   const pathname = usePathname();
@@ -36,11 +39,11 @@ export default function Sidebar({ onOpenSwitchModal }: { onOpenSwitchModal: () =
             <Link
               key={item.href}
               href={item.href}
-              className={`rounded-md px-3 py-2.5 text-sm transition-colors ${
+              className={`flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm transition-colors ${
                 active ? 'bg-white/10 font-medium text-white' : 'text-[#C9D4E3] hover:bg-white/5 hover:text-white'
               }`}
             >
-              {item.emoji ? `${item.emoji} ` : ''}
+              {item.icon(active ? '#1E9D75' : NAV_INACTIVE)}
               {t(item.labelKey)}
             </Link>
           );

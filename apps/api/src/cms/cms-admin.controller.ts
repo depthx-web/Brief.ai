@@ -41,8 +41,9 @@ export class CmsAdminController {
   }
 
   @Patch('pages/:slug/seo')
-  async updateSeo(@Param('slug') slug: string, @Body() body: UpdateSeoBody) {
-    await this.cmsService.updateSeo(slug, body);
+  async updateSeo(@Param('slug') slug: string, @Body() body: UpdateSeoBody & { locale?: string }) {
+    const { locale, ...seo } = body;
+    await this.cmsService.updateSeo(slug, seo, locale || 'en');
     return { success: true };
   }
 

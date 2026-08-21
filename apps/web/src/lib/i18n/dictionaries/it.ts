@@ -543,6 +543,23 @@ const it: Record<DictionaryKey, string> = {
   'tool.methodologyExtractor.description': 'Riassume la metodologia in una tabella strutturata campione/strumenti/analisi.',
   'tool.presentationOutline.name': 'Generatore di scaletta per presentazione',
   'tool.presentationOutline.description': 'Trasforma l’articolo in una serie di punti pronti per una presentazione.',
+
+  'workspace.legalWorkspace': 'Area Legale',
+  'workspace.accountingWorkspace': 'Area Contabilità',
+  'workspace.researchWorkspace': 'Area Ricerca',
+  'workspace.cycleWeekly': 'Settimanale',
+  'workspace.cycleMonthly': 'Mensile',
+  'workspace.cycleQuarterly': 'Trimestrale',
+  'workspace.cycleYearly': 'Annuale',
+  'workspace.active': 'Attivo',
+  'workspace.freePlan': 'Piano gratuito',
+  'workspace.creditsRemainingSingular': '{n} credito rimanente →',
+  'workspace.creditsRemainingPlural': '{n} crediti rimanenti →',
+  'workspace.changePlan': 'Cambia piano →',
+
+  'retentionConfirm.title': 'Estendere la conservazione?',
+  'retentionConfirm.body': 'Questo verrà conservato per altri {days} giorni prima di essere eliminato automaticamente. Continuare?',
+  'retentionConfirm.confirm': 'Estendi',
 };
 
 export default it;

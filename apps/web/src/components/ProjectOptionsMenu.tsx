@@ -17,6 +17,7 @@ import { setProjectVisibility } from '@/lib/teamApi';
 import { showError, showSuccess } from '@/lib/toast';
 import { useLocale } from '@/lib/i18n/LocaleContext';
 import type { DictionaryKey } from '@/lib/i18n/dictionaries/en';
+import RetentionConfirmDialog from './RetentionConfirmDialog';
 
 const BILLING_ENFORCED = process.env.NEXT_PUBLIC_BILLING_ENFORCED === 'true';
 
@@ -40,6 +41,7 @@ export default function ProjectOptionsMenu({ project, onExtended, onDeleted, onU
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [filesSubOpen, setFilesSubOpen] = useState(false);
   const [files, setFiles] = useState<LibraryDocumentSummary[] | null>(null);
+  const [confirmExtendDays, setConfirmExtendDays] = useState<7 | 30 | null>(null);
 
   const locked = BILLING_ENFORCED && user?.plan !== 'PAID';
   const segmentActionKey = user?.segment ? SEGMENT_PROJECT_ACTION_KEY[user.segment] : null;
@@ -62,6 +64,8 @@ export default function ProjectOptionsMenu({ project, onExtended, onDeleted, onU
       showSuccess(t('fileMenu.retentionExtended').replace('{days}', String(days)));
     } catch (err) {
       showError(err instanceof Error ? err.message : t('fileMenu.couldNotExtendRetention'));
+    } finally {
+      setConfirmExtendDays(null);
     }
   }
 
@@ -165,14 +169,14 @@ export default function ProjectOptionsMenu({ project, onExtended, onDeleted, onU
 
             <DropdownMenu.Item
               onSelect={(e) => e.preventDefault()}
-              onClick={() => handleExtend(7)}
+              onClick={() => setConfirmExtendDays(7)}
               className="cursor-pointer select-none rounded-md px-2.5 py-2 text-[13px] text-ink outline-none transition-colors data-[highlighted]:bg-emerald-soft"
             >
               {t('projectMenu.extendRetention7d')}
             </DropdownMenu.Item>
             <DropdownMenu.Item
               onSelect={(e) => e.preventDefault()}
-              onClick={() => handleExtend(30)}
+              onClick={() => setConfirmExtendDays(30)}
               className="cursor-pointer select-none rounded-md px-2.5 py-2 text-[13px] text-ink outline-none transition-colors data-[highlighted]:bg-emerald-soft"
             >
               {t('projectMenu.extendRetention30d')}
@@ -269,6 +273,12 @@ export default function ProjectOptionsMenu({ project, onExtended, onDeleted, onU
           </Dialog.Content>
         </Dialog.Portal>
       </Dialog.Root>
+
+      <RetentionConfirmDialog
+        days={confirmExtendDays}
+        onCancel={() => setConfirmExtendDays(null)}
+        onConfirm={handleExtend}
+      />
     </>
   );
 }
