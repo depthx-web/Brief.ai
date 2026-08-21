@@ -3,6 +3,8 @@
 import { useRef, useState } from 'react';
 import { PDFDocument } from 'pdf-lib';
 import { useLocale } from '@/lib/i18n/LocaleContext';
+import { isTauri } from '@/lib/platform';
+import { pickPdfFilesNative } from '@/lib/nativeFilePicker';
 import GuestEncouragementBar from './GuestEncouragementBar';
 
 interface PdfItem {
@@ -38,6 +40,15 @@ export default function MergePdf() {
       ...prev,
       ...pdfFiles.map((file) => ({ id: `${file.name}-${file.size}-${crypto.randomUUID()}`, file })),
     ]);
+  }
+
+  async function handleChooseFiles() {
+    if (isTauri()) {
+      const files = await pickPdfFilesNative();
+      if (files.length) addFiles(files);
+      return;
+    }
+    inputRef.current?.click();
   }
 
   function handleDrop(e: React.DragEvent<HTMLDivElement>) {
@@ -111,7 +122,7 @@ export default function MergePdf() {
         }}
         onDragLeave={() => setIsDragOver(false)}
         onDrop={handleDrop}
-        onClick={() => inputRef.current?.click()}
+        onClick={handleChooseFiles}
         className={`mt-6 flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed px-6 py-12 text-center transition-colors ${
           isDragOver ? 'border-emerald bg-emerald/5' : 'border-gray-300 bg-white'
         }`}
