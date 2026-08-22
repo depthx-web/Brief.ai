@@ -51,7 +51,7 @@ export default function LoginModal({ open, onClose }: Props) {
           </Dialog.Description>
 
           <div className="mt-5">
-            <GoogleSignInButton />
+            <GoogleSignInButton label={t('auth.continueWithGoogle')} />
           </div>
           <div className="my-4 flex items-center gap-3 text-xs text-ink-soft">
             <span className="h-px flex-1 bg-gray-200" />

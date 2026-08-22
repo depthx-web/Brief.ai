@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { generateFilePdf } from '@/lib/generateFilePdf';
 import { convertPdfToOffice, downloadBlob } from '@/lib/convertApi';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 
 interface Props {
   title: string;
@@ -19,6 +20,7 @@ function approxSizeLabel(content: string): string {
 // shown as a small "physical document" card (bg=paper, matching how every
 // other document representation in the app looks) rather than plain text.
 export default function MiniFileCard({ title, filename, content }: Props) {
+  const { t } = useLocale();
   const [generating, setGenerating] = useState<'pdf' | 'word' | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,7 +31,7 @@ export default function MiniFileCard({ title, filename, content }: Props) {
       const blob = await generateFilePdf(title, content);
       downloadBlob(blob, `${filename}.pdf`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not generate the PDF.');
+      setError(err instanceof Error ? err.message : t('miniFileCard.couldNotGeneratePdf'));
     } finally {
       setGenerating(null);
     }
@@ -44,7 +46,7 @@ export default function MiniFileCard({ title, filename, content }: Props) {
       const { blob, filename: outName } = await convertPdfToOffice(pdfFile, 'word');
       downloadBlob(blob, outName);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not generate the Word document.');
+      setError(err instanceof Error ? err.message : t('miniFileCard.couldNotGenerateWord'));
     } finally {
       setGenerating(null);
     }
@@ -68,14 +70,14 @@ export default function MiniFileCard({ title, filename, content }: Props) {
           disabled={generating !== null}
           className="flex-1 rounded-md bg-navy-light px-2 py-1.5 text-[11px] font-medium text-white transition-colors hover:bg-navy disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {generating === 'pdf' ? '…' : 'Download PDF'}
+          {generating === 'pdf' ? '…' : t('miniFileCard.downloadPdf')}
         </button>
         <button
           onClick={handleDownloadWord}
           disabled={generating !== null}
           className="flex-1 rounded-md border border-navy-light px-2 py-1.5 text-[11px] font-medium text-navy-light transition-colors hover:bg-navy-light/5 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {generating === 'word' ? '…' : 'Download Word'}
+          {generating === 'word' ? '…' : t('miniFileCard.downloadWord')}
         </button>
       </div>
     </div>

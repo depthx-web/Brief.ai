@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import * as pdfjsLib from 'pdfjs-dist';
 import * as Diff from 'diff';
 import { useAuth } from '@/lib/AuthContext';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 import { extractPdfText, type PageText } from '@/lib/extractPdfText';
 import { fetchDocumentFile, deleteDocument, downloadDocument, listDocuments } from '@/lib/libraryApi';
 import {
@@ -52,6 +53,7 @@ function joinPages(pages: PageText[]): string {
 
 export default function Workspace() {
   const { user, token } = useAuth();
+  const { t } = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();
   const docId = searchParams.get('doc');
@@ -112,7 +114,7 @@ export default function Workspace() {
         runAnalysis(extracted, foundDocType);
       } catch (err) {
         if (!cancelled) {
-          setLoadError(err instanceof Error ? err.message : 'Could not load this document.');
+          setLoadError(err instanceof Error ? err.message : t('docWorkspace.couldNotLoad'));
         }
       } finally {
         if (!cancelled) setIsLoadingDoc(false);
@@ -139,7 +141,7 @@ export default function Workspace() {
         setSummary(await summarizeDocument(docPages, 'executive', 'medium', token ?? undefined, forDocType));
       }
     } catch (err) {
-      setAnalysisError(err instanceof Error ? err.message : 'Could not analyze this document.');
+      setAnalysisError(err instanceof Error ? err.message : t('docWorkspace.couldNotAnalyze'));
     } finally {
       setIsAnalyzing(false);
     }
@@ -153,7 +155,7 @@ export default function Workspace() {
     try {
       setSummary(await summarizeDocument(pages, 'executive', 'medium', token ?? undefined, docType));
     } catch (err) {
-      setAnalysisError(err instanceof Error ? err.message : 'Could not summarize this document.');
+      setAnalysisError(err instanceof Error ? err.message : t('docWorkspace.couldNotSummarize'));
     } finally {
       setIsSummarizing(false);
     }
@@ -167,7 +169,7 @@ export default function Workspace() {
       const otherPages = await extractPdfText(file);
       setDiffParts(Diff.diffWords(joinPages(pages), joinPages(otherPages)));
     } catch (err) {
-      setAnalysisError(err instanceof Error ? err.message : 'Could not compare documents.');
+      setAnalysisError(err instanceof Error ? err.message : t('docWorkspace.couldNotCompareDocuments'));
     } finally {
       setIsComparing(false);
     }
@@ -190,14 +192,14 @@ export default function Workspace() {
         result.type === 'file'
           ? {
               role: 'assistant',
-              content: `Generated: ${result.title}`,
+              content: t('docWorkspace.generatedPrefix').replace('{title}', result.title),
               file: { title: result.title, filename: result.filename, content: result.content },
             }
           : { role: 'assistant', content: result.content };
       setMessages([...next, reply]);
     } catch (err) {
       setMessages(messages);
-      setAnalysisError(err instanceof Error ? err.message : 'Could not get an answer.');
+      setAnalysisError(err instanceof Error ? err.message : t('docWorkspace.couldNotGetAnswer'));
     } finally {
       setIsAsking(false);
     }
@@ -205,7 +207,7 @@ export default function Workspace() {
 
   async function handleDelete() {
     if (!token || !docId) return;
-    if (!window.confirm('Delete this document from your library?')) return;
+    if (!window.confirm(t('docWorkspace.confirmDelete'))) return;
     await deleteDocument(token, docId);
     router.push('/library');
   }
@@ -218,12 +220,12 @@ export default function Workspace() {
   if (!docId) {
     return (
       <div className="mx-auto max-w-md px-6 py-24 text-center">
-        <p className="text-ink-soft">No document selected.</p>
+        <p className="text-ink-soft">{t('docWorkspace.noDocumentSelected')}</p>
         <button
           onClick={() => router.push('/dashboard')}
           className="mt-4 font-medium text-navy hover:text-emerald"
         >
-          Go to Dashboard
+          {t('nav.goToDashboard')}
         </button>
       </div>
     );
@@ -236,12 +238,12 @@ export default function Workspace() {
           <button
             onClick={() => router.push('/dashboard')}
             className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-ink-soft hover:text-navy"
-            aria-label="Back"
-            title="Back"
+            aria-label={t('docWorkspace.back')}
+            title={t('docWorkspace.back')}
           >
             <BackIcon />
           </button>
-          <span className="truncate font-mono text-[13px] text-ink">{filename || 'Loading…'}</span>
+          <span className="truncate font-mono text-[13px] text-ink">{filename || t('common.loading')}</span>
           {docType && (
             <span className="shrink-0 rounded-full bg-emerald-soft px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-emerald">
               {docType}
@@ -252,16 +254,16 @@ export default function Workspace() {
           <button
             onClick={handleDownload}
             className="flex h-7 w-7 items-center justify-center rounded-md text-ink-soft hover:text-navy"
-            aria-label="Download"
-            title="Download"
+            aria-label={t('common.download')}
+            title={t('common.download')}
           >
             <DownloadIcon />
           </button>
           <button
             onClick={handleDelete}
             className="flex h-7 w-7 items-center justify-center rounded-md text-ink-soft hover:text-redline"
-            aria-label="Delete"
-            title="Delete"
+            aria-label={t('common.delete')}
+            title={t('common.delete')}
           >
             <DeleteIcon />
           </button>
@@ -277,7 +279,7 @@ export default function Workspace() {
       <div className="flex flex-1 overflow-hidden">
         <div className="flex-[6] overflow-y-auto bg-gray-100 p-8">
           {isLoadingDoc ? (
-            <p className="text-center text-sm text-ink-soft">Loading document…</p>
+            <p className="text-center text-sm text-ink-soft">{t('docWorkspace.loadingDocument')}</p>
           ) : (
             <div className="mx-auto flex max-w-2xl flex-col items-center gap-4">
               {pageImages.map((src, i) => (
@@ -290,15 +292,15 @@ export default function Workspace() {
 
         <div className="flex flex-[4] flex-col border-l border-gray-200 bg-white">
           <div className="flex border-b border-gray-200">
-            {(['analysis', 'chat'] as Tab[]).map((t) => (
+            {(['analysis', 'chat'] as Tab[]).map((tabKey) => (
               <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={`flex-1 py-3 text-sm font-medium capitalize transition-colors ${
-                  tab === t ? 'border-b-2 border-emerald text-navy' : 'text-ink-soft hover:text-navy'
+                key={tabKey}
+                onClick={() => setTab(tabKey)}
+                className={`flex-1 py-3 text-sm font-medium transition-colors ${
+                  tab === tabKey ? 'border-b-2 border-emerald text-navy' : 'text-ink-soft hover:text-navy'
                 }`}
               >
-                {t}
+                {t(tabKey === 'analysis' ? 'docWorkspace.tabAnalysis' : 'docWorkspace.tabChat')}
               </button>
             ))}
           </div>
@@ -314,18 +316,18 @@ export default function Workspace() {
                       onClick={() => (showQuickSummary ? setShowQuickSummary(false) : handleQuickSummary())}
                       className="text-sm font-medium text-navy hover:text-emerald"
                     >
-                      {showQuickSummary ? 'Hide quick summary' : 'Get quick summary →'}
+                      {showQuickSummary ? t('docWorkspace.hideQuickSummary') : t('docWorkspace.getQuickSummary')}
                     </button>
                     {showQuickSummary && (
                       <p className="mt-3 whitespace-pre-wrap text-sm text-ink-soft">
-                        {isSummarizing ? 'Summarizing…' : summary}
+                        {isSummarizing ? t('docWorkspace.summarizing') : summary}
                       </p>
                     )}
                   </div>
                 )}
                 {isAnalyzing ? (
                   <div className="space-y-3">
-                    <p className="font-mono text-xs text-ink-soft">Dossiera is analyzing the document…</p>
+                    <p className="font-mono text-xs text-ink-soft">{t('docWorkspace.analyzing')}</p>
                     <div className="h-3 animate-pulse rounded bg-gray-200" />
                     <div className="h-3 w-5/6 animate-pulse rounded bg-gray-200" />
                     <div className="h-3 w-4/6 animate-pulse rounded bg-gray-200" />
@@ -347,13 +349,13 @@ export default function Workspace() {
                             ))}
                           </ul>
                         ) : (
-                          <p className="text-sm text-ink-soft">No flagged clauses.</p>
+                          <p className="text-sm text-ink-soft">{t('aiTool.highRiskClauses.noneFound')}</p>
                         )}
 
                         <dl className="space-y-3 text-sm">
                           {(['parties', 'dates', 'amounts', 'obligations'] as const).map((key) => (
                             <div key={key}>
-                              <dt className="font-medium capitalize text-ink">{key}</dt>
+                              <dt className="font-medium text-ink">{t(`aiTool.highRiskClauses.${key}`)}</dt>
                               <dd className="text-ink-soft">
                                 {clauseAnalysis.entities[key].length > 0
                                   ? clauseAnalysis.entities[key].join(', ')
@@ -368,7 +370,7 @@ export default function Workspace() {
                             onClick={() => setShowCompare((v) => !v)}
                             className="text-sm font-medium text-navy hover:text-emerald"
                           >
-                            {showCompare ? 'Hide comparison' : 'Compare with another version →'}
+                            {showCompare ? t('docWorkspace.hideComparison') : t('docWorkspace.compareAnotherVersion')}
                           </button>
                           {showCompare && (
                             <div className="mt-3">
@@ -377,7 +379,7 @@ export default function Workspace() {
                                 disabled={isComparing}
                                 className="rounded-md border border-gray-300 px-3 py-2 text-xs hover:bg-gray-50"
                               >
-                                {isComparing ? 'Comparing…' : 'Choose file to compare'}
+                                {isComparing ? t('toolPage.contractCompare.comparing') : t('docWorkspace.chooseFileToCompare')}
                               </button>
                               <input
                                 ref={compareInputRef}
@@ -413,28 +415,28 @@ export default function Workspace() {
                     {invoiceData && (
                       <dl className="space-y-3 text-sm">
                         <div>
-                          <dt className="font-medium text-ink">Vendor</dt>
+                          <dt className="font-medium text-ink">{t('toolPage.batchInvoices.colVendor')}</dt>
                           <dd className="text-ink-soft">{invoiceData.vendor || '—'}</dd>
                         </div>
                         <div>
-                          <dt className="font-medium text-ink">Invoice #</dt>
+                          <dt className="font-medium text-ink">{t('toolPage.batchInvoices.colInvoiceNumber')}</dt>
                           <dd className="font-mono text-ink-soft">{invoiceData.invoiceNumber || '—'}</dd>
                         </div>
                         <div>
-                          <dt className="font-medium text-ink">Date</dt>
+                          <dt className="font-medium text-ink">{t('toolPage.batchInvoices.colDate')}</dt>
                           <dd className="text-ink-soft">{invoiceData.date || '—'}</dd>
                         </div>
                         <div>
-                          <dt className="font-medium text-ink">Category</dt>
+                          <dt className="font-medium text-ink">{t('toolPage.batchInvoices.colCategory')}</dt>
                           <dd className="text-ink-soft">{invoiceData.category || '—'}</dd>
                         </div>
                         <div>
-                          <dt className="font-medium text-ink">Total</dt>
+                          <dt className="font-medium text-ink">{t('toolPage.batchInvoices.colTotal')}</dt>
                           <dd className="font-mono text-ink-soft">{invoiceData.total || '—'}</dd>
                         </div>
                         {invoiceData.lineItems.length > 0 && (
                           <div>
-                            <dt className="mb-1 font-medium text-ink">Line items</dt>
+                            <dt className="mb-1 font-medium text-ink">{t('docWorkspace.lineItems')}</dt>
                             <ul className="space-y-1 text-xs text-ink-soft">
                               {invoiceData.lineItems.map((li, i) => (
                                 <li key={i}>
@@ -463,7 +465,7 @@ export default function Workspace() {
               <div className="flex h-full flex-col">
                 <div className="flex-1 space-y-3 overflow-y-auto">
                   {messages.length === 0 && (
-                    <p className="text-sm text-ink-soft">Ask a question about this document.</p>
+                    <p className="text-sm text-ink-soft">{t('docWorkspace.askAQuestion')}</p>
                   )}
                   {messages.map((m, i) => (
                     <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -484,7 +486,7 @@ export default function Workspace() {
                       )}
                     </div>
                   ))}
-                  {isAsking && <p className="text-sm text-ink-soft">Thinking…</p>}
+                  {isAsking && <p className="text-sm text-ink-soft">{t('docWorkspace.thinking')}</p>}
                 </div>
                 <div className="mt-3 flex gap-2 border-t border-gray-100 pt-3">
                   <input
@@ -492,14 +494,14 @@ export default function Workspace() {
                     value={question}
                     onChange={(e) => setQuestion(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && !isAsking && handleSend()}
-                    placeholder="Ask a question…"
+                    placeholder={t('docWorkspace.askPlaceholder')}
                     className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm"
                   />
                   <button
                     onClick={handleSend}
                     disabled={isAsking || !question.trim()}
                     className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald text-white hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
-                    aria-label="Send"
+                    aria-label={t('docWorkspace.send')}
                   >
                     →
                   </button>

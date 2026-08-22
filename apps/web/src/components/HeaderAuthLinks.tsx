@@ -1,9 +1,11 @@
 'use client';
 
 import { useAuth } from '@/lib/AuthContext';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 
 export default function HeaderAuthLinks() {
   const { user, isLoading, logout } = useAuth();
+  const { t } = useLocale();
 
   if (isLoading) return null;
 
@@ -11,10 +13,10 @@ export default function HeaderAuthLinks() {
     return (
       <div className="flex items-center gap-4">
         <a href="/login" className="text-sm font-medium text-navy hover:text-emerald transition-colors">
-          Log in
+          {t('nav.logIn')}
         </a>
         <a href="/signup" className="text-sm font-medium text-navy hover:text-emerald transition-colors">
-          Sign up
+          {t('nav.signUp')}
         </a>
       </div>
     );
@@ -23,11 +25,11 @@ export default function HeaderAuthLinks() {
   return (
     <div className="flex items-center gap-4">
       <a href="/library" className="text-sm font-medium text-navy hover:text-emerald transition-colors">
-        My Library
+        {t('sidebar.myLibrary')}
       </a>
       <span className="text-sm text-gray-400">{user.email}</span>
       <button onClick={logout} className="text-sm font-medium text-navy hover:text-emerald transition-colors">
-        Log out
+        {t('sidebar.logout')}
       </button>
     </div>
   );

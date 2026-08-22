@@ -960,6 +960,73 @@ const en = {
   'retentionConfirm.title': 'Extend retention?',
   'retentionConfirm.body': 'This will be kept for {days} more days before it’s automatically deleted. Continue?',
   'retentionConfirm.confirm': 'Extend',
+
+  // App shell free-plan banner
+  'appShell.freePlanBanner': "You're on the Free plan — core tools are unlimited.",
+  'appShell.upgradeForAiFeatures': 'Upgrade for AI features →',
+
+  // Google OAuth completion screen
+  'googleComplete.missingToken': 'Missing sign-in token.',
+  'googleComplete.couldNotSignIn': 'Could not complete Google sign-in.',
+  'googleComplete.backToLogin': 'Back to login',
+  'googleComplete.signingIn': 'Signing you in…',
+
+  // Guest encouragement bar (shown below the download button after a free-tool operation)
+  'guestBar.createAccountToSave': 'Create a free account to save your files and unlock AI tools',
+  'guestBar.signUpFree': 'Sign up free →',
+
+  // Legal pages layout (Privacy, Terms)
+  'legal.lastUpdated': 'Last updated {date}',
+  'legal.onThisPage': 'On this page',
+
+  // Mini file card (AI chat generated-file download card)
+  'miniFileCard.couldNotGeneratePdf': 'Could not generate the PDF.',
+  'miniFileCard.couldNotGenerateWord': 'Could not generate the Word document.',
+  'miniFileCard.downloadPdf': 'Download PDF',
+  'miniFileCard.downloadWord': 'Download Word',
+
+  // Require-paid-plan gate
+  'requirePaid.pro': 'Pro',
+  'requirePaid.needsPaidPlan': 'This tool needs a paid plan',
+  'requirePaid.needsAccount': 'This tool needs an account',
+  'requirePaid.paidPlanBody': 'The free plan covers merge, split, rotate, organize, and other tools that run entirely in your browser. This one needs our servers, so it’s part of a paid workspace plan, or spend a pay-as-you-go credit.',
+  'requirePaid.accountBody': 'Create a free account to use this tool, then subscribe or buy credits if it needs more than the free plan covers.',
+  'requirePaid.createFreeAccount': 'Create free account',
+
+  // Verify email page
+  'verifyEmail.noToken': 'No verification token provided.',
+  'verifyEmail.confirming': 'Confirming your email…',
+  'verifyEmail.confirmed': 'Email confirmed',
+  'verifyEmail.verified': 'Your email address has been verified.',
+  'verifyEmail.couldNotConfirm': 'Could not confirm your email',
+  'verifyEmail.invalidOrExpired': 'This verification link is invalid or has expired.',
+  'verifyEmail.requestNewLinkPrefix': 'You can request a new confirmation link from',
+
+  // Document workspace (AI chat/analysis view opened from the Library)
+  'docWorkspace.noDocumentSelected': 'No document selected.',
+  'docWorkspace.couldNotLoad': 'Could not load this document.',
+  'docWorkspace.couldNotAnalyze': 'Could not analyze this document.',
+  'docWorkspace.couldNotSummarize': 'Could not summarize this document.',
+  'docWorkspace.couldNotCompareDocuments': 'Could not compare documents.',
+  'docWorkspace.couldNotGetAnswer': 'Could not get an answer.',
+  'docWorkspace.confirmDelete': 'Delete this document from your library?',
+  'docWorkspace.back': 'Back',
+  'docWorkspace.loadingDocument': 'Loading document…',
+  'docWorkspace.tabAnalysis': 'Analysis',
+  'docWorkspace.tabChat': 'Chat',
+  'docWorkspace.hideQuickSummary': 'Hide quick summary',
+  'docWorkspace.getQuickSummary': 'Get quick summary →',
+  'docWorkspace.summarizing': 'Summarizing…',
+  'docWorkspace.analyzing': 'Dossiera is analyzing the document…',
+  'docWorkspace.hideComparison': 'Hide comparison',
+  'docWorkspace.compareAnotherVersion': 'Compare with another version →',
+  'docWorkspace.chooseFileToCompare': 'Choose file to compare',
+  'docWorkspace.lineItems': 'Line items',
+  'docWorkspace.askAQuestion': 'Ask a question about this document.',
+  'docWorkspace.thinking': 'Thinking…',
+  'docWorkspace.askPlaceholder': 'Ask a question…',
+  'docWorkspace.generatedPrefix': 'Generated: {title}',
+  'docWorkspace.send': 'Send',
 } as const;
 
 export default en;

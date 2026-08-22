@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 
 export interface LegalSection {
   id: string;
@@ -19,6 +20,7 @@ interface Props {
 // interaction. `--paper` ground, a single narrow column, and Newsreader
 // throughout (the app's usual Inter body face is set aside on purpose).
 export default function LegalLayout({ title, lastUpdated, sections }: Props) {
+  const { t } = useLocale();
   const [activeId, setActiveId] = useState(sections[0]?.id ?? '');
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
@@ -41,7 +43,9 @@ export default function LegalLayout({ title, lastUpdated, sections }: Props) {
     <div className="bg-paper">
       <div className="mx-auto flex max-w-5xl gap-16 px-6 py-16 lg:px-12">
         <article className="mx-auto max-w-[720px] font-serif text-[16px] leading-[1.8] text-ink">
-          <p className="font-mono text-xs uppercase tracking-wide text-ink-soft">Last updated {lastUpdated}</p>
+          <p className="font-mono text-xs uppercase tracking-wide text-ink-soft">
+            {t('legal.lastUpdated').replace('{date}', lastUpdated)}
+          </p>
           <h1 className="mt-3 font-serif text-3xl font-medium text-navy">{title}</h1>
 
           <div className="mt-10 space-y-10">
@@ -62,7 +66,7 @@ export default function LegalLayout({ title, lastUpdated, sections }: Props) {
         </article>
 
         <nav className="sticky top-16 hidden h-fit w-56 shrink-0 border-s border-paper-line ps-6 lg:block">
-          <p className="font-mono text-[11px] uppercase tracking-wide text-ink-soft">On this page</p>
+          <p className="font-mono text-[11px] uppercase tracking-wide text-ink-soft">{t('legal.onThisPage')}</p>
           <ul className="mt-3 space-y-2.5">
             {sections.map((section) => (
               <li key={section.id}>

@@ -4,23 +4,25 @@ import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { showError } from '@/lib/toast';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 
 function GoogleCompleteInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { loginWithToken } = useAuth();
+  const { t } = useLocale();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const token = searchParams.get('token');
     if (!token) {
-      setError('Missing sign-in token.');
+      setError(t('googleComplete.missingToken'));
       return;
     }
     loginWithToken(token)
       .then(() => router.replace('/dashboard'))
       .catch((err) => {
-        const message = err instanceof Error ? err.message : 'Could not complete Google sign-in.';
+        const message = err instanceof Error ? err.message : t('googleComplete.couldNotSignIn');
         setError(message);
         showError(message);
       });
@@ -34,11 +36,11 @@ function GoogleCompleteInner() {
           <>
             <p className="text-sm text-redline">{error}</p>
             <a href="/login" className="mt-4 inline-block text-sm font-medium text-navy hover:text-emerald">
-              Back to login
+              {t('googleComplete.backToLogin')}
             </a>
           </>
         ) : (
-          <p className="text-sm text-ink-soft">Signing you in…</p>
+          <p className="text-sm text-ink-soft">{t('googleComplete.signingIn')}</p>
         )}
       </div>
     </div>
@@ -46,8 +48,9 @@ function GoogleCompleteInner() {
 }
 
 export default function GoogleCompleteHandler() {
+  const { t } = useLocale();
   return (
-    <Suspense fallback={<div className="mt-10 text-sm text-ink-soft">Signing you in…</div>}>
+    <Suspense fallback={<div className="mt-10 text-sm text-ink-soft">{t('googleComplete.signingIn')}</div>}>
       <GoogleCompleteInner />
     </Suspense>
   );

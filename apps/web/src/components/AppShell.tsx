@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 import { isTauri } from '@/lib/platform';
 import { getDesktopNavKeyForPath } from '@/lib/desktopNav';
 import Sidebar from './Sidebar';
@@ -27,6 +28,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
 function AppShellInner({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
+  const { t } = useLocale();
   const router = useRouter();
   const pathname = usePathname();
   // Only read for /tools's sidebar-highlight purposes — see getDesktopNavKeyForPath.
@@ -54,12 +56,12 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
       <div className="bg-dot-pattern ms-60 h-screen flex-1 overflow-y-auto bg-surface">
         {(!user || user.plan === 'FREE') && (
           <div className="flex items-center justify-center gap-2 bg-emerald-soft px-4 py-2 text-center text-sm text-navy">
-            <span>You&apos;re on the Free plan — core tools are unlimited.</span>
+            <span>{t('appShell.freePlanBanner')}</span>
             <button
               onClick={() => (user ? setModalOpen(true) : setGuestSignupOpen(true))}
               className="font-medium text-emerald-dark hover:underline"
             >
-              Upgrade for AI features →
+              {t('appShell.upgradeForAiFeatures')}
             </button>
           </div>
         )}
