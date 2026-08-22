@@ -1055,6 +1055,16 @@ const en = {
   'teamInvite.decline': 'Decline',
   'teamInvite.joining': 'Joining…',
   'teamInvite.accept': 'Accept',
+
+  // Homepage — live relative trust stats
+  'homeStats.autoDeletionLabel': 'of files auto-deleted on schedule',
+  'homeStats.autoDeletionFallbackAll': 'Every file is auto-deleted on schedule',
+  'homeStats.autoDeletionFallbackDefault': 'Files are auto-deleted on schedule',
+  'homeStats.processingValue': 'Under {s}s',
+  'homeStats.processingLabel': 'average processing time',
+  'homeStats.processingFallback': 'Most files process in seconds',
+  'homeStats.clientShareLabel': 'of operations never touch our servers',
+  'homeStats.clientShareFallback': 'Client-side tools run entirely in your browser, never touching our servers',
 } as const;
 
 export default en;

@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import { extractPdfTextWithOcrFallback, type PageText } from '@/lib/extractPdfText';
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
 import { useLocale } from '@/lib/i18n/LocaleContext';
+import { recordClientOperation } from '@/lib/statsApi';
 import GuestEncouragementBar from './GuestEncouragementBar';
 
 function toPlainText(pages: PageText[]): string {
@@ -45,6 +46,7 @@ export default function PdfToTextPdf() {
       a.download = file.name.replace(/\.pdf$/i, '') + '.txt';
       a.click();
       URL.revokeObjectURL(url);
+      recordClientOperation('pdf-to-text');
       setCompleted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('toolPage.pdfToText.couldNotExtract'));

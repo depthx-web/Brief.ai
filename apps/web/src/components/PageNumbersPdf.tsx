@@ -5,6 +5,7 @@ import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { loadPdfForPreview, renderAllThumbnails, renderPageDataUrl } from '@/lib/pdfThumbnails';
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
 import { useLocale } from '@/lib/i18n/LocaleContext';
+import { recordClientOperation } from '@/lib/statsApi';
 import type { DictionaryKey } from '@/lib/i18n/dictionaries/en';
 import PageThumbnailStrip from './PageThumbnailStrip';
 import GuestEncouragementBar from './GuestEncouragementBar';
@@ -122,6 +123,7 @@ export default function PageNumbersPdf() {
       a.download = file.name.replace(/\.pdf$/i, '') + '-numbered.pdf';
       a.click();
       URL.revokeObjectURL(url);
+      recordClientOperation('page-numbers');
       setCompleted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('toolPage.pageNumbers.couldNotNumber'));

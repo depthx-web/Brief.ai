@@ -6,6 +6,7 @@ import JSZip from 'jszip';
 import { parsePageRanges, everyPageIndividually, type PageRange } from '@/lib/pageRanges';
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
 import { useLocale } from '@/lib/i18n/LocaleContext';
+import { recordClientOperation } from '@/lib/statsApi';
 import GuestEncouragementBar from './GuestEncouragementBar';
 
 function downloadBlob(blob: Blob, filename: string) {
@@ -83,6 +84,7 @@ export default function SplitPdf() {
         const zipBlob = await zip.generateAsync({ type: 'blob' });
         downloadBlob(zipBlob, `${baseName}-split.zip`);
       }
+      recordClientOperation('split');
       setCompleted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('toolPage.split.couldNotSplit'));

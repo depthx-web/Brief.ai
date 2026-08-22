@@ -5,6 +5,7 @@ import { PDFDocument } from 'pdf-lib';
 import { loadPdfForPreview, renderAllThumbnails, renderPageDataUrl } from '@/lib/pdfThumbnails';
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
 import { useLocale } from '@/lib/i18n/LocaleContext';
+import { recordClientOperation } from '@/lib/statsApi';
 import PageThumbnailStrip, { type ThumbnailPage } from './PageThumbnailStrip';
 import GuestEncouragementBar from './GuestEncouragementBar';
 
@@ -105,6 +106,7 @@ export default function OrganizePdf() {
       a.download = file.name.replace(/\.pdf$/i, '') + '-organized.pdf';
       a.click();
       URL.revokeObjectURL(url);
+      recordClientOperation('organize');
       setCompleted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('toolPage.organize.couldNotSave'));

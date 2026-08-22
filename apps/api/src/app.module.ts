@@ -19,6 +19,7 @@ import { CmsModule } from './cms/cms.module';
 import { AffiliateModule } from './affiliate/affiliate.module';
 import { CompressionModule } from './compression/compression.module';
 import { TeamModule } from './team/team.module';
+import { StatsModule } from './stats/stats.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { TeamModule } from './team/team.module';
     AffiliateModule,
     CompressionModule,
     TeamModule,
+    StatsModule,
   ],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

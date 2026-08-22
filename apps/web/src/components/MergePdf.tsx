@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import { PDFDocument } from 'pdf-lib';
 import { useLocale } from '@/lib/i18n/LocaleContext';
+import { recordClientOperation } from '@/lib/statsApi';
 import { isTauri } from '@/lib/platform';
 import { pickPdfFilesNative } from '@/lib/nativeFilePicker';
 import GuestEncouragementBar from './GuestEncouragementBar';
@@ -96,6 +97,7 @@ export default function MergePdf() {
       a.download = 'merged.pdf';
       a.click();
       URL.revokeObjectURL(url);
+      recordClientOperation('merge');
       setCompleted(true);
     } catch (err) {
       setError(

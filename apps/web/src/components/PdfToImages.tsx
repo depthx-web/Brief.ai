@@ -5,6 +5,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 import JSZip from 'jszip';
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
 import { useLocale } from '@/lib/i18n/LocaleContext';
+import { recordClientOperation } from '@/lib/statsApi';
 import GuestEncouragementBar from './GuestEncouragementBar';
 
 // Served as a static asset (see scripts/copy-pdf-worker.mjs) rather than bundled,
@@ -84,6 +85,7 @@ export default function PdfToImages() {
         const zipBlob = await zip.generateAsync({ type: 'blob' });
         downloadBlob(zipBlob, `${baseName}-images.zip`);
       }
+      recordClientOperation('pdf-to-images');
       setCompleted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('toolPage.pdfToImages.couldNotConvert'));

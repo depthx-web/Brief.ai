@@ -5,6 +5,7 @@ import { PDFDocument, degrees } from 'pdf-lib';
 import { loadPdfForPreview, renderAllThumbnails, renderPageDataUrl } from '@/lib/pdfThumbnails';
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
 import { useLocale } from '@/lib/i18n/LocaleContext';
+import { recordClientOperation } from '@/lib/statsApi';
 import PageThumbnailStrip from './PageThumbnailStrip';
 import GuestEncouragementBar from './GuestEncouragementBar';
 
@@ -106,6 +107,7 @@ export default function RotatePdf() {
       a.download = file.name.replace(/\.pdf$/i, '') + '-rotated.pdf';
       a.click();
       URL.revokeObjectURL(url);
+      recordClientOperation('rotate');
       setCompleted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('toolPage.rotate.couldNotRotate'));

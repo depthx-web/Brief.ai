@@ -5,6 +5,7 @@ import { PDFDocument } from 'pdf-lib';
 import * as pdfjsLib from 'pdfjs-dist';
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
 import { useLocale } from '@/lib/i18n/LocaleContext';
+import { recordClientOperation } from '@/lib/statsApi';
 import type { DictionaryKey } from '@/lib/i18n/dictionaries/en';
 import GuestEncouragementBar from './GuestEncouragementBar';
 
@@ -100,6 +101,7 @@ export default function CompressPdf() {
       a.download = file.name.replace(/\.pdf$/i, '') + '-compressed.pdf';
       a.click();
       URL.revokeObjectURL(url);
+      recordClientOperation('compress');
 
       setResult({ originalSize: file.size, newSize: outBytes.byteLength });
     } catch (err) {

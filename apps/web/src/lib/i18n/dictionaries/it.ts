@@ -1013,6 +1013,16 @@ const it: Record<DictionaryKey, string> = {
   'teamInvite.decline': 'Rifiuta',
   'teamInvite.joining': 'Iscrizione in corso…',
   'teamInvite.accept': 'Accetta',
+
+  // Homepage — live relative trust stats
+  'homeStats.autoDeletionLabel': 'dei file eliminati automaticamente come previsto',
+  'homeStats.autoDeletionFallbackAll': 'Ogni file viene eliminato automaticamente come previsto',
+  'homeStats.autoDeletionFallbackDefault': 'I file vengono eliminati automaticamente come previsto',
+  'homeStats.processingValue': 'Meno di {s}s',
+  'homeStats.processingLabel': 'tempo medio di elaborazione',
+  'homeStats.processingFallback': 'La maggior parte dei file viene elaborata in pochi secondi',
+  'homeStats.clientShareLabel': 'delle operazioni non tocca mai i nostri server',
+  'homeStats.clientShareFallback': 'Gli strumenti lato client funzionano interamente nel tuo browser, senza mai toccare i nostri server',
 };
 
 export default it;

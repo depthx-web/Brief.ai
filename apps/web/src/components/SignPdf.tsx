@@ -5,6 +5,7 @@ import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import * as Dialog from '@radix-ui/react-dialog';
 import { useAuth } from '@/lib/AuthContext';
+import { recordClientOperation } from '@/lib/statsApi';
 import { loadPdfForPreview, renderAllThumbnails, renderPageDataUrl } from '@/lib/pdfThumbnails';
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
 import { listSignatures, saveSignature, deleteSignature, type SavedSignature } from '@/lib/signaturesApi';
@@ -195,6 +196,7 @@ export default function SignPdf() {
       a.download = file.name.replace(/\.pdf$/i, '') + '-signed.pdf';
       a.click();
       URL.revokeObjectURL(url);
+      recordClientOperation('sign');
       setCompleted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('toolPage.sign.couldNotSign'));

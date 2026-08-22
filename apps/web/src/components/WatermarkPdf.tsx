@@ -5,6 +5,7 @@ import { PDFDocument, StandardFonts, rgb, degrees } from 'pdf-lib';
 import { loadPdfForPreview, renderPageDataUrl } from '@/lib/pdfThumbnails';
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
 import { useLocale } from '@/lib/i18n/LocaleContext';
+import { recordClientOperation } from '@/lib/statsApi';
 import GuestEncouragementBar from './GuestEncouragementBar';
 
 export default function WatermarkPdf() {
@@ -76,6 +77,7 @@ export default function WatermarkPdf() {
       a.download = file.name.replace(/\.pdf$/i, '') + '-watermarked.pdf';
       a.click();
       URL.revokeObjectURL(url);
+      recordClientOperation('watermark');
       setCompleted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('toolPage.watermark.couldNotWatermark'));

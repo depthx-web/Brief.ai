@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import { PDFDocument } from 'pdf-lib';
 import { useLocale } from '@/lib/i18n/LocaleContext';
+import { recordClientOperation } from '@/lib/statsApi';
 import GuestEncouragementBar from './GuestEncouragementBar';
 
 interface ImageItem {
@@ -84,6 +85,7 @@ export default function ImagesToPdf() {
       a.download = 'images.pdf';
       a.click();
       URL.revokeObjectURL(url);
+      recordClientOperation('images-to-pdf');
       setCompleted(true);
     } catch (err) {
       setError(

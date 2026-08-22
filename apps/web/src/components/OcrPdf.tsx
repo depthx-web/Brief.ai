@@ -6,6 +6,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 import { createWorker } from 'tesseract.js';
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
 import { useLocale } from '@/lib/i18n/LocaleContext';
+import { recordClientOperation } from '@/lib/statsApi';
 import type { DictionaryKey } from '@/lib/i18n/dictionaries/en';
 import GuestEncouragementBar from './GuestEncouragementBar';
 
@@ -138,6 +139,7 @@ export default function OcrPdf() {
       a.download = file.name.replace(/\.pdf$/i, '') + '-ocr.pdf';
       a.click();
       URL.revokeObjectURL(url);
+      recordClientOperation('ocr');
       setStatus(null);
       setHasResult(true);
     } catch (err) {

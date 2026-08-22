@@ -87,6 +87,29 @@ model AiJob {
   @@index([userId])
 }
 
+// One row per completed client-side tool operation (merge, split, rotate,
+// etc. — anything that runs entirely in the browser via pdf-lib/pdfjs and
+// never touches the API). No file content or identifying info, purely a
+// count for the homepage's "client-side share" trust metric — see
+// stats.service.ts. `tool` is optional and unused today; kept for a
+// possible future per-tool breakdown.
+model ClientOperationEvent {
+  id        String   @id @default(uuid())
+  tool      String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// Singleton cache row (id is always 1) for the homepage trust-stats section
+// — computed periodically by stats.service.ts's cron rather than on every
+// page load. See HomepageStatsPayload for the shape of `data`.
+model HomepageStatsCache {
+  id        Int      @id @default(1)
+  data      Json
+  updatedAt DateTime @updatedAt
+}
+
 enum Segment {
   LAWYER
   ACCOUNTANT

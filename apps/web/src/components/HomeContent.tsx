@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import DocumentDemo from '@/components/DocumentDemo';
 import DesktopAppSection from '@/components/DesktopAppSection';
+import HomeStats from '@/components/HomeStats';
 import Reveal from '@/components/Reveal';
 import { useLocale } from '@/lib/i18n/LocaleContext';
 import { getHomeContent } from '@/lib/i18n/homeContent';
@@ -117,6 +118,8 @@ export default function HomeContent({ sections }: { sections: CmsSections }) {
       <section className="border-b border-gray-100 bg-surface px-6 py-12 sm:px-12">
         <p className="text-center font-mono text-xs uppercase tracking-[1.5px] text-ink-soft">{content.hero.builtForTagline}</p>
       </section>
+
+      <HomeStats />
 
       <section id="workspaces" className="mx-auto max-w-6xl px-6 py-24 sm:px-12">
         <div className="mb-14 max-w-xl">
