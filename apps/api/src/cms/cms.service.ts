@@ -20,7 +20,16 @@ function resolveLocaleFields(raw: unknown, locale: string): unknown {
   if (locale === 'en' || typeof raw !== 'object' || raw === null) return base;
   const localesMap = (raw as Record<string, unknown>)[LOCALES_FIELD] as Record<string, unknown> | undefined;
   const override = localesMap?.[locale];
-  if (!override || typeof override !== 'object') return base;
+  // No override actually stored for this locale — deliberately return
+  // undefined rather than the English base. Every frontend consumer of a
+  // CMS section already has its own properly-translated local fallback
+  // (homeContent.ts, downloadContent.ts, toolSeoContent.ts, dictionary
+  // keys, ...) and only uses the CMS value when it's present; silently
+  // handing back English here would make it treat unpublished-for-this-
+  // locale English content as if it were a genuine translation, permanently
+  // shadowing that local fallback the moment anyone publishes English-only
+  // (see the download-page bug this was written to stop recurring).
+  if (!override || typeof override !== 'object') return undefined;
   return { ...(base as object), ...(override as object) };
 }
 
