@@ -1,6 +1,10 @@
 import { LOCALES } from './locales';
 
-export const SITE_URL = 'https://dossiera.com';
+// dossiera.com is registered but not wired to this Vercel project yet (it
+// currently resolves to a suspended-account page on unrelated hosting) — use
+// the real production URL until that's sorted out, then update this one
+// constant.
+export const SITE_URL = 'https://brief-ai-web-three.vercel.app';
 
 // English lives unprefixed at the root; every other locale is prefixed
 // (`/de/pricing`) — see `middleware.ts` for why. `x-default` points at the

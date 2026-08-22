@@ -19,7 +19,9 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://dossiera.com'),
+  // Keep in sync with SITE_URL in lib/i18n/alternates.ts — see the comment
+  // there for why this isn't dossiera.com yet.
+  metadataBase: new URL('https://brief-ai-web-three.vercel.app'),
   title: 'Dossiera — PDF Tools',
   description: 'Professional PDF tools with AI-powered document intelligence.',
 };
