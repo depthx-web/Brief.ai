@@ -23,7 +23,7 @@ interface Props {
 }
 
 export default function ToolSourceModal({ open, href, onClose, onPick }: Props) {
-  const { token } = useAuth();
+  const { token, isLoading: authLoading } = useAuth();
   const { t } = useLocale();
   const router = useRouter();
   const [step, setStep] = useState<'choose' | 'library'>('choose');
@@ -41,12 +41,15 @@ export default function ToolSourceModal({ open, href, onClose, onPick }: Props) 
       .catch(() => setProjectCount(0));
   }, [open, token]);
 
-  // Desktop skips this modal's own "choose a source" UI entirely — a native
-  // OS file dialog opens the moment this is asked to open, with no
-  // intermediate branded screen. Library-picking (which needs an account
-  // and a network round-trip anyway) stays web-only.
+  // Desktop skips this modal's own "choose a source" screen entirely for a
+  // GUEST — a native OS file dialog opens the moment this is asked to open,
+  // with no intermediate branded screen, since "upload a new file" is the
+  // only option that ever did anything for a signed-out user anyway (the
+  // Library button was already a no-op without a token). A signed-in
+  // desktop user still gets the modal below, because Library is a real,
+  // working option for them — skipping it here was a real regression.
   useEffect(() => {
-    if (!open || !isTauri()) return;
+    if (!open || !isTauri() || authLoading || token) return;
     let cancelled = false;
     pickPdfFileNative().then((file) => {
       if (cancelled) return;
@@ -57,7 +60,16 @@ export default function ToolSourceModal({ open, href, onClose, onPick }: Props) 
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }, [open, token, authLoading]);
+
+  async function handleUploadClick() {
+    if (isTauri()) {
+      const file = await pickPdfFileNative();
+      if (file) handleFileChosen(file);
+      return;
+    }
+    fileInputRef.current?.click();
+  }
 
   function handleFileChosen(file: File) {
     if (onPick) {
@@ -96,7 +108,10 @@ export default function ToolSourceModal({ open, href, onClose, onPick }: Props) 
     }
   }
 
-  if (isTauri()) return null;
+  // While signed-out on desktop (or auth still resolving), the effect above
+  // handles everything via the native dialog — render nothing so there's no
+  // flash of this modal first.
+  if (isTauri() && (authLoading || !token)) return null;
 
   return (
     <Dialog.Root open={open} onOpenChange={(next) => !next && onClose()}>
@@ -108,7 +123,7 @@ export default function ToolSourceModal({ open, href, onClose, onPick }: Props) 
               <Dialog.Title className="font-serif text-xl font-medium text-navy">{t('toolSource.chooseFile')}</Dialog.Title>
               <div className="mt-6 grid grid-cols-2 gap-3">
                 <button
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={handleUploadClick}
                   className="flex flex-col items-center gap-3 rounded-xl border border-gray-200 px-4 py-8 text-center transition-colors hover:border-emerald"
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} className="h-7 w-7 text-navy">
