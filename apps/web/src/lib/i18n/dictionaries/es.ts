@@ -42,6 +42,8 @@ const es: Record<DictionaryKey, string> = {
   'common.confirm': 'Confirmar',
   'common.saving': 'Guardando…',
   'common.pageNumber': 'Página {n}',
+  'common.retry': 'Reintentar',
+  'common.dismiss': 'Cerrar',
 
   'changePlan.title': 'Cambiar tu plan',
   'changePlan.subtitle': 'Ciclo de facturación de tu espacio de trabajo actual.',

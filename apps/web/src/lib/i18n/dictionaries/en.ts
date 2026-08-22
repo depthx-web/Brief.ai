@@ -45,6 +45,8 @@ const en = {
   'common.confirm': 'Confirm',
   'common.saving': 'Saving…',
   'common.pageNumber': 'Page {n}',
+  'common.retry': 'Retry',
+  'common.dismiss': 'Dismiss',
 
   // Change plan modal
   'changePlan.title': 'Change your plan',

@@ -2,6 +2,7 @@
 
 import toast, { Toaster as HotToaster, type Toast } from 'react-hot-toast';
 import { useLocale } from './i18n/LocaleContext';
+import { CloseIcon } from './icons';
 
 // Platform-wide notification system (Batch 3, Section 10). Built on
 // react-hot-toast for the stacking/lifecycle machinery, but every pixel of
@@ -47,6 +48,7 @@ function Spinner() {
 }
 
 interface CardProps {
+  id: string;
   visible: boolean;
   kind: ToastKind;
   message: string;
@@ -54,11 +56,12 @@ interface CardProps {
   onRetry?: () => void;
 }
 
-function ToastCard({ visible, kind, message, progress, onRetry }: CardProps) {
+function ToastCard({ id, visible, kind, message, progress, onRetry }: CardProps) {
+  const { t } = useLocale();
   return (
     <div
       role={kind === 'error' ? 'alert' : 'status'}
-      className={`relative flex w-[340px] items-start gap-3 overflow-hidden rounded-[10px] bg-white py-3 ps-4 pe-3.5 shadow-level-2 ${
+      className={`relative flex w-[calc(100vw-2rem)] items-start gap-3 overflow-hidden rounded-[10px] bg-white py-3 ps-4 pe-3.5 shadow-level-2 sm:w-[340px] ${
         visible ? 'animate-toast-in' : 'animate-toast-out'
       }`}
     >
@@ -81,10 +84,17 @@ function ToastCard({ visible, kind, message, progress, onRetry }: CardProps) {
             onClick={onRetry}
             className="mt-1.5 text-xs font-medium text-navy underline-offset-2 hover:underline"
           >
-            Retry
+            {t('common.retry')}
           </button>
         )}
       </div>
+      <button
+        onClick={() => toast.dismiss(id)}
+        aria-label={t('common.dismiss')}
+        className="shrink-0 rounded p-0.5 text-ink-soft/50 transition-colors hover:bg-gray-100 hover:text-ink-soft"
+      >
+        <CloseIcon size={12} />
+      </button>
     </div>
   );
 }
@@ -103,34 +113,44 @@ export function Toaster() {
   );
 }
 
+// Errors used to stay up forever (duration: Infinity) with no way to
+// dismiss one short of navigating away — on a narrow viewport especially,
+// a stuck error could sit over real content indefinitely. ToastCard now
+// always has a close button regardless of kind, and error/failure toasts
+// additionally clear themselves after a generous but finite window so one
+// left unread doesn't linger forever either. Loading stays Infinity on
+// purpose — it represents a real in-progress operation, not a final state,
+// so only the close button (not a timeout) should be able to hide it.
+const ERROR_DURATION_MS = 10000;
+
 export function showSuccess(message: string): string {
-  return toast.custom((t: Toast) => <ToastCard visible={t.visible} kind="success" message={message} />, {
+  return toast.custom((t: Toast) => <ToastCard id={t.id} visible={t.visible} kind="success" message={message} />, {
     duration: 4000,
   });
 }
 
 export function showError(message: string, opts?: { onRetry?: () => void }): string {
   return toast.custom(
-    (t: Toast) => <ToastCard visible={t.visible} kind="error" message={message} onRetry={opts?.onRetry} />,
-    { duration: Infinity }
+    (t: Toast) => <ToastCard id={t.id} visible={t.visible} kind="error" message={message} onRetry={opts?.onRetry} />,
+    { duration: ERROR_DURATION_MS }
   );
 }
 
 export function showLoading(message: string, progress?: number): string {
-  return toast.custom((t: Toast) => <ToastCard visible={t.visible} kind="loading" message={message} progress={progress} />, {
+  return toast.custom((t: Toast) => <ToastCard id={t.id} visible={t.visible} kind="loading" message={message} progress={progress} />, {
     duration: Infinity,
   });
 }
 
 export function updateLoading(id: string, message: string, progress?: number): void {
-  toast.custom((t: Toast) => <ToastCard visible={t.visible} kind="loading" message={message} progress={progress} />, {
+  toast.custom((t: Toast) => <ToastCard id={t.id} visible={t.visible} kind="loading" message={message} progress={progress} />, {
     id,
     duration: Infinity,
   });
 }
 
 export function resolveLoading(id: string, message: string): void {
-  toast.custom((t: Toast) => <ToastCard visible={t.visible} kind="success" message={message} />, {
+  toast.custom((t: Toast) => <ToastCard id={t.id} visible={t.visible} kind="success" message={message} />, {
     id,
     duration: 4000,
   });
@@ -138,8 +158,8 @@ export function resolveLoading(id: string, message: string): void {
 
 export function failLoading(id: string, message: string, opts?: { onRetry?: () => void }): void {
   toast.custom(
-    (t: Toast) => <ToastCard visible={t.visible} kind="error" message={message} onRetry={opts?.onRetry} />,
-    { id, duration: Infinity }
+    (t: Toast) => <ToastCard id={t.id} visible={t.visible} kind="error" message={message} onRetry={opts?.onRetry} />,
+    { id, duration: ERROR_DURATION_MS }
   );
 }
 

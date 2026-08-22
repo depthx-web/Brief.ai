@@ -42,6 +42,8 @@ const ar: Record<DictionaryKey, string> = {
   'common.confirm': 'تأكيد',
   'common.saving': 'جارٍ الحفظ…',
   'common.pageNumber': 'صفحة {n}',
+  'common.retry': 'إعادة المحاولة',
+  'common.dismiss': 'إغلاق',
 
   'changePlan.title': 'تغيير خطتك',
   'changePlan.subtitle': 'دورة الفوترة لمساحة عملك الحالية.',

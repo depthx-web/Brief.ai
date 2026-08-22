@@ -42,6 +42,8 @@ const de: Record<DictionaryKey, string> = {
   'common.confirm': 'Bestätigen',
   'common.saving': 'Wird gespeichert…',
   'common.pageNumber': 'Seite {n}',
+  'common.retry': 'Erneut versuchen',
+  'common.dismiss': 'Schließen',
 
   'changePlan.title': 'Plan ändern',
   'changePlan.subtitle': 'Abrechnungszyklus für Ihren aktuellen Arbeitsbereich.',

@@ -42,6 +42,8 @@ const fr: Record<DictionaryKey, string> = {
   'common.confirm': 'Confirmer',
   'common.saving': 'Enregistrement…',
   'common.pageNumber': 'Page {n}',
+  'common.retry': 'Réessayer',
+  'common.dismiss': 'Fermer',
 
   'changePlan.title': 'Changer votre forfait',
   'changePlan.subtitle': 'Cycle de facturation pour votre espace de travail actuel.',
