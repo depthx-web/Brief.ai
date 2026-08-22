@@ -22,7 +22,7 @@ export class ProjectRetentionService {
   async deleteExpiredDocuments(): Promise<void> {
     const expired = await this.prisma.libraryDocument.findMany({
       where: { expiresAt: { lte: new Date() } },
-      select: { id: true, storagePath: true, projectId: true },
+      select: { id: true, storagePath: true, projectId: true, userId: true },
     });
 
     const touchedProjectIds = new Set<string>();
@@ -31,6 +31,11 @@ export class ProjectRetentionService {
         await this.storage.delete(doc.storagePath);
         await this.prisma.libraryDocument.delete({ where: { id: doc.id } });
         if (doc.projectId) touchedProjectIds.add(doc.projectId);
+        // Surfaced in Settings > Activity — the manual-delete counterpart
+        // of this log entry lives in library.service.ts's remove().
+        await this.prisma.aiJob.create({
+          data: { operation: 'DOCUMENT_AUTO_DELETED', userId: doc.userId, status: 'SUCCESS' },
+        });
       } catch (err) {
         this.logger.error(
           `Retention sweep failed for document ${doc.id}: ${err instanceof Error ? err.message : String(err)}`

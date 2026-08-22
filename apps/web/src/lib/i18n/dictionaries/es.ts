@@ -372,6 +372,8 @@ const es: Record<DictionaryKey, string> = {
   'settings.opAnalyzeClauses': 'Análisis de contrato',
   'settings.opExtractReferences': 'Extracción de referencias',
   'settings.opExtractInvoice': 'Extracción de factura',
+  'settings.opDocumentDeleted': 'Documento eliminado',
+  'settings.opDocumentAutoDeleted': 'Documento eliminado automáticamente (retención expirada)',
   'settings.statusSuccess': 'Éxito',
   'settings.statusFailed': 'Fallido',
   'settings.statusProcessing': 'Procesando',

@@ -393,6 +393,8 @@ const en = {
   'settings.opAnalyzeClauses': 'Contract analysis',
   'settings.opExtractReferences': 'Reference extraction',
   'settings.opExtractInvoice': 'Invoice extraction',
+  'settings.opDocumentDeleted': 'Document deleted',
+  'settings.opDocumentAutoDeleted': 'Document auto-deleted (retention expired)',
   'settings.statusSuccess': 'Success',
   'settings.statusFailed': 'Failed',
   'settings.statusProcessing': 'Processing',

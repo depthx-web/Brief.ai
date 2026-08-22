@@ -62,6 +62,12 @@ enum AiOperation {
   COMPARE_PAPERS
   EXTRACT_METHODOLOGY
   GENERATE_OUTLINE
+  // Document lifecycle events, not AI calls — logged here (rather than a
+  // separate model) purely so they show up in the same Settings > Activity
+  // feed this enum already powers. See library.service.ts's remove() and
+  // project-retention.service.ts's deleteExpiredDocuments().
+  DOCUMENT_DELETED
+  DOCUMENT_AUTO_DELETED
 }
 
 // Audit log only — document text and conversation content are never

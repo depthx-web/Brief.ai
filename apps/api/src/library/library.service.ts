@@ -76,11 +76,19 @@ export class LibraryService {
       // in that window (previously caused a 500 when picked from a tool's
       // "Choose from Library" step, since the file itself was often already
       // gone from disk while the row lingered).
-      where: { userId, OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] },
+      where: { userId, ...this.notExpired() },
       select: { id: true, filename: true, docType: true, projectId: true, expiresAt: true, createdAt: true },
       orderBy: { createdAt: 'desc' },
     });
     return docs;
+  }
+
+  // Same "not yet swept by the retention cron" exclusion as list() above —
+  // shared here so listProjects/getProject/search can't drift out of sync
+  // with it and start showing a file in the up-to-15-minute window where
+  // it's expired but its row (and possibly its storage file) still exists.
+  private notExpired() {
+    return { OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] };
   }
 
   // --- Projects (Batch 3, Section 2; per-file retention fix in Batch 5) ----
@@ -102,8 +110,8 @@ export class LibraryService {
     const projects = await this.prisma.project.findMany({
       where: { userId },
       include: {
-        _count: { select: { documents: true } },
-        documents: { select: { expiresAt: true }, orderBy: { expiresAt: 'asc' }, take: 1 },
+        _count: { select: { documents: { where: this.notExpired() } } },
+        documents: { where: this.notExpired(), select: { expiresAt: true }, orderBy: { expiresAt: 'asc' }, take: 1 },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -124,7 +132,7 @@ export class LibraryService {
   async getProject(userId: string, projectId: string) {
     const project = await this.findAccessibleProject(userId, projectId);
     const documents = await this.prisma.libraryDocument.findMany({
-      where: { projectId },
+      where: { projectId, ...this.notExpired() },
       select: { id: true, filename: true, docType: true, projectId: true, expiresAt: true, createdAt: true },
       orderBy: { createdAt: 'desc' },
     });
@@ -247,6 +255,11 @@ export class LibraryService {
     const doc = await this.findOwned(userId, documentId);
     await this.storage.delete(doc.storagePath);
     await this.prisma.libraryDocument.delete({ where: { id: doc.id } });
+    // Surfaced in Settings > Activity alongside AI operations — same
+    // audit-log role, just for a document lifecycle event instead of an
+    // AI call. See project-retention.service.ts for the automatic-expiry
+    // counterpart of this same log entry.
+    await this.prisma.aiJob.create({ data: { operation: 'DOCUMENT_DELETED', userId, status: 'SUCCESS' } });
   }
 
   // Contextual menu "Duplicate" — a full independent copy (own storage
@@ -331,9 +344,14 @@ export class LibraryService {
     const ownedTeam = await this.prisma.team.findFirst({ where: { ownerUserId: userId } });
 
     const docs = await this.prisma.libraryDocument.findMany({
-      where: ownedTeam
-        ? { OR: [{ userId }, { project: { teamId: ownedTeam.id, visibility: 'SHARED_WITH_TEAM' } }] }
-        : { userId },
+      where: {
+        AND: [
+          ownedTeam
+            ? { OR: [{ userId }, { project: { teamId: ownedTeam.id, visibility: 'SHARED_WITH_TEAM' } }] }
+            : { userId },
+          this.notExpired(),
+        ],
+      },
       select: {
         id: true,
         filename: true,

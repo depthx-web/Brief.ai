@@ -33,6 +33,8 @@ const OPERATION_LABEL_KEY: Record<string, DictionaryKey> = {
   ANALYZE_CLAUSES: 'settings.opAnalyzeClauses',
   EXTRACT_REFERENCES: 'settings.opExtractReferences',
   EXTRACT_INVOICE: 'settings.opExtractInvoice',
+  DOCUMENT_DELETED: 'settings.opDocumentDeleted',
+  DOCUMENT_AUTO_DELETED: 'settings.opDocumentAutoDeleted',
 };
 
 export default function Settings() {

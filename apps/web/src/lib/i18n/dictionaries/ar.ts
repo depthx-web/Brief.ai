@@ -372,6 +372,8 @@ const ar: Record<DictionaryKey, string> = {
   'settings.opAnalyzeClauses': 'تحليل العقد',
   'settings.opExtractReferences': 'استخراج المراجع',
   'settings.opExtractInvoice': 'استخراج الفاتورة',
+  'settings.opDocumentDeleted': 'تم حذف المستند',
+  'settings.opDocumentAutoDeleted': 'تم حذف المستند تلقائيًا (انتهت مدة الاحتفاظ)',
   'settings.statusSuccess': 'نجاح',
   'settings.statusFailed': 'فشل',
   'settings.statusProcessing': 'قيد المعالجة',
