@@ -306,6 +306,7 @@ export interface AdminPlatformSettings {
   dunningMaxAttempts: number;
   dunningIntervalDays: number;
   tokensPerDollar: number;
+  homepageStatsDemoMode: boolean;
 }
 
 export async function fetchAdminSettings(token: string): Promise<AdminPlatformSettings> {
@@ -317,6 +318,27 @@ export async function updateAdminSettings(
   data: Partial<AdminPlatformSettings>
 ): Promise<void> {
   await adminFetch(token, '/admin/settings', { method: 'PATCH', body: data });
+}
+
+// Real computed homepage trust-stats numbers, regardless of whether
+// homepageStatsDemoMode is currently showing visitors the demo figures —
+// lets the admin panel show "here's what it'd look like live" next to
+// the toggle.
+export interface AdminHomepageStatMetric {
+  value: number | null;
+  isFallback: boolean;
+  fallbackVariant?: 'allCompliant' | 'default';
+}
+
+export interface AdminHomepageStats {
+  autoDeletionCompliance: AdminHomepageStatMetric;
+  avgProcessingSeconds: AdminHomepageStatMetric;
+  clientSideShare: AdminHomepageStatMetric;
+  computedAt: string;
+}
+
+export async function fetchAdminHomepageStats(token: string): Promise<AdminHomepageStats> {
+  return adminFetch<AdminHomepageStats>(token, '/admin/homepage-stats');
 }
 
 // --- Token Economics ----------------------------------------------------

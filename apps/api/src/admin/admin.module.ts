@@ -8,9 +8,10 @@ import { AiModule } from '../ai/ai.module';
 import { MailModule } from '../mail/mail.module';
 import { CreditsModule } from '../credits/credits.module';
 import { PlatformSettingsModule } from '../platform-settings/platform-settings.module';
+import { StatsModule } from '../stats/stats.module';
 
 @Module({
-  imports: [BillingModule, FeaturesModule, AiModule, MailModule, CreditsModule, PlatformSettingsModule],
+  imports: [BillingModule, FeaturesModule, AiModule, MailModule, CreditsModule, PlatformSettingsModule, StatsModule],
   controllers: [AdminController],
   providers: [AdminService, PrismaService],
 })

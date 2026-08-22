@@ -11,6 +11,7 @@ import { EmailCampaignService } from '../mail/email-campaign.service';
 import { CreditsService } from '../credits/credits.service';
 import { PlatformSettingsService } from '../platform-settings/platform-settings.service';
 import { LemonSqueezyService } from '../billing/lemon-squeezy.service';
+import { StatsService } from '../stats/stats.service';
 import type { CreditTransactionReason } from '@prisma/client';
 
 const VALID_SEGMENTS: Segment[] = ['LAWYER', 'ACCOUNTANT', 'RESEARCHER'];
@@ -72,6 +73,7 @@ interface UpdateSettingsBody {
   dunningMaxAttempts?: number;
   dunningIntervalDays?: number;
   tokensPerDollar?: number;
+  homepageStatsDemoMode?: boolean;
 }
 
 interface CancelSubscriptionBody {
@@ -95,12 +97,22 @@ export class AdminController {
     private readonly emailCampaignService: EmailCampaignService,
     private readonly creditsService: CreditsService,
     private readonly platformSettings: PlatformSettingsService,
-    private readonly lemonSqueezy: LemonSqueezyService
+    private readonly lemonSqueezy: LemonSqueezyService,
+    private readonly statsService: StatsService
   ) {}
 
   @Get('stats')
   async stats() {
     return this.adminService.getStats();
+  }
+
+  // The real computed homepage trust-stats numbers, regardless of whether
+  // homepageStatsDemoMode is currently showing visitors the illustrative
+  // example figures instead — so an admin can tell when it's time to flip
+  // the toggle off without needing to disable demo mode first to check.
+  @Get('homepage-stats')
+  async homepageStats() {
+    return this.statsService.getCached(true);
   }
 
   @Get('users')

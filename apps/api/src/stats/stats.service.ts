@@ -34,6 +34,21 @@ export interface HomepageStatsPayload {
 }
 
 const ALL_TIME = new Date(0);
+const SETTINGS_ID = 'singleton';
+
+// Illustrative figures shown while homepageStatsDemoMode is on (admin
+// toggle, PlatformSettings) — the same example numbers the original spec
+// for this section used. Never served silently forever: the admin panel's
+// Analytics tab always shows the real computed numbers alongside the
+// toggle, so there's a clear signal for when to switch it off.
+function demoPayload(): HomepageStatsPayload {
+  return {
+    autoDeletionCompliance: { value: 100, isFallback: false },
+    avgProcessingSeconds: { value: 8, isFallback: false },
+    clientSideShare: { value: 62, isFallback: false },
+    computedAt: new Date().toISOString(),
+  };
+}
 
 @Injectable()
 export class StatsService implements OnModuleInit {
@@ -63,7 +78,14 @@ export class StatsService implements OnModuleInit {
     });
   }
 
-  async getCached(): Promise<HomepageStatsPayload> {
+  // bypassDemoMode: true always returns the real computed/cached numbers —
+  // used by the admin preview endpoint so an admin can see genuine volume
+  // without first having to switch demo mode off for everyone.
+  async getCached(bypassDemoMode = false): Promise<HomepageStatsPayload> {
+    if (!bypassDemoMode) {
+      const settings = await this.prisma.platformSettings.findUnique({ where: { id: SETTINGS_ID } });
+      if (settings?.homepageStatsDemoMode ?? true) return demoPayload();
+    }
     const row = await this.prisma.homepageStatsCache.findUnique({ where: { id: CACHE_ID } });
     if (row) return row.data as unknown as HomepageStatsPayload;
     // Cold start: nothing written yet (first request racing onModuleInit).

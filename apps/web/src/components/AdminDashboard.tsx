@@ -2,7 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { useAdminAuth } from '@/lib/AdminAuthContext';
-import { fetchAdminStats, fetchAdminCreditTransactions, type AdminStats, type AdminCreditTransaction } from '@/lib/adminApi';
+import {
+  fetchAdminStats,
+  fetchAdminCreditTransactions,
+  fetchAdminSettings,
+  updateAdminSettings,
+  fetchAdminHomepageStats,
+  type AdminStats,
+  type AdminCreditTransaction,
+  type AdminHomepageStats,
+} from '@/lib/adminApi';
+import { showError } from '@/lib/toast';
 
 const REASON_LABEL: Record<AdminCreditTransaction['reason'], string> = {
   PURCHASE: 'Purchase',
@@ -64,6 +74,76 @@ function StatTile({ label, value }: { label: string; value: number | string }) {
     <div className="rounded-lg border border-gray-200 bg-white p-4">
       <p className="text-2xl font-bold text-navy">{value}</p>
       <p className="mt-1 text-xs uppercase tracking-wide text-ink-soft">{label}</p>
+    </div>
+  );
+}
+
+function formatRealMetric(m: AdminHomepageStats['autoDeletionCompliance'], unit: '%' | 's'): string {
+  if (m.isFallback || m.value === null) return 'Below 50-sample threshold — showing honest wording instead';
+  return unit === '%' ? `${Math.round(m.value)}%` : `${m.value}s avg`;
+}
+
+function HomepageStatsCard() {
+  const { token } = useAdminAuth();
+  const [demoMode, setDemoMode] = useState<boolean | null>(null);
+  const [real, setReal] = useState<AdminHomepageStats | null>(null);
+
+  useEffect(() => {
+    if (!token) return;
+    Promise.all([fetchAdminSettings(token), fetchAdminHomepageStats(token)]).then(([settings, stats]) => {
+      setDemoMode(settings.homepageStatsDemoMode);
+      setReal(stats);
+    });
+  }, [token]);
+
+  async function toggleDemoMode() {
+    if (!token || demoMode === null) return;
+    const next = !demoMode;
+    setDemoMode(next);
+    try {
+      await updateAdminSettings(token, { homepageStatsDemoMode: next });
+    } catch (err) {
+      setDemoMode(!next);
+      showError(err instanceof Error ? err.message : 'Could not update this setting.');
+    }
+  }
+
+  if (demoMode === null) return null;
+
+  return (
+    <div className="mt-8 rounded-lg border border-gray-200 bg-white p-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Homepage Trust Stats</h2>
+          <p className="mt-1 text-sm text-ink">
+            {demoMode ? 'Showing illustrative demo numbers to visitors.' : 'Showing real computed numbers to visitors.'}
+          </p>
+        </div>
+        <button
+          onClick={toggleDemoMode}
+          className={`rounded-md px-4 py-2 text-xs font-semibold uppercase tracking-wide transition-colors ${
+            demoMode ? 'bg-emerald text-white hover:bg-emerald-dark' : 'border border-gray-300 text-ink-soft hover:bg-gray-50'
+          }`}
+        >
+          {demoMode ? 'Switch to live data' : 'Switch to demo data'}
+        </button>
+      </div>
+      {real && (
+        <div className="mt-4 grid grid-cols-1 gap-3 border-t border-gray-100 pt-4 text-sm sm:grid-cols-3">
+          <div>
+            <p className="text-xs uppercase tracking-wide text-ink-soft">Auto-deletion compliance</p>
+            <p className="mt-0.5 text-ink">{formatRealMetric(real.autoDeletionCompliance, '%')}</p>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-ink-soft">Avg processing time</p>
+            <p className="mt-0.5 text-ink">{formatRealMetric(real.avgProcessingSeconds, 's')}</p>
+          </div>
+          <div>
+            <p className="text-xs uppercase tracking-wide text-ink-soft">Client-side share</p>
+            <p className="mt-0.5 text-ink">{formatRealMetric(real.clientSideShare, '%')}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -144,6 +224,8 @@ export default function AdminDashboard() {
           )}
         </div>
       </div>
+
+      <HomepageStatsCard />
 
       <div className="mt-8">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-soft">

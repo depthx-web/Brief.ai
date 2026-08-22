@@ -654,6 +654,12 @@ model PlatformSettings {
   // — it doesn't retroactively alter past transactions.
   tokensPerDollar          Int      @default(500)
 
+  // Homepage trust-stats section (stats.service.ts): while traffic is too
+  // low to show real percentages meaningfully, an admin can show the
+  // illustrative example numbers instead — flip off once there's enough
+  // real volume. Defaults on so the section reads well from launch.
+  homepageStatsDemoMode    Boolean  @default(true)
+
   updatedAt                DateTime @updatedAt
 }
 

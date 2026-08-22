@@ -29,6 +29,7 @@ export class PlatformSettingsService {
     dunningMaxAttempts?: number;
     dunningIntervalDays?: number;
     tokensPerDollar?: number;
+    homepageStatsDemoMode?: boolean;
   }) {
     await this.get();
     return this.prisma.platformSettings.update({ where: { id: SETTINGS_ID }, data });
