@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { fetchCmsPage } from '@/lib/cmsApi';
 import { useLocale } from '@/lib/i18n/LocaleContext';
 import { getToolSeoContent, type ToolFaqItem } from '@/lib/toolSeoContent';
-import { TOOLS_BY_TAB, type Tab, type Tool } from './ToolsIndex';
+import { TOOLS_BY_TAB, toolLabelKeys, type Tab, type Tool } from '@/lib/toolCatalog';
 
 function findTool(slug: string): { tool: Tool; tab: Tab } | null {
   for (const tab of Object.keys(TOOLS_BY_TAB) as Tab[]) {
@@ -48,7 +48,7 @@ export default function ToolSeoSections({ slug }: { slug: string }) {
   // conversions/Protect/Remove Password) actually runs on our servers —
   // the same signal FeatureGuard itself gates on, not a guess.
   const isServerSide = Boolean(found.tool.featureKey);
-  const related = TOOLS_BY_TAB[found.tab].filter((t) => t.href !== `/${slug}`).slice(0, 4);
+  const related = TOOLS_BY_TAB[found.tab].filter((tool) => tool.href !== `/${slug}`).slice(0, 4);
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-14">
@@ -108,17 +108,22 @@ export default function ToolSeoSections({ slug }: { slug: string }) {
         <section className="mt-12">
           <h2 className="font-serif text-xl font-medium text-navy">{t('toolSeo.relatedTools')}</h2>
           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {related.map((t) => (
-              <Link
-                key={t.name}
-                href={t.href}
-                title={t.description}
-                className="rounded-xl border-2 border-navy-light p-4 text-center transition-shadow hover:shadow-level-1"
-              >
-                <p className="font-mono text-[11px] font-bold uppercase tracking-wide text-ink">{t.stamp}</p>
-                <p className="mt-1.5 text-xs text-ink-soft">{t.name}</p>
-              </Link>
-            ))}
+            {related.map((tool) => {
+              const labelKeys = toolLabelKeys(tool.name);
+              const displayName = labelKeys ? t(labelKeys.nameKey) : tool.name;
+              const displayDescription = labelKeys ? t(labelKeys.descriptionKey) : tool.description;
+              return (
+                <Link
+                  key={tool.name}
+                  href={tool.href}
+                  title={displayDescription}
+                  className="rounded-xl border-2 border-navy-light p-4 text-center transition-shadow hover:shadow-level-1"
+                >
+                  <p className="font-mono text-[11px] font-bold uppercase tracking-wide text-ink">{tool.stamp}</p>
+                  <p className="mt-1.5 text-xs text-ink-soft">{displayName}</p>
+                </Link>
+              );
+            })}
           </div>
         </section>
       )}
