@@ -18,6 +18,48 @@ import {
   type SegmentPricing,
   type PublicFeature,
 } from '@/lib/billingApi';
+import type { DictionaryKey } from '@/lib/i18n/dictionaries/en';
+
+// Feature.label is a plain English string in the database (admin-authored,
+// see the Feature seed migrations) with no i18n of its own — every one of
+// these keys already has a translated label somewhere else in the app
+// (a standalone tool page's catalog entry, or — for the four workspace-only
+// operations with no tool page of their own — the Activity log's operation
+// labels), so this maps each Feature.key straight to that existing key
+// rather than inventing a third, redundant set of translations.
+const FEATURE_LABEL_KEY: Record<string, DictionaryKey> = {
+  PROTECT_PDF: 'tool.protect.name',
+  WORD_TO_PDF: 'tool.wordToPdf.name',
+  COMPRESS_HIGH_RATIO: 'tool.compressHighRatio.name',
+  REMOVE_PASSWORD: 'tool.removePassword.name',
+  PDF_TO_WORD: 'tool.pdfToWord.name',
+  EXCEL_TO_PDF: 'tool.excelToPdf.name',
+  PDF_TO_EXCEL: 'tool.pdfToExcel.name',
+  POWERPOINT_TO_PDF: 'tool.powerpointToPdf.name',
+  PDF_TO_POWERPOINT: 'tool.pdfToPowerpoint.name',
+  PDF_TO_HTML: 'tool.pdfToHtml.name',
+  SUMMARIZE: 'settings.opSummarize',
+  ANALYZE_CLAUSES: 'settings.opAnalyzeClauses',
+  CHAT: 'settings.opChat',
+  COMPARE_CONTRACTS: 'tool.contractCompare.name',
+  SUMMARIZE_PLAIN: 'tool.plainSummary.name',
+  AUDIT_NDA: 'tool.ndaAudit.name',
+  DETECT_SENSITIVE_DATA: 'tool.redactionDetector.name',
+  EXTRACT_INVOICE: 'tool.batchInvoiceExport.name',
+  ANALYZE_FINANCIAL_RATIOS: 'tool.financialRatios.name',
+  RECONCILE_BANK: 'tool.bankReconciliation.name',
+  FLAG_DEDUCTIBLE_EXPENSES: 'tool.taxDeductible.name',
+  DETECT_DUPLICATE_PAYMENTS: 'tool.duplicatePayments.name',
+  EXTRACT_REFERENCES: 'settings.opExtractReferences',
+  COMPARE_PAPERS: 'tool.multiPaperCompare.name',
+  EXTRACT_METHODOLOGY: 'tool.methodologyExtractor.name',
+  GENERATE_OUTLINE: 'tool.presentationOutline.name',
+};
+
+function featureLabel(f: PublicFeature, t: (key: DictionaryKey) => string): string {
+  const key = FEATURE_LABEL_KEY[f.key];
+  return key ? t(key) : f.label;
+}
 import {
   creditsEnabled,
   listCreditPacks,
@@ -60,7 +102,7 @@ async function fetchCmsSections(preview: boolean, locale?: string): Promise<CmsS
 
 function PricingPageInner() {
   const { user, token } = useAuth();
-  const { locale } = useLocale();
+  const { locale, t } = useLocale();
   const pc = getPricingContent(locale);
   const PLAN_COPY: Record<Segment, { tab: string; name: string }> = {
     LAWYER: { tab: pc.planTabs.legal, name: pc.planNames.legal },
@@ -289,7 +331,7 @@ function PricingPageInner() {
                 {freeFeatures.map((f) => (
                   <li key={f.key} className="flex items-center gap-2">
                     <span className="text-[8px] text-emerald">●</span>
-                    {f.label}
+                    {featureLabel(f, t)}
                   </li>
                 ))}
               </ul>
@@ -357,7 +399,7 @@ function PricingPageInner() {
                 {segmentFeatures.map((f) => (
                   <li key={f.key} className="flex items-center gap-2">
                     <span className="text-[8px] text-emerald">●</span>
-                    {f.label}
+                    {featureLabel(f, t)}
                   </li>
                 ))}
               </ul>
@@ -440,7 +482,7 @@ function ComparePlansModal({
   user: { plan: 'FREE' | 'PAID' } | null;
   token: string | null;
 }) {
-  const { locale } = useLocale();
+  const { locale, t } = useLocale();
   const pc = getPricingContent(locale);
   const PLAN_COPY: Record<Segment, { tab: string; name: string }> = {
     LAWYER: { tab: pc.planTabs.legal, name: pc.planNames.legal },
@@ -545,7 +587,7 @@ function ComparePlansModal({
             </li>
             {segmentFeatures.map((f) => (
               <li key={f.key} className="flex items-center justify-between py-2 text-sm">
-                <span className="text-ink">{f.label}</span>
+                <span className="text-ink">{featureLabel(f, t)}</span>
                 <span className="flex items-center gap-6">
                   <span className="flex w-10 justify-center">
                     {f.freeEnabled ? <CheckIcon className="text-emerald" /> : <DashIcon className="text-gray-300" />}
