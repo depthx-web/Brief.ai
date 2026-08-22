@@ -22,6 +22,16 @@ function readCookieLocale(): Locale | null {
   return isLocale(value) ? value : null;
 }
 
+// The URL is the most explicit signal of intent for the page actually being
+// viewed — read before the cookie so a fresh visitor (no cookie yet, cookies
+// blocked, etc.) landing directly on `/de/pricing` renders German immediately
+// instead of a flash of the cookie/geolocation guess.
+function readPathnameLocale(): Locale | null {
+  if (typeof window === 'undefined') return null;
+  const first = window.location.pathname.split('/').filter(Boolean)[0];
+  return isLocale(first) ? first : null;
+}
+
 function writeCookieLocale(locale: Locale) {
   if (typeof document === 'undefined') return;
   const maxAge = COOKIE_MAX_AGE_DAYS * 24 * 60 * 60;
@@ -66,6 +76,14 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
     const urlLocale = new URLSearchParams(window.location.search).get('locale');
     if (isLocale(urlLocale)) {
       setLocaleState(urlLocale);
+      setIsDetecting(false);
+      return;
+    }
+
+    const fromPathname = readPathnameLocale();
+    if (fromPathname) {
+      setLocaleState(fromPathname);
+      writeCookieLocale(fromPathname);
       setIsDetecting(false);
       return;
     }

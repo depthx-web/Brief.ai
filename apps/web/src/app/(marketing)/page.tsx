@@ -4,6 +4,7 @@ import ReferralCapture from '@/components/ReferralCapture';
 import HomeContent, { type CmsSections } from '@/components/HomeContent';
 import { fetchCmsPage } from '@/lib/cmsApi';
 import { isLocale } from '@/lib/i18n/locales';
+import { buildAlternates } from '@/lib/i18n/alternates';
 
 const LOCALE_COOKIE_NAME = 'brief-ai-locale';
 
@@ -17,6 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: page?.metaTitle ?? DEFAULT_META_TITLE,
     description: page?.metaDescription ?? DEFAULT_META_DESCRIPTION,
+    alternates: buildAlternates('/'),
     ...(page?.ogImageUrl ? { openGraph: { images: [page.ogImageUrl] } } : {}),
   };
 }

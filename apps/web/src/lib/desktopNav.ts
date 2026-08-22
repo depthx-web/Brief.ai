@@ -1,3 +1,5 @@
+import { stripLocalePrefix } from './i18n/locales';
+
 export type DesktopNavKey =
   | 'home'
   | 'convert'
@@ -68,7 +70,10 @@ const TAB_SLUG_TO_NAV_KEY: Record<string, DesktopNavKey> = {
 // so callers that can't cheaply read search params (or are on a route
 // where it doesn't apply) still get the pathname-only behavior.
 export function getDesktopNavKeyForPath(pathname: string, tabParam?: string | null): DesktopNavKey {
-  const segment = pathname.split('/').filter(Boolean)[0] ?? '';
+  // Strip a leading locale prefix (`/fr/protect` -> `/protect`) — the
+  // desktop app never sees one (it stays on unprefixed routes by design),
+  // but the web app's sidebar/nav share this same lookup and do see them.
+  const segment = stripLocalePrefix(pathname).split('/').filter(Boolean)[0] ?? '';
   if (segment === 'desktop-home' || segment === '') return 'home';
   if (segment === 'library') return 'library';
   if (segment === 'recent') return 'recent';

@@ -1,13 +1,33 @@
 'use client';
 
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import { usePathname, useRouter } from 'next/navigation';
 import { useLocale } from '@/lib/i18n/LocaleContext';
-import { LOCALES, LOCALE_LABELS } from '@/lib/i18n/locales';
+import { LOCALES, LOCALE_LABELS, stripLocalePrefix } from '@/lib/i18n/locales';
+import { localePath } from '@/lib/i18n/alternates';
+import { isLocalizableRoute } from '@/lib/i18n/localizableRoutes';
+import { isTauri } from '@/lib/platform';
 
 // Reused on both the dark marketing nav and light app/desktop chrome —
 // `variant` swaps just the trigger's color scheme, not its layout.
 export default function LanguageSwitcher({ variant = 'light' }: { variant?: 'light' | 'dark' }) {
   const { locale, setLocale, t } = useLocale();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  function selectLocale(code: (typeof LOCALES)[number]) {
+    setLocale(code);
+    // Desktop's static export has no locale-prefixed routes at all (no
+    // middleware to rewrite them) — it stays purely cookie-driven, same as
+    // before this migration. Only the web app gets a real URL per locale.
+    if (isTauri()) return;
+    const basePath = stripLocalePrefix(pathname);
+    // Non-localizable routes (dashboard, library, admin, ...) have no
+    // locale-prefixed URL — switching there just updates the cookie in
+    // place, same as before this migration.
+    if (!isLocalizableRoute(basePath)) return;
+    router.push(`${localePath(basePath, code)}${window.location.search}`);
+  }
 
   return (
     <DropdownMenu.Root>
@@ -33,7 +53,7 @@ export default function LanguageSwitcher({ variant = 'light' }: { variant?: 'lig
           {LOCALES.map((code) => (
             <DropdownMenu.Item
               key={code}
-              onSelect={() => setLocale(code)}
+              onSelect={() => selectLocale(code)}
               className={`flex cursor-pointer select-none items-center justify-between rounded-md px-2.5 py-2 text-[13px] outline-none transition-colors data-[highlighted]:bg-emerald-soft ${
                 code === locale ? 'font-semibold text-emerald' : 'text-ink'
               }`}

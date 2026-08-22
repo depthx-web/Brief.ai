@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import ToolsIndex from '@/components/ToolsIndex';
 import { fetchCmsPage } from '@/lib/cmsApi';
+import { buildAlternates } from '@/lib/i18n/alternates';
 
 const DEFAULT_META_TITLE = 'All Tools — Dossiera';
 const DEFAULT_META_DESCRIPTION =
@@ -11,6 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: page?.metaTitle ?? DEFAULT_META_TITLE,
     description: page?.metaDescription ?? DEFAULT_META_DESCRIPTION,
+    alternates: buildAlternates('/tools'),
     ...(page?.ogImageUrl ? { openGraph: { images: [page.ogImageUrl] } } : {}),
   };
 }

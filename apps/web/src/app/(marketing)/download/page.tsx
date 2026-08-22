@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import DownloadContent from '@/components/DownloadContent';
 import { fetchCmsPage } from '@/lib/cmsApi';
+import { buildAlternates } from '@/lib/i18n/alternates';
 
 const DEFAULT_META_TITLE = 'Download — Dossiera Desktop';
 const DEFAULT_META_DESCRIPTION =
@@ -12,6 +13,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: page?.metaTitle ?? DEFAULT_META_TITLE,
     description: page?.metaDescription ?? DEFAULT_META_DESCRIPTION,
+    alternates: buildAlternates('/download'),
     ...(page?.ogImageUrl ? { openGraph: { images: [page.ogImageUrl] } } : {}),
   };
 }

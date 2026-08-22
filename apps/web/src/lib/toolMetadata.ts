@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { TOOLS_BY_TAB, type Tab, type Tool } from './toolCatalog';
+import { buildAlternates } from './i18n/alternates';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -46,6 +47,7 @@ export async function getToolMetadata(slug: string): Promise<Metadata> {
   return {
     title: page?.metaTitle || defaultTitle,
     description: page?.metaDescription || defaultDescription,
+    alternates: buildAlternates(`/${slug}`),
     ...(page?.ogImageUrl ? { openGraph: { images: [page.ogImageUrl] } } : {}),
   };
 }

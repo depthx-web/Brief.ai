@@ -19,6 +19,7 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://dossiera.com'),
   title: 'Dossiera — PDF Tools',
   description: 'Professional PDF tools with AI-powered document intelligence.',
 };

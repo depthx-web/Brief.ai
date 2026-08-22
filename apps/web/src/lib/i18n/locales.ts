@@ -51,3 +51,15 @@ export function localeForCountry(countryCode: string | null | undefined): Locale
   if (!countryCode) return 'en';
   return COUNTRY_TO_LOCALE[countryCode.toUpperCase()] ?? 'en';
 }
+
+// Strips a leading locale segment (`/de/pricing` -> `/pricing`) — English is
+// never prefixed, so this only ever matches the other 5. Shared by anything
+// that needs "the route regardless of which locale URL it's on": the
+// language switcher building the next URL, desktopNav's sidebar highlight.
+export function stripLocalePrefix(pathname: string): string {
+  const segments = pathname.split('/').filter(Boolean);
+  if (segments[0] && isLocale(segments[0])) {
+    return '/' + segments.slice(1).join('/');
+  }
+  return pathname;
+}

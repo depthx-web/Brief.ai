@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import LegalLayout, { type LegalSection } from '@/components/LegalLayout';
 import { fetchCmsPage } from '@/lib/cmsApi';
+import { buildAlternates } from '@/lib/i18n/alternates';
 
 const DEFAULT_META_TITLE = 'Privacy Policy — Dossiera';
 const DEFAULT_META_DESCRIPTION =
@@ -144,6 +145,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: page?.metaTitle ?? DEFAULT_META_TITLE,
     description: page?.metaDescription ?? DEFAULT_META_DESCRIPTION,
+    alternates: buildAlternates('/privacy'),
     ...(page?.ogImageUrl ? { openGraph: { images: [page.ogImageUrl] } } : {}),
   };
 }
