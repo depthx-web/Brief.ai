@@ -9,7 +9,7 @@ import type { DictionaryKey } from '@/lib/i18n/dictionaries/en';
 import HomeLogoLink from './HomeLogoLink';
 import LanguageSwitcher from './LanguageSwitcher';
 import WorkspacePlanCard from './WorkspacePlanCard';
-import { DashboardIcon, LibraryIcon, WalletIcon, ReferralIcon, ToolsGroupIcon, SettingsIcon } from '@/lib/icons';
+import { DashboardIcon, LibraryIcon, WalletIcon, ReferralIcon, ToolsGroupIcon, SettingsIcon, CloseIcon } from '@/lib/icons';
 
 const NAV_ITEMS: { href: string; labelKey: DictionaryKey; icon: (color: string) => React.ReactNode }[] = [
   { href: '/dashboard', labelKey: 'sidebar.dashboard', icon: DashboardIcon },
@@ -22,16 +22,43 @@ const NAV_ITEMS: { href: string; labelKey: DictionaryKey; icon: (color: string) 
 
 const NAV_INACTIVE = '#C9D4E3';
 
-export default function Sidebar({ onOpenSwitchModal }: { onOpenSwitchModal: () => void }) {
+interface Props {
+  onOpenSwitchModal: () => void;
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
+}
+
+export default function Sidebar({ onOpenSwitchModal, mobileOpen = false, onMobileClose }: Props) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const { t } = useLocale();
 
   return (
-    <aside className="fixed inset-y-0 start-0 z-10 flex h-screen w-60 shrink-0 flex-col overflow-y-auto bg-navy text-white">
-      <HomeLogoLink className="px-6 py-6 font-serif text-xl font-semibold">
-        dossier<span className="text-emerald">a</span>
-      </HomeLogoLink>
+    <>
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/40 md:hidden"
+          onClick={onMobileClose}
+          aria-hidden
+        />
+      )}
+      <aside
+        className={`fixed inset-y-0 start-0 z-40 h-screen w-60 shrink-0 flex-col overflow-y-auto bg-navy text-white md:flex ${
+          mobileOpen ? 'flex' : 'hidden'
+        }`}
+      >
+        <div className="flex items-center justify-between px-6 py-6">
+          <HomeLogoLink className="font-serif text-xl font-semibold">
+            dossier<span className="text-emerald">a</span>
+          </HomeLogoLink>
+          <button
+            onClick={onMobileClose}
+            aria-label={t('sidebar.closeMenu')}
+            className="text-[#C9D4E3] hover:text-white md:hidden"
+          >
+            <CloseIcon size={18} />
+          </button>
+        </div>
 
       <nav className="flex flex-col gap-1 px-3">
         {NAV_ITEMS.map((item) => {
@@ -40,6 +67,7 @@ export default function Sidebar({ onOpenSwitchModal }: { onOpenSwitchModal: () =
             <Link
               key={item.href}
               href={item.href}
+              onClick={onMobileClose}
               className={`flex items-center gap-2.5 rounded-md px-3 py-2.5 text-sm transition-colors ${
                 active ? 'bg-white/10 font-medium text-white' : 'text-[#C9D4E3] hover:bg-white/5 hover:text-white'
               }`}
@@ -73,12 +101,13 @@ export default function Sidebar({ onOpenSwitchModal }: { onOpenSwitchModal: () =
         ) : (
           <>
             <p className="text-xs text-[#8FA1BC]">{t('sidebar.browsingAsGuest')}</p>
-            <Link href="/login" className="mt-2 block text-xs font-medium text-emerald hover:text-white">
+            <Link href="/login" onClick={onMobileClose} className="mt-2 block text-xs font-medium text-emerald hover:text-white">
               {t('sidebar.logInArrow')}
             </Link>
           </>
         )}
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }

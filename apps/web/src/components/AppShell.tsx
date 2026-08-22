@@ -11,6 +11,14 @@ import DesktopShell from './DesktopShell';
 import ChangePlanModal from './ChangePlanModal';
 import GuestSignupModal from './GuestSignupModal';
 
+function MenuIcon() {
+  return (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 6h18M3 12h18M3 18h18" />
+    </svg>
+  );
+}
+
 // Free users can use the dashboard, tools, and workspace without an
 // account — only pages tied to a persistent account (saved library,
 // credit wallet, billing/security settings, referral earnings) require
@@ -35,11 +43,16 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
   const tabParam = useSearchParams().get('tab');
   const [modalOpen, setModalOpen] = useState(false);
   const [guestSignupOpen, setGuestSignupOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const requiresAccount = ACCOUNT_REQUIRED_PREFIXES.some((p) => pathname.startsWith(p));
 
   useEffect(() => {
     if (!isLoading && !user && requiresAccount) router.replace('/login');
   }, [isLoading, user, requiresAccount, router]);
+
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [pathname]);
 
   if (isLoading) return null;
   if (!user && requiresAccount) return null;
@@ -52,8 +65,24 @@ function AppShellInner({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen">
-      <Sidebar onOpenSwitchModal={() => setModalOpen(true)} />
-      <div className="bg-dot-pattern ms-60 h-screen flex-1 overflow-y-auto bg-surface">
+      <Sidebar
+        onOpenSwitchModal={() => setModalOpen(true)}
+        mobileOpen={mobileNavOpen}
+        onMobileClose={() => setMobileNavOpen(false)}
+      />
+      <div className="bg-dot-pattern h-screen flex-1 overflow-y-auto bg-surface md:ms-60">
+        <div className="flex items-center gap-3 border-b border-paper-line bg-white px-4 py-3 md:hidden">
+          <button
+            onClick={() => setMobileNavOpen(true)}
+            aria-label={t('sidebar.openMenu')}
+            className="text-navy"
+          >
+            <MenuIcon />
+          </button>
+          <span className="font-serif text-lg font-semibold text-navy">
+            dossier<span className="text-emerald">a</span>
+          </span>
+        </div>
         {(!user || user.plan === 'FREE') && (
           <div className="flex items-center justify-center gap-2 bg-emerald-soft px-4 py-2 text-center text-sm text-navy">
             <span>{t('appShell.freePlanBanner')}</span>

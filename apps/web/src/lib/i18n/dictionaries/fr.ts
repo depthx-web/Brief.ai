@@ -26,6 +26,8 @@ const fr: Record<DictionaryKey, string> = {
   'sidebar.logout': 'Déconnexion',
   'sidebar.browsingAsGuest': 'Navigation en tant qu’invité',
   'sidebar.logInArrow': 'Connexion →',
+  'sidebar.openMenu': 'Ouvrir le menu',
+  'sidebar.closeMenu': 'Fermer le menu',
 
   'common.save': 'Enregistrer',
   'common.saveChanges': 'Enregistrer les modifications',

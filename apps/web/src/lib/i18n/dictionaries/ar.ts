@@ -26,6 +26,8 @@ const ar: Record<DictionaryKey, string> = {
   'sidebar.logout': 'تسجيل الخروج',
   'sidebar.browsingAsGuest': 'تصفح كضيف',
   'sidebar.logInArrow': '→ تسجيل الدخول',
+  'sidebar.openMenu': 'فتح القائمة',
+  'sidebar.closeMenu': 'إغلاق القائمة',
 
   'common.save': 'حفظ',
   'common.saveChanges': 'حفظ التغييرات',

@@ -28,6 +28,8 @@ const en = {
   'sidebar.logout': 'Log out',
   'sidebar.browsingAsGuest': 'Browsing as a guest',
   'sidebar.logInArrow': 'Log in →',
+  'sidebar.openMenu': 'Open menu',
+  'sidebar.closeMenu': 'Close menu',
 
   // Common actions
   'common.save': 'Save',
