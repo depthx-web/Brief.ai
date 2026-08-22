@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { useLocale } from '@/lib/i18n/LocaleContext';
+import { stripLocalePrefix } from '@/lib/i18n/locales';
 import type { DictionaryKey } from '@/lib/i18n/dictionaries/en';
 import HomeLogoLink from './HomeLogoLink';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -34,7 +35,7 @@ export default function Sidebar({ onOpenSwitchModal }: { onOpenSwitchModal: () =
 
       <nav className="flex flex-col gap-1 px-3">
         {NAV_ITEMS.map((item) => {
-          const active = pathname === item.href;
+          const active = stripLocalePrefix(pathname) === item.href;
           return (
             <Link
               key={item.href}

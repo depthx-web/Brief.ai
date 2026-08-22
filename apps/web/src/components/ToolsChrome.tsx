@@ -9,6 +9,7 @@ import DesktopShell from '@/components/DesktopShell';
 import ToolSeoSections from '@/components/ToolSeoSections';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { useLocale } from '@/lib/i18n/LocaleContext';
+import { stripLocalePrefix } from '@/lib/i18n/locales';
 import { isTauri } from '@/lib/platform';
 import { getDesktopNavKeyForPath } from '@/lib/desktopNav';
 
@@ -41,7 +42,7 @@ export default function ToolsChrome({ children }: { children: React.ReactNode })
       </header>
       <main>{children}</main>
       <Suspense fallback={null}>
-        <ToolSeoSections slug={pathname.replace(/^\//, '')} />
+        <ToolSeoSections slug={stripLocalePrefix(pathname).replace(/^\//, '')} />
       </Suspense>
     </>
   );
