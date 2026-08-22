@@ -48,16 +48,42 @@ export default function MyLibrary() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  async function refreshLibrary(currentToken: string) {
-    setIsLoading(true);
+  // The retention cron sweeps expired files server-side every 15 minutes
+  // (see project-retention.service.ts) — without this, a file it deletes
+  // while this page is already open just stays visible until the user
+  // navigates away or reloads. Polls quietly in the background (no loading
+  // spinner) and also refreshes the moment the tab regains focus, so
+  // switching back after being away catches up immediately rather than
+  // waiting out the rest of the interval.
+  useEffect(() => {
+    const currentToken = token;
+    if (!currentToken) return;
+    const POLL_MS = 3 * 60 * 1000;
+    const id = setInterval(() => refreshLibrary(currentToken, { silent: true }), POLL_MS);
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') refreshLibrary(currentToken, { silent: true });
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
+
+  async function refreshLibrary(currentToken: string, opts?: { silent?: boolean }) {
+    if (!opts?.silent) setIsLoading(true);
     try {
       const [projectList, docList] = await Promise.all([listProjects(currentToken), listDocuments(currentToken)]);
       setProjects(projectList);
       setUnsorted(docList.filter((d) => !d.projectId));
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('library.couldNotLoad'));
+      // A background poll failing silently (network blip, tab backgrounded
+      // mid-request) shouldn't surface an error the user never asked for —
+      // only the initial, user-visible load reports one.
+      if (!opts?.silent) setError(err instanceof Error ? err.message : t('library.couldNotLoad'));
     } finally {
-      setIsLoading(false);
+      if (!opts?.silent) setIsLoading(false);
     }
   }
 
