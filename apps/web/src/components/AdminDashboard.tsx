@@ -148,6 +148,62 @@ function HomepageStatsCard() {
   );
 }
 
+function DesktopAppCard() {
+  const { token } = useAdminAuth();
+  const [url, setUrl] = useState<string | null>(null);
+  const [draft, setDraft] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (!token) return;
+    fetchAdminSettings(token).then((settings) => {
+      setUrl(settings.desktopDownloadUrl);
+      setDraft(settings.desktopDownloadUrl ?? '');
+    });
+  }, [token]);
+
+  async function save() {
+    if (!token) return;
+    setIsSaving(true);
+    const next = draft.trim() || null;
+    try {
+      await updateAdminSettings(token, { desktopDownloadUrl: next });
+      setUrl(next);
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Could not save this setting.');
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  return (
+    <div className="mt-8 rounded-lg border border-gray-200 bg-white p-4">
+      <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Desktop App</h2>
+      <p className="mt-1 text-sm text-ink">
+        {url
+          ? 'The Download page links visitors directly to this build.'
+          : 'No build URL set — the Download page shows its "notify me" fallback.'}
+      </p>
+      <div className="mt-3 flex gap-2">
+        <input
+          type="url"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          placeholder="https://.../Brief.ai-Setup.exe"
+          className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm"
+        />
+        <button
+          onClick={save}
+          disabled={isSaving}
+          className="rounded-md bg-emerald px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white hover:bg-emerald-dark disabled:opacity-50"
+        >
+          {isSaving ? 'Saving…' : 'Save'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminDashboard() {
   const { token } = useAdminAuth();
   const [stats, setStats] = useState<AdminStats | null>(null);
@@ -226,6 +282,7 @@ export default function AdminDashboard() {
       </div>
 
       <HomepageStatsCard />
+      <DesktopAppCard />
 
       <div className="mt-8">
         <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-soft">

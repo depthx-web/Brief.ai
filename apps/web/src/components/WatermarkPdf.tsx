@@ -6,6 +6,7 @@ import { loadPdfForPreview, renderPageDataUrl } from '@/lib/pdfThumbnails';
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
 import { useLocale } from '@/lib/i18n/LocaleContext';
 import { recordClientOperation } from '@/lib/statsApi';
+import { startJob, completeJob, failJob } from '@/lib/activityStore';
 import GuestEncouragementBar from './GuestEncouragementBar';
 
 export default function WatermarkPdf() {
@@ -50,6 +51,8 @@ export default function WatermarkPdf() {
     if (!file || !text.trim()) return;
     setError(null);
     setIsProcessing(true);
+    const outputFilename = file.name.replace(/\.pdf$/i, '') + '-watermarked.pdf';
+    const jobId = startJob(outputFilename);
     try {
       const bytes = await file.arrayBuffer();
       const doc = await PDFDocument.load(bytes);
@@ -74,13 +77,16 @@ export default function WatermarkPdf() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = file.name.replace(/\.pdf$/i, '') + '-watermarked.pdf';
+      a.download = outputFilename;
       a.click();
       URL.revokeObjectURL(url);
       recordClientOperation('watermark');
+      completeJob(jobId);
       setCompleted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('toolPage.watermark.couldNotWatermark'));
+      const message = err instanceof Error ? err.message : t('toolPage.watermark.couldNotWatermark');
+      failJob(jobId, message);
+      setError(message);
     } finally {
       setIsProcessing(false);
     }

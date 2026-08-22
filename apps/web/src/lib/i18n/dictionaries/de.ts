@@ -903,6 +903,7 @@ const de: Record<DictionaryKey, string> = {
   'download.descriptionPre': 'Wir schließen gerade Verpackung und Signierung ab, bevor der Installer öffentlich verfügbar wird. In der Zwischenzeit funktioniert bereits jedes Kernwerkzeug — Schützen, Entsperren, Komprimieren und Konvertieren — vollständig offline in Ihrem Browser unter',
   'download.descriptionLinkText': 'brief.ai/tools',
   'download.notifyButton': 'Benachrichtigen Sie mich, wenn es bereit ist',
+  'download.downloadForWindows': 'Für Windows herunterladen',
   'download.setupHeading': 'Einrichtung',
   'download.faqHeading': 'FAQ',
   'download.screenshotAlt': 'Dossiera Desktop-App — Startbildschirm',

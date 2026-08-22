@@ -6,6 +6,7 @@ import { loadPdfForPreview, renderAllThumbnails, renderPageDataUrl } from '@/lib
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
 import { useLocale } from '@/lib/i18n/LocaleContext';
 import { recordClientOperation } from '@/lib/statsApi';
+import { startJob, completeJob, failJob } from '@/lib/activityStore';
 import type { DictionaryKey } from '@/lib/i18n/dictionaries/en';
 import PageThumbnailStrip from './PageThumbnailStrip';
 import GuestEncouragementBar from './GuestEncouragementBar';
@@ -87,6 +88,8 @@ export default function PageNumbersPdf() {
     if (!file) return;
     setError(null);
     setIsProcessing(true);
+    const outputFilename = file.name.replace(/\.pdf$/i, '') + '-numbered.pdf';
+    const jobId = startJob(outputFilename);
     try {
       const bytes = await file.arrayBuffer();
       const doc = await PDFDocument.load(bytes);
@@ -120,13 +123,16 @@ export default function PageNumbersPdf() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = file.name.replace(/\.pdf$/i, '') + '-numbered.pdf';
+      a.download = outputFilename;
       a.click();
       URL.revokeObjectURL(url);
       recordClientOperation('page-numbers');
+      completeJob(jobId);
       setCompleted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('toolPage.pageNumbers.couldNotNumber'));
+      const message = err instanceof Error ? err.message : t('toolPage.pageNumbers.couldNotNumber');
+      failJob(jobId, message);
+      setError(message);
     } finally {
       setIsProcessing(false);
     }

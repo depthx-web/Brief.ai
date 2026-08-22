@@ -307,6 +307,7 @@ export interface AdminPlatformSettings {
   dunningIntervalDays: number;
   tokensPerDollar: number;
   homepageStatsDemoMode: boolean;
+  desktopDownloadUrl: string | null;
 }
 
 export async function fetchAdminSettings(token: string): Promise<AdminPlatformSettings> {

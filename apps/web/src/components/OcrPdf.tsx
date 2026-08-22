@@ -7,6 +7,7 @@ import { createWorker } from 'tesseract.js';
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
 import { useLocale } from '@/lib/i18n/LocaleContext';
 import { recordClientOperation } from '@/lib/statsApi';
+import { startJob, completeJob, failJob } from '@/lib/activityStore';
 import type { DictionaryKey } from '@/lib/i18n/dictionaries/en';
 import GuestEncouragementBar from './GuestEncouragementBar';
 
@@ -63,6 +64,8 @@ export default function OcrPdf() {
     setError(null);
     setIsProcessing(true);
     setStatus(t('toolPage.ocr.startingEngine'));
+    const outputFilename = file.name.replace(/\.pdf$/i, '') + '-ocr.pdf';
+    const jobId = startJob(outputFilename);
 
     const worker = await createWorker(language, 1, {
       workerPath: '/tesseract/worker.min.js',
@@ -136,14 +139,17 @@ export default function OcrPdf() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = file.name.replace(/\.pdf$/i, '') + '-ocr.pdf';
+      a.download = outputFilename;
       a.click();
       URL.revokeObjectURL(url);
       recordClientOperation('ocr');
+      completeJob(jobId);
       setStatus(null);
       setHasResult(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('toolPage.ocr.couldNotRun'));
+      const message = err instanceof Error ? err.message : t('toolPage.ocr.couldNotRun');
+      failJob(jobId, message);
+      setError(message);
     } finally {
       await worker.terminate();
       setIsProcessing(false);

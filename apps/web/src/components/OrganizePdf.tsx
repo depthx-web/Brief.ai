@@ -6,6 +6,7 @@ import { loadPdfForPreview, renderAllThumbnails, renderPageDataUrl } from '@/lib
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
 import { useLocale } from '@/lib/i18n/LocaleContext';
 import { recordClientOperation } from '@/lib/statsApi';
+import { startJob, completeJob, failJob } from '@/lib/activityStore';
 import PageThumbnailStrip, { type ThumbnailPage } from './PageThumbnailStrip';
 import GuestEncouragementBar from './GuestEncouragementBar';
 
@@ -88,6 +89,8 @@ export default function OrganizePdf() {
     if (!file) return;
     setError(null);
     setIsProcessing(true);
+    const outputFilename = file.name.replace(/\.pdf$/i, '') + '-organized.pdf';
+    const jobId = startJob(outputFilename);
     try {
       const kept = pages.filter((p) => p.keep);
       const bytes = await file.arrayBuffer();
@@ -103,13 +106,16 @@ export default function OrganizePdf() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = file.name.replace(/\.pdf$/i, '') + '-organized.pdf';
+      a.download = outputFilename;
       a.click();
       URL.revokeObjectURL(url);
       recordClientOperation('organize');
+      completeJob(jobId);
       setCompleted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('toolPage.organize.couldNotSave'));
+      const message = err instanceof Error ? err.message : t('toolPage.organize.couldNotSave');
+      failJob(jobId, message);
+      setError(message);
     } finally {
       setIsProcessing(false);
     }

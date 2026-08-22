@@ -6,6 +6,7 @@ import JSZip from 'jszip';
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
 import { useLocale } from '@/lib/i18n/LocaleContext';
 import { recordClientOperation } from '@/lib/statsApi';
+import { startJob, completeJob, failJob } from '@/lib/activityStore';
 import GuestEncouragementBar from './GuestEncouragementBar';
 
 // Served as a static asset (see scripts/copy-pdf-worker.mjs) rather than bundled,
@@ -47,6 +48,9 @@ export default function PdfToImages() {
     if (!file) return;
     setError(null);
     setIsProcessing(true);
+    // Not started until the final filename is known (single image vs. a
+    // zip) — depends on the page count, only known once the PDF is loaded.
+    let jobId: string | null = null;
     try {
       const srcBytes = new Uint8Array(await file.arrayBuffer());
       const pdfDoc = await pdfjsLib.getDocument({ data: srcBytes.slice() }).promise;
@@ -78,17 +82,23 @@ export default function PdfToImages() {
       await pdfDoc.destroy();
 
       if (images.length === 1) {
+        jobId = startJob(images[0].name);
         downloadBlob(images[0].blob, images[0].name);
       } else {
+        const zipName = `${baseName}-images.zip`;
+        jobId = startJob(zipName);
         const zip = new JSZip();
         for (const img of images) zip.file(img.name, img.blob);
         const zipBlob = await zip.generateAsync({ type: 'blob' });
-        downloadBlob(zipBlob, `${baseName}-images.zip`);
+        downloadBlob(zipBlob, zipName);
       }
       recordClientOperation('pdf-to-images');
+      completeJob(jobId);
       setCompleted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('toolPage.pdfToImages.couldNotConvert'));
+      const message = err instanceof Error ? err.message : t('toolPage.pdfToImages.couldNotConvert');
+      if (jobId) failJob(jobId, message);
+      setError(message);
     } finally {
       setIsProcessing(false);
     }

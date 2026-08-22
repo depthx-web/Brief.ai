@@ -660,6 +660,11 @@ model PlatformSettings {
   // real volume. Defaults on so the section reads well from launch.
   homepageStatsDemoMode    Boolean  @default(true)
 
+  // The Download page's real CTA once a build actually exists (see the
+  // desktop app's release notes) — null means "no build published yet",
+  // and the page falls back to its existing "notify me" mailto link.
+  desktopDownloadUrl       String?
+
   updatedAt                DateTime @updatedAt
 }
 

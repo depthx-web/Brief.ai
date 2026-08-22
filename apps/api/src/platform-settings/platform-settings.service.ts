@@ -30,8 +30,16 @@ export class PlatformSettingsService {
     dunningIntervalDays?: number;
     tokensPerDollar?: number;
     homepageStatsDemoMode?: boolean;
+    desktopDownloadUrl?: string | null;
   }) {
     await this.get();
     return this.prisma.platformSettings.update({ where: { id: SETTINGS_ID }, data });
+  }
+
+  // Public, unauthenticated subset — only what the Download page needs to
+  // render its real CTA once a build exists. Never return the full row here.
+  async getPublic(): Promise<{ desktopDownloadUrl: string | null }> {
+    const settings = await this.get();
+    return { desktopDownloadUrl: settings.desktopDownloadUrl };
   }
 }

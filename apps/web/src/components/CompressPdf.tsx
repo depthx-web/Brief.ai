@@ -6,6 +6,7 @@ import * as pdfjsLib from 'pdfjs-dist';
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
 import { useLocale } from '@/lib/i18n/LocaleContext';
 import { recordClientOperation } from '@/lib/statsApi';
+import { startJob, completeJob, failJob } from '@/lib/activityStore';
 import type { DictionaryKey } from '@/lib/i18n/dictionaries/en';
 import GuestEncouragementBar from './GuestEncouragementBar';
 
@@ -53,6 +54,8 @@ export default function CompressPdf() {
     setError(null);
     setResult(null);
     setIsProcessing(true);
+    const outputFilename = file.name.replace(/\.pdf$/i, '') + '-compressed.pdf';
+    const jobId = startJob(outputFilename);
     try {
       const preset = QUALITY_PRESETS[quality];
       const srcBytes = new Uint8Array(await file.arrayBuffer());
@@ -98,14 +101,17 @@ export default function CompressPdf() {
       const url = URL.createObjectURL(outBlob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = file.name.replace(/\.pdf$/i, '') + '-compressed.pdf';
+      a.download = outputFilename;
       a.click();
       URL.revokeObjectURL(url);
       recordClientOperation('compress');
+      completeJob(jobId);
 
       setResult({ originalSize: file.size, newSize: outBytes.byteLength });
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('toolPage.compress.couldNotCompress'));
+      const message = err instanceof Error ? err.message : t('toolPage.compress.couldNotCompress');
+      failJob(jobId, message);
+      setError(message);
     } finally {
       setIsProcessing(false);
     }

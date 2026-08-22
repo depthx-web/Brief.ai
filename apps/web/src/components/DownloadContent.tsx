@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { fetchCmsPage } from '@/lib/cmsApi';
+import { fetchPublicPlatformSettings } from '@/lib/publicSettingsApi';
 import { useLocale } from '@/lib/i18n/LocaleContext';
 import type { DictionaryKey } from '@/lib/i18n/dictionaries/en';
 import { detectOs, type Os } from '@/lib/detectOs';
@@ -28,9 +29,14 @@ export default function DownloadContent() {
   const [faq, setFaq] = useState<DownloadFaqItem[]>(defaults.faq);
   const [screenshotUrl, setScreenshotUrl] = useState(localeScreenshotSrc(locale));
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
 
   useEffect(() => {
     setOs(detectOs());
+  }, []);
+
+  useEffect(() => {
+    fetchPublicPlatformSettings().then((settings) => setDownloadUrl(settings?.desktopDownloadUrl ?? null));
   }, []);
 
   useEffect(() => {
@@ -61,12 +67,21 @@ export default function DownloadContent() {
           </a>
           .
         </p>
-        <a
-          href="mailto:support@brief.ai?subject=Notify%20me%20when%20the%20desktop%20app%20is%20ready"
-          className="inline-block rounded-md bg-emerald px-7 py-3.5 text-[15px] font-semibold text-white transition-all hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(30,157,117,0.4)]"
-        >
-          {t('download.notifyButton')}
-        </a>
+        {downloadUrl && (os === 'windows' || os === 'unknown') ? (
+          <a
+            href={downloadUrl}
+            className="inline-block rounded-md bg-emerald px-7 py-3.5 text-[15px] font-semibold text-white transition-all hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(30,157,117,0.4)]"
+          >
+            {t('download.downloadForWindows')}
+          </a>
+        ) : (
+          <a
+            href="mailto:support@brief.ai?subject=Notify%20me%20when%20the%20desktop%20app%20is%20ready"
+            className="inline-block rounded-md bg-emerald px-7 py-3.5 text-[15px] font-semibold text-white transition-all hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(30,157,117,0.4)]"
+          >
+            {t('download.notifyButton')}
+          </a>
+        )}
       </section>
 
       <section className="mt-16">

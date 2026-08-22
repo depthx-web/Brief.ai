@@ -903,6 +903,7 @@ const it: Record<DictionaryKey, string> = {
   'download.descriptionPre': 'Stiamo completando il packaging e la firma prima di rendere pubblico il programma di installazione. Nel frattempo, ogni strumento principale — proteggi, sblocca, comprimi e converti — funziona già interamente offline nel tuo browser su',
   'download.descriptionLinkText': 'brief.ai/tools',
   'download.notifyButton': 'Avvisami quando è pronto',
+  'download.downloadForWindows': 'Scarica per Windows',
   'download.setupHeading': 'Configurazione',
   'download.faqHeading': 'Domande frequenti',
   'download.screenshotAlt': 'App desktop Dossiera — Schermata iniziale',

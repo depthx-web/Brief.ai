@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import { PDFDocument } from 'pdf-lib';
 import { useLocale } from '@/lib/i18n/LocaleContext';
 import { recordClientOperation } from '@/lib/statsApi';
+import { startJob, completeJob, failJob } from '@/lib/activityStore';
 import { isTauri } from '@/lib/platform';
 import { pickPdfFilesNative } from '@/lib/nativeFilePicker';
 import GuestEncouragementBar from './GuestEncouragementBar';
@@ -81,6 +82,7 @@ export default function MergePdf() {
   async function handleMerge() {
     setError(null);
     setIsMerging(true);
+    const jobId = startJob('merged.pdf');
     try {
       const mergedPdf = await PDFDocument.create();
       for (const item of items) {
@@ -98,13 +100,15 @@ export default function MergePdf() {
       a.click();
       URL.revokeObjectURL(url);
       recordClientOperation('merge');
+      completeJob(jobId);
       setCompleted(true);
     } catch (err) {
-      setError(
+      const message =
         err instanceof Error
           ? t('toolPage.merge.couldNotMergeWithMessage').replace('{message}', err.message)
-          : t('toolPage.merge.couldNotMerge')
-      );
+          : t('toolPage.merge.couldNotMerge');
+      failJob(jobId, message);
+      setError(message);
     } finally {
       setIsMerging(false);
     }

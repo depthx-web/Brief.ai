@@ -74,6 +74,7 @@ interface UpdateSettingsBody {
   dunningIntervalDays?: number;
   tokensPerDollar?: number;
   homepageStatsDemoMode?: boolean;
+  desktopDownloadUrl?: string | null;
 }
 
 interface CancelSubscriptionBody {

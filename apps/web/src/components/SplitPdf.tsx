@@ -7,6 +7,7 @@ import { parsePageRanges, everyPageIndividually, type PageRange } from '@/lib/pa
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
 import { useLocale } from '@/lib/i18n/LocaleContext';
 import { recordClientOperation } from '@/lib/statsApi';
+import { startJob, completeJob, failJob } from '@/lib/activityStore';
 import GuestEncouragementBar from './GuestEncouragementBar';
 
 function downloadBlob(blob: Blob, filename: string) {
@@ -53,6 +54,10 @@ export default function SplitPdf() {
     if (!file || !pageCount) return;
     setError(null);
     setIsProcessing(true);
+    // Not started until the final filename is known (single output vs. a
+    // zip) — this one genuinely can't name the job up front like the other
+    // tools, since split's output shape depends on how many ranges result.
+    let jobId: string | null = null;
     try {
       let ranges: PageRange[];
       if (mode === 'each') {
@@ -74,20 +79,26 @@ export default function SplitPdf() {
       }
 
       if (outputs.length === 1) {
+        jobId = startJob(outputs[0].name);
         downloadBlob(
           new Blob([outputs[0].bytes.buffer as ArrayBuffer], { type: 'application/pdf' }),
           outputs[0].name
         );
       } else {
+        const zipName = `${baseName}-split.zip`;
+        jobId = startJob(zipName);
         const zip = new JSZip();
         outputs.forEach((o) => zip.file(o.name, o.bytes));
         const zipBlob = await zip.generateAsync({ type: 'blob' });
-        downloadBlob(zipBlob, `${baseName}-split.zip`);
+        downloadBlob(zipBlob, zipName);
       }
       recordClientOperation('split');
+      completeJob(jobId);
       setCompleted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('toolPage.split.couldNotSplit'));
+      const message = err instanceof Error ? err.message : t('toolPage.split.couldNotSplit');
+      if (jobId) failJob(jobId, message);
+      setError(message);
     } finally {
       setIsProcessing(false);
     }

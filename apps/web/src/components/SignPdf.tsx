@@ -6,6 +6,7 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import * as Dialog from '@radix-ui/react-dialog';
 import { useAuth } from '@/lib/AuthContext';
 import { recordClientOperation } from '@/lib/statsApi';
+import { startJob, completeJob, failJob } from '@/lib/activityStore';
 import { loadPdfForPreview, renderAllThumbnails, renderPageDataUrl } from '@/lib/pdfThumbnails';
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
 import { listSignatures, saveSignature, deleteSignature, type SavedSignature } from '@/lib/signaturesApi';
@@ -158,6 +159,8 @@ export default function SignPdf() {
     if (!file || !activeSignature || Object.keys(placements).length === 0) return;
     setError(null);
     setIsProcessing(true);
+    const outputFilename = file.name.replace(/\.pdf$/i, '') + '-signed.pdf';
+    const jobId = startJob(outputFilename);
     try {
       const bytes = await file.arrayBuffer();
       const doc = await PDFDocument.load(bytes);
@@ -193,13 +196,16 @@ export default function SignPdf() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = file.name.replace(/\.pdf$/i, '') + '-signed.pdf';
+      a.download = outputFilename;
       a.click();
       URL.revokeObjectURL(url);
       recordClientOperation('sign');
+      completeJob(jobId);
       setCompleted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('toolPage.sign.couldNotSign'));
+      const message = err instanceof Error ? err.message : t('toolPage.sign.couldNotSign');
+      failJob(jobId, message);
+      setError(message);
     } finally {
       setIsProcessing(false);
     }

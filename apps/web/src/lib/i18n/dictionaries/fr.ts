@@ -903,6 +903,7 @@ const fr: Record<DictionaryKey, string> = {
   'download.descriptionPre': 'Nous finalisons l’empaquetage et la signature avant de rendre l’installateur public. En attendant, tous les outils principaux — protéger, déverrouiller, compresser et convertir — fonctionnent déjà entièrement hors ligne dans votre navigateur sur',
   'download.descriptionLinkText': 'brief.ai/tools',
   'download.notifyButton': 'Me prévenir quand c’est prêt',
+  'download.downloadForWindows': 'Télécharger pour Windows',
   'download.setupHeading': 'Installation',
   'download.faqHeading': 'FAQ',
   'download.screenshotAlt': 'Application de bureau Dossiera — Écran d’accueil',

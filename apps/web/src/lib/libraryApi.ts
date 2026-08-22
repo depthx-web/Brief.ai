@@ -140,7 +140,19 @@ export async function fetchDocumentFile(token: string, id: string, fallbackFilen
   const response = await fetch(`${API_URL}/library/documents/${id}/file`, {
     headers: authHeaders(token),
   });
-  if (!response.ok) throw new Error(`Could not load this file (${response.status}).`);
+  if (!response.ok) {
+    // Surface the backend's actual reason (e.g. "This file has expired and
+    // is no longer available") instead of a generic status-code message —
+    // this is the difference between a confusing error and an explanation.
+    let message = `Could not load this file (${response.status}).`;
+    try {
+      const body = await response.json();
+      if (typeof body?.message === 'string') message = body.message;
+    } catch {
+      // not JSON — keep the generic message
+    }
+    throw new Error(message);
+  }
   const disposition = response.headers.get('Content-Disposition') ?? '';
   const match = disposition.match(/filename="([^"]+)"/);
   const filename = match?.[1] ?? fallbackFilename ?? 'document.pdf';

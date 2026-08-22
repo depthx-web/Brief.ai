@@ -903,6 +903,7 @@ const es: Record<DictionaryKey, string> = {
   'download.descriptionPre': 'Estamos terminando el empaquetado y la firma antes de hacer público el instalador. Mientras tanto, cada herramienta principal — proteger, desbloquear, comprimir y convertir — ya funciona completamente sin conexión en tu navegador en',
   'download.descriptionLinkText': 'brief.ai/tools',
   'download.notifyButton': 'Avísame cuando esté lista',
+  'download.downloadForWindows': 'Descargar para Windows',
   'download.setupHeading': 'Configuración',
   'download.faqHeading': 'Preguntas frecuentes',
   'download.screenshotAlt': 'Aplicación de escritorio Dossiera — Pantalla de inicio',

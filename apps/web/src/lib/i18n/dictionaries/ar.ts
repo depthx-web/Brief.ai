@@ -903,6 +903,7 @@ const ar: Record<DictionaryKey, string> = {
   'download.descriptionPre': 'نحن بصدد الانتهاء من التغليف والتوقيع قبل إتاحة برنامج التثبيت للعامة. في غضون ذلك، تعمل بالفعل كل أداة أساسية — الحماية وفك القفل والضغط والتحويل — بلا اتصال بالكامل داخل متصفحك على',
   'download.descriptionLinkText': 'brief.ai/tools',
   'download.notifyButton': 'أعلمني عندما يصبح جاهزًا',
+  'download.downloadForWindows': 'تنزيل لنظام Windows',
   'download.setupHeading': 'الإعداد',
   'download.faqHeading': 'الأسئلة الشائعة',
   'download.screenshotAlt': 'تطبيق سطح المكتب Dossiera — الشاشة الرئيسية',

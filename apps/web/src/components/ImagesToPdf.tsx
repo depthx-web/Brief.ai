@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import { PDFDocument } from 'pdf-lib';
 import { useLocale } from '@/lib/i18n/LocaleContext';
 import { recordClientOperation } from '@/lib/statsApi';
+import { startJob, completeJob, failJob } from '@/lib/activityStore';
 import GuestEncouragementBar from './GuestEncouragementBar';
 
 interface ImageItem {
@@ -69,6 +70,7 @@ export default function ImagesToPdf() {
     if (items.length === 0) return;
     setError(null);
     setIsProcessing(true);
+    const jobId = startJob('images.pdf');
     try {
       const outDoc = await PDFDocument.create();
       for (const item of items) {
@@ -86,13 +88,15 @@ export default function ImagesToPdf() {
       a.click();
       URL.revokeObjectURL(url);
       recordClientOperation('images-to-pdf');
+      completeJob(jobId);
       setCompleted(true);
     } catch (err) {
-      setError(
+      const message =
         err instanceof Error
           ? t('toolPage.imagesToPdf.couldNotConvertWithMessage').replace('{message}', err.message)
-          : t('toolPage.imagesToPdf.couldNotConvert')
-      );
+          : t('toolPage.imagesToPdf.couldNotConvert');
+      failJob(jobId, message);
+      setError(message);
     } finally {
       setIsProcessing(false);
     }

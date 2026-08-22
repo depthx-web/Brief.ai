@@ -935,6 +935,7 @@ const en = {
   'download.descriptionPre': 'We’re finishing up packaging and signing before making the installer public. In the meantime, every core tool — protect, unlock, compress, and convert — already works fully offline in your browser at',
   'download.descriptionLinkText': 'brief.ai/tools',
   'download.notifyButton': 'Notify me when it’s ready',
+  'download.downloadForWindows': 'Download for Windows',
   'download.setupHeading': 'Setup',
   'download.faqHeading': 'FAQ',
   'download.screenshotAlt': 'Dossiera desktop app — Home screen',

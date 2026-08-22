@@ -5,6 +5,7 @@ import { extractPdfTextWithOcrFallback, type PageText } from '@/lib/extractPdfTe
 import { usePendingToolFile } from '@/lib/usePendingToolFile';
 import { useLocale } from '@/lib/i18n/LocaleContext';
 import { recordClientOperation } from '@/lib/statsApi';
+import { startJob, completeJob, failJob } from '@/lib/activityStore';
 import GuestEncouragementBar from './GuestEncouragementBar';
 
 function toPlainText(pages: PageText[]): string {
@@ -36,6 +37,8 @@ export default function PdfToTextPdf() {
     if (!file) return;
     setError(null);
     setIsProcessing(true);
+    const outputFilename = file.name.replace(/\.pdf$/i, '') + '.txt';
+    const jobId = startJob(outputFilename);
     try {
       const { pages } = await extractPdfTextWithOcrFallback(file, 'eng', setStatus);
       const text = toPlainText(pages);
@@ -43,13 +46,16 @@ export default function PdfToTextPdf() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = file.name.replace(/\.pdf$/i, '') + '.txt';
+      a.download = outputFilename;
       a.click();
       URL.revokeObjectURL(url);
       recordClientOperation('pdf-to-text');
+      completeJob(jobId);
       setCompleted(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('toolPage.pdfToText.couldNotExtract'));
+      const message = err instanceof Error ? err.message : t('toolPage.pdfToText.couldNotExtract');
+      failJob(jobId, message);
+      setError(message);
     } finally {
       setStatus(null);
       setIsProcessing(false);
