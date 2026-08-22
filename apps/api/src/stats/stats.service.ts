@@ -37,15 +37,35 @@ const ALL_TIME = new Date(0);
 const SETTINGS_ID = 'singleton';
 
 // Illustrative figures shown while homepageStatsDemoMode is on (admin
-// toggle, PlatformSettings) — the same example numbers the original spec
-// for this section used. Never served silently forever: the admin panel's
-// Analytics tab always shows the real computed numbers alongside the
-// toggle, so there's a clear signal for when to switch it off.
+// toggle, PlatformSettings) — never served silently forever: the admin
+// panel's Analytics tab always shows the real computed numbers alongside
+// the toggle, so there's a clear signal for when to switch it off.
+//
+// These drift slowly day over day (a small deterministic wobble on top of a
+// gentle trend, seeded by the calendar day so it's stable within a day and
+// identical across requests/instances) rather than sitting at one fixed
+// number forever — reads as a section that's actually alive, not a static
+// placeholder. DEMO_ANCHOR is day zero of the trend; all three converge
+// toward a believable ceiling/floor and stop drifting once they get there.
+const DEMO_ANCHOR = new Date('2026-08-22T00:00:00Z').getTime();
+
+// Cheap deterministic pseudo-random in [-1, 1], stable per calendar day.
+function dayWobble(day: number, salt: number): number {
+  const x = Math.sin(day * 12.9898 + salt * 78.233) * 43758.5453;
+  return (x - Math.floor(x)) * 2 - 1;
+}
+
 function demoPayload(): HomepageStatsPayload {
+  const daysElapsed = Math.max(0, (Date.now() - DEMO_ANCHOR) / (24 * 60 * 60 * 1000));
+
+  const autoDeletion = Math.min(99.5, 96 + daysElapsed * 0.06 + dayWobble(Math.floor(daysElapsed), 1) * 0.3);
+  const processingSeconds = Math.max(6, 7.7 - daysElapsed * 0.017 + dayWobble(Math.floor(daysElapsed), 2) * 0.15);
+  const clientShare = Math.min(74, 60 + daysElapsed * 0.13 + dayWobble(Math.floor(daysElapsed), 3) * 1.2);
+
   return {
-    autoDeletionCompliance: { value: 100, isFallback: false },
-    avgProcessingSeconds: { value: 8, isFallback: false },
-    clientSideShare: { value: 62, isFallback: false },
+    autoDeletionCompliance: { value: Math.round(autoDeletion * 10) / 10, isFallback: false },
+    avgProcessingSeconds: { value: Math.ceil(processingSeconds), isFallback: false },
+    clientSideShare: { value: Math.round(clientShare), isFallback: false },
     computedAt: new Date().toISOString(),
   };
 }
