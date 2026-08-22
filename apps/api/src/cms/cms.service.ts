@@ -133,6 +133,20 @@ const CMS_PAGES: { slug: string; label: string; sections: { key: string; label: 
     sections: [],
   },
   {
+    // SEO fields only, same reasoning as 'tools' — these are the only two
+    // remaining public, unauthenticated pages with no admin-editable
+    // metadata (every other missing page is either authenticated app UI
+    // or staff-only /admin, neither meaningfully indexed).
+    slug: 'login',
+    label: 'Log In',
+    sections: [],
+  },
+  {
+    slug: 'signup',
+    label: 'Sign Up',
+    sections: [],
+  },
+  {
     slug: 'privacy',
     label: 'Privacy Policy',
     sections: [{ key: 'body', label: 'Body' }],
