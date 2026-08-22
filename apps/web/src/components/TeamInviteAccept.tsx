@@ -5,10 +5,12 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { fetchInvitation, acceptInvitation, declineInvitation } from '@/lib/teamApi';
 import { showError, showSuccess } from '@/lib/toast';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 
 export default function TeamInviteAccept() {
   const inviteToken = useSearchParams().get('token');
   const { user, token, login } = useAuth();
+  const { t } = useLocale();
   const router = useRouter();
   const [invitation, setInvitation] = useState<{ teamName: string; email: string } | null | undefined>(undefined);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +26,7 @@ export default function TeamInviteAccept() {
       .then(setInvitation)
       .catch((err) => {
         setInvitation(null);
-        setError(err instanceof Error ? err.message : 'This invitation could not be found.');
+        setError(err instanceof Error ? err.message : t('teamInvite.notFound'));
       });
   }, [inviteToken]);
 
@@ -35,7 +37,7 @@ export default function TeamInviteAccept() {
     try {
       await login(email.trim(), password);
     } catch (err) {
-      setLoginError(err instanceof Error ? err.message : 'Could not log in.');
+      setLoginError(err instanceof Error ? err.message : t('auth.couldNotLogIn'));
     } finally {
       setIsLoggingIn(false);
     }
@@ -46,10 +48,10 @@ export default function TeamInviteAccept() {
     setIsActing(true);
     try {
       await acceptInvitation(token, inviteToken);
-      showSuccess('You joined the team');
+      showSuccess(t('teamInvite.joinedTeamToast'));
       router.push('/dashboard');
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Could not accept this invitation.');
+      showError(err instanceof Error ? err.message : t('teamInvite.couldNotAccept'));
     } finally {
       setIsActing(false);
     }
@@ -60,17 +62,17 @@ export default function TeamInviteAccept() {
     setIsActing(true);
     try {
       await declineInvitation(inviteToken);
-      showSuccess('Invitation declined');
+      showSuccess(t('teamInvite.declinedToast'));
       router.push('/');
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Could not decline this invitation.');
+      showError(err instanceof Error ? err.message : t('teamInvite.couldNotDecline'));
     } finally {
       setIsActing(false);
     }
   }
 
   if (!inviteToken) {
-    return <div className="mx-auto mt-16 max-w-md px-6 text-center text-sm text-ink-soft">No invitation token provided.</div>;
+    return <div className="mx-auto mt-16 max-w-md px-6 text-center text-sm text-ink-soft">{t('teamInvite.noTokenProvided')}</div>;
   }
   if (invitation === undefined) return null;
   if (invitation === null) {
@@ -85,24 +87,24 @@ export default function TeamInviteAccept() {
     <div className="mx-auto mt-16 w-full max-w-md px-6">
       <div className="rounded-xl border border-gray-200 bg-white p-8 text-center shadow-sm">
         <h1 className="font-serif text-xl font-semibold text-navy">
-          Accept invitation to join {invitation.teamName}?
+          {t('teamInvite.acceptTitle').replace('{team}', invitation.teamName)}
         </h1>
-        <p className="mt-2 text-sm text-ink-soft">Sent to {invitation.email}.</p>
+        <p className="mt-2 text-sm text-ink-soft">{t('teamInvite.sentTo').replace('{email}', invitation.email)}</p>
 
         {!user ? (
           <>
             <p className="mt-6 text-sm text-ink-soft">
-              Log in with <strong>{invitation.email}</strong> to accept, or{' '}
+              {t('teamInvite.logInWithPrefix')} <strong>{invitation.email}</strong> {t('teamInvite.toAcceptOr')}{' '}
               <a href="/signup" className="font-medium text-navy hover:text-emerald">
-                create an account
+                {t('teamInvite.createAccount')}
               </a>{' '}
-              and reopen this link afterward.
+              {t('teamInvite.reopenLinkAfterward')}
             </p>
             <form onSubmit={handleLogin} className="mt-4 space-y-3 text-start">
               <input
                 type="email"
                 required
-                placeholder="Email"
+                placeholder={t('guestSignup.emailPlaceholder')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
@@ -110,7 +112,7 @@ export default function TeamInviteAccept() {
               <input
                 type="password"
                 required
-                placeholder="Password"
+                placeholder={t('auth.password')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
@@ -121,13 +123,13 @@ export default function TeamInviteAccept() {
                 disabled={isLoggingIn}
                 className="w-full rounded-lg bg-emerald px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
               >
-                {isLoggingIn ? 'Logging in…' : 'Log in'}
+                {isLoggingIn ? t('auth.loggingIn') : t('auth.logInTitle')}
               </button>
             </form>
           </>
         ) : user.email !== invitation.email ? (
           <p className="mt-6 text-sm text-redline">
-            This invitation was sent to {invitation.email}, but you&apos;re logged in as {user.email}.
+            {t('teamInvite.mismatchError').replace('{invited}', invitation.email).replace('{current}', user.email)}
           </p>
         ) : (
           <div className="mt-6 flex justify-center gap-3">
@@ -136,14 +138,14 @@ export default function TeamInviteAccept() {
               disabled={isActing}
               className="rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-medium text-ink-soft hover:bg-gray-50"
             >
-              Decline
+              {t('teamInvite.decline')}
             </button>
             <button
               onClick={handleAccept}
               disabled={isActing}
               className="rounded-lg bg-emerald px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-emerald-dark disabled:cursor-not-allowed disabled:bg-gray-300"
             >
-              {isActing ? 'Joining…' : 'Accept'}
+              {isActing ? t('teamInvite.joining') : t('teamInvite.accept')}
             </button>
           </div>
         )}

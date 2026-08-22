@@ -284,7 +284,7 @@ export default function Workspace() {
             <div className="mx-auto flex max-w-2xl flex-col items-center gap-4">
               {pageImages.map((src, i) => (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img key={i} src={src} alt={`Page ${i + 1}`} className="w-full rounded shadow-md" />
+                <img key={i} src={src} alt={t('common.pageNumber').replace('{n}', String(i + 1))} className="w-full rounded shadow-md" />
               ))}
             </div>
           )}

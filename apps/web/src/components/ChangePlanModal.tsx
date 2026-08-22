@@ -54,7 +54,7 @@ export default function ChangePlanModal({ open, onClose }: Props) {
           window.location.href = url;
           return;
         } catch (err) {
-          const message = err instanceof Error ? err.message : 'Could not start checkout.';
+          const message = err instanceof Error ? err.message : t('wallet.couldNotStartCheckout');
           setError(message);
           showError(message);
           return;
@@ -64,7 +64,7 @@ export default function ChangePlanModal({ open, onClose }: Props) {
       showSuccess(t('changePlan.updated'));
       onClose();
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Could not change your plan.';
+      const message = err instanceof Error ? err.message : t('changePlan.couldNotChangePlan');
       setError(message);
       showError(message);
     } finally {

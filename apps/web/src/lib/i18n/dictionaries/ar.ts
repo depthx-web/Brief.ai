@@ -39,6 +39,7 @@ const ar: Record<DictionaryKey, string> = {
   'common.duplicate': 'تكرار',
   'common.confirm': 'تأكيد',
   'common.saving': 'جارٍ الحفظ…',
+  'common.pageNumber': 'صفحة {n}',
 
   'changePlan.title': 'تغيير خطتك',
   'changePlan.subtitle': 'دورة الفوترة لمساحة عملك الحالية.',
@@ -47,6 +48,7 @@ const ar: Record<DictionaryKey, string> = {
   'changePlan.updated': 'تم تحديث الخطة',
   'changePlan.save10': 'وفّر 10%',
   'changePlan.save20': 'وفّر 20%',
+  'changePlan.couldNotChangePlan': 'تعذّر تغيير خطتك.',
 
   'auth.email': 'البريد الإلكتروني',
   'auth.password': 'كلمة المرور',
@@ -986,6 +988,23 @@ const ar: Record<DictionaryKey, string> = {
   'docWorkspace.askPlaceholder': 'اطرح سؤالًا…',
   'docWorkspace.generatedPrefix': 'تم الإنشاء: {title}',
   'docWorkspace.send': 'إرسال',
+
+  'teamInvite.notFound': 'تعذّر العثور على هذه الدعوة.',
+  'teamInvite.couldNotAccept': 'تعذّر قبول هذه الدعوة.',
+  'teamInvite.couldNotDecline': 'تعذّر رفض هذه الدعوة.',
+  'teamInvite.joinedTeamToast': 'لقد انضممت إلى الفريق',
+  'teamInvite.declinedToast': 'تم رفض الدعوة',
+  'teamInvite.noTokenProvided': 'لم يتم توفير رمز الدعوة.',
+  'teamInvite.acceptTitle': 'قبول الدعوة للانضمام إلى {team}؟',
+  'teamInvite.sentTo': 'أُرسلت إلى {email}.',
+  'teamInvite.logInWithPrefix': 'سجّل الدخول باستخدام',
+  'teamInvite.toAcceptOr': 'للقبول، أو',
+  'teamInvite.createAccount': 'أنشئ حسابًا',
+  'teamInvite.reopenLinkAfterward': 'ثم أعد فتح هذا الرابط لاحقًا.',
+  'teamInvite.mismatchError': 'أُرسلت هذه الدعوة إلى {invited}، لكنك مسجّل الدخول باسم {current}.',
+  'teamInvite.decline': 'رفض',
+  'teamInvite.joining': 'جارٍ الانضمام…',
+  'teamInvite.accept': 'قبول',
 };
 
 export default ar;

@@ -39,6 +39,7 @@ const fr: Record<DictionaryKey, string> = {
   'common.duplicate': 'Dupliquer',
   'common.confirm': 'Confirmer',
   'common.saving': 'Enregistrement…',
+  'common.pageNumber': 'Page {n}',
 
   'changePlan.title': 'Changer votre forfait',
   'changePlan.subtitle': 'Cycle de facturation pour votre espace de travail actuel.',
@@ -47,6 +48,7 @@ const fr: Record<DictionaryKey, string> = {
   'changePlan.updated': 'Forfait mis à jour',
   'changePlan.save10': 'Économisez 10 %',
   'changePlan.save20': 'Économisez 20 %',
+  'changePlan.couldNotChangePlan': 'Impossible de modifier votre forfait.',
 
   'auth.email': 'Adresse e-mail',
   'auth.password': 'Mot de passe',
@@ -986,6 +988,23 @@ const fr: Record<DictionaryKey, string> = {
   'docWorkspace.askPlaceholder': 'Poser une question…',
   'docWorkspace.generatedPrefix': 'Généré : {title}',
   'docWorkspace.send': 'Envoyer',
+
+  'teamInvite.notFound': 'Cette invitation est introuvable.',
+  'teamInvite.couldNotAccept': "Impossible d'accepter cette invitation.",
+  'teamInvite.couldNotDecline': 'Impossible de refuser cette invitation.',
+  'teamInvite.joinedTeamToast': "Vous avez rejoint l'équipe",
+  'teamInvite.declinedToast': 'Invitation refusée',
+  'teamInvite.noTokenProvided': "Aucun jeton d'invitation fourni.",
+  'teamInvite.acceptTitle': "Accepter l'invitation à rejoindre {team} ?",
+  'teamInvite.sentTo': 'Envoyée à {email}.',
+  'teamInvite.logInWithPrefix': 'Connectez-vous avec',
+  'teamInvite.toAcceptOr': 'pour accepter, ou',
+  'teamInvite.createAccount': 'créez un compte',
+  'teamInvite.reopenLinkAfterward': 'puis rouvrez ce lien.',
+  'teamInvite.mismatchError': 'Cette invitation a été envoyée à {invited}, mais vous êtes connecté en tant que {current}.',
+  'teamInvite.decline': 'Refuser',
+  'teamInvite.joining': 'Adhésion en cours…',
+  'teamInvite.accept': 'Accepter',
 };
 
 export default fr;

@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { useLocale } from '@/lib/i18n/LocaleContext';
 
 export interface ThumbnailPage {
   id: string;
@@ -22,6 +23,7 @@ interface Props {
 // Batch 3, Section 5). Presentational + drag-reorder only; each tool owns
 // what "selecting" or "reordering" a page actually means to it.
 export default function PageThumbnailStrip({ pages, selectedId, onSelect, onReorder, renderBadge }: Props) {
+  const { t } = useLocale();
   const dragIndex = useRef<number | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
 
@@ -69,7 +71,7 @@ export default function PageThumbnailStrip({ pages, selectedId, onSelect, onReor
               >
                 <img
                   src={page.thumbnailUrl}
-                  alt={`Page ${page.originalIndex + 1}`}
+                  alt={t('common.pageNumber').replace('{n}', String(page.originalIndex + 1))}
                   style={page.rotationDeg ? { transform: `rotate(${page.rotationDeg}deg)` } : undefined}
                   className="w-full"
                 />

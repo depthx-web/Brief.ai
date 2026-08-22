@@ -39,6 +39,7 @@ const es: Record<DictionaryKey, string> = {
   'common.duplicate': 'Duplicar',
   'common.confirm': 'Confirmar',
   'common.saving': 'Guardando…',
+  'common.pageNumber': 'Página {n}',
 
   'changePlan.title': 'Cambiar tu plan',
   'changePlan.subtitle': 'Ciclo de facturación de tu espacio de trabajo actual.',
@@ -47,6 +48,7 @@ const es: Record<DictionaryKey, string> = {
   'changePlan.updated': 'Plan actualizado',
   'changePlan.save10': 'Ahorra 10 %',
   'changePlan.save20': 'Ahorra 20 %',
+  'changePlan.couldNotChangePlan': 'No se pudo cambiar tu plan.',
 
   'auth.email': 'Correo electrónico',
   'auth.password': 'Contraseña',
@@ -986,6 +988,23 @@ const es: Record<DictionaryKey, string> = {
   'docWorkspace.askPlaceholder': 'Haz una pregunta…',
   'docWorkspace.generatedPrefix': 'Generado: {title}',
   'docWorkspace.send': 'Enviar',
+
+  'teamInvite.notFound': 'No se encontró esta invitación.',
+  'teamInvite.couldNotAccept': 'No se pudo aceptar esta invitación.',
+  'teamInvite.couldNotDecline': 'No se pudo rechazar esta invitación.',
+  'teamInvite.joinedTeamToast': 'Te uniste al equipo',
+  'teamInvite.declinedToast': 'Invitación rechazada',
+  'teamInvite.noTokenProvided': 'No se proporcionó un token de invitación.',
+  'teamInvite.acceptTitle': '¿Aceptar la invitación para unirte a {team}?',
+  'teamInvite.sentTo': 'Enviada a {email}.',
+  'teamInvite.logInWithPrefix': 'Inicia sesión con',
+  'teamInvite.toAcceptOr': 'para aceptar, o',
+  'teamInvite.createAccount': 'crea una cuenta',
+  'teamInvite.reopenLinkAfterward': 'y vuelve a abrir este enlace después.',
+  'teamInvite.mismatchError': 'Esta invitación se envió a {invited}, pero has iniciado sesión como {current}.',
+  'teamInvite.decline': 'Rechazar',
+  'teamInvite.joining': 'Uniéndote…',
+  'teamInvite.accept': 'Aceptar',
 };
 
 export default es;

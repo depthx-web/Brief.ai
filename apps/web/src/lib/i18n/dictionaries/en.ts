@@ -42,6 +42,7 @@ const en = {
   'common.duplicate': 'Duplicate',
   'common.confirm': 'Confirm',
   'common.saving': 'Saving…',
+  'common.pageNumber': 'Page {n}',
 
   // Change plan modal
   'changePlan.title': 'Change your plan',
@@ -51,6 +52,7 @@ const en = {
   'changePlan.updated': 'Plan updated',
   'changePlan.save10': 'Save 10%',
   'changePlan.save20': 'Save 20%',
+  'changePlan.couldNotChangePlan': 'Could not change your plan.',
 
   // Auth forms
   'auth.email': 'Email address',
@@ -1027,6 +1029,24 @@ const en = {
   'docWorkspace.askPlaceholder': 'Ask a question…',
   'docWorkspace.generatedPrefix': 'Generated: {title}',
   'docWorkspace.send': 'Send',
+
+  // Team invite acceptance page
+  'teamInvite.notFound': 'This invitation could not be found.',
+  'teamInvite.couldNotAccept': 'Could not accept this invitation.',
+  'teamInvite.couldNotDecline': 'Could not decline this invitation.',
+  'teamInvite.joinedTeamToast': 'You joined the team',
+  'teamInvite.declinedToast': 'Invitation declined',
+  'teamInvite.noTokenProvided': 'No invitation token provided.',
+  'teamInvite.acceptTitle': 'Accept invitation to join {team}?',
+  'teamInvite.sentTo': 'Sent to {email}.',
+  'teamInvite.logInWithPrefix': 'Log in with',
+  'teamInvite.toAcceptOr': 'to accept, or',
+  'teamInvite.createAccount': 'create an account',
+  'teamInvite.reopenLinkAfterward': 'and reopen this link afterward.',
+  'teamInvite.mismatchError': "This invitation was sent to {invited}, but you're logged in as {current}.",
+  'teamInvite.decline': 'Decline',
+  'teamInvite.joining': 'Joining…',
+  'teamInvite.accept': 'Accept',
 } as const;
 
 export default en;
