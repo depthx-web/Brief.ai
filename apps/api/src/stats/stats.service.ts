@@ -31,6 +31,10 @@ export interface HomepageStatsPayload {
   avgProcessingSeconds: HomepageStatMetric;
   clientSideShare: HomepageStatMetric;
   computedAt: string;
+  // Lets the frontend tell demo numbers from real ones without guessing —
+  // only demo figures are safe to visually animate every couple seconds
+  // (see HomeStats.tsx); real computed numbers must never show fake motion.
+  isDemo: boolean;
 }
 
 const ALL_TIME = new Date(0);
@@ -67,6 +71,7 @@ function demoPayload(): HomepageStatsPayload {
     avgProcessingSeconds: { value: Math.ceil(processingSeconds), isFallback: false },
     clientSideShare: { value: Math.round(clientShare), isFallback: false },
     computedAt: new Date().toISOString(),
+    isDemo: true,
   };
 }
 
@@ -122,7 +127,7 @@ export class StatsService implements OnModuleInit {
       this.computeAvgProcessingSeconds(),
       this.computeClientSideShare(),
     ]);
-    return { autoDeletionCompliance, avgProcessingSeconds, clientSideShare, computedAt: new Date().toISOString() };
+    return { autoDeletionCompliance, avgProcessingSeconds, clientSideShare, computedAt: new Date().toISOString(), isDemo: false };
   }
 
   // Of every document that has ever been due for retention deletion, what

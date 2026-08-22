@@ -36,6 +36,15 @@ function ShieldIcon() {
   );
 }
 
+// Cheap deterministic pseudo-random in [-1, 1] — same shape as the backend's
+// day-to-day demo wobble, just seeded by the tick counter instead of the
+// calendar day so it changes every couple seconds instead of every day.
+function jitter(base: number, seed: number, amplitude: number): number {
+  const x = Math.sin(seed * 12.9898 + base * 78.233) * 43758.5453;
+  const r = (x - Math.floor(x)) * 2 - 1;
+  return base + r * amplitude;
+}
+
 // Sits between the Hero/tagline block and #workspaces — see the homepage
 // trust-stats spec. Relative metrics only (rates/percentages/averages), not
 // absolute counts, so the section reads as credible regardless of current
@@ -44,6 +53,11 @@ function ShieldIcon() {
 export default function HomeStats() {
   const { t } = useLocale();
   const [stats, setStats] = useState<HomepageStatsPayload | null>(null);
+  // Only advances (and is only ever consulted) while stats.isDemo is true —
+  // ticks the demo figures visibly every 2s so the section reads as "live".
+  // Real computed numbers never get this treatment: they only change when a
+  // genuine recompute happens, never a client-side animation.
+  const [tick, setTick] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -55,7 +69,21 @@ export default function HomeStats() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!stats?.isDemo) return;
+    if (typeof window === 'undefined') return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const id = setInterval(() => setTick((t) => t + 1), 2000);
+    return () => clearInterval(id);
+  }, [stats?.isDemo]);
+
   if (!stats) return null;
+
+  // Demo mode only: nudge the real value a little every tick, purely for a
+  // "this is live" feel. Real (non-demo) numbers pass through unchanged.
+  function live(value: number, amplitude: number): number {
+    return stats!.isDemo ? jitter(value, tick, amplitude) : value;
+  }
 
   const columns: {
     metric: HomepageStatMetric;
@@ -67,7 +95,7 @@ export default function HomeStats() {
   }[] = [
     {
       metric: stats.autoDeletionCompliance,
-      value: `${Math.round(stats.autoDeletionCompliance.value ?? 0)}%`,
+      value: `${Math.round(live(stats.autoDeletionCompliance.value ?? 0, 0.4))}%`,
       label: t('homeStats.autoDeletionLabel'),
       fallback: t(
         stats.autoDeletionCompliance.fallbackVariant === 'allCompliant'
@@ -77,6 +105,10 @@ export default function HomeStats() {
       icon: CheckCircleIcon,
     },
     {
+      // Not ticked: it's already a coarse whole-second figure (a small
+      // jitter would just flip it between adjacent integers, which reads as
+      // glitchy rather than "live") — the pulsing dot already carries the
+      // "this one updates live" signal for this metric.
       metric: stats.avgProcessingSeconds,
       value: t('homeStats.processingValue').replace('{s}', String(stats.avgProcessingSeconds.value ?? 0)),
       label: t('homeStats.processingLabel'),
@@ -86,7 +118,7 @@ export default function HomeStats() {
     },
     {
       metric: stats.clientSideShare,
-      value: `${Math.round(stats.clientSideShare.value ?? 0)}%`,
+      value: `${Math.round(live(stats.clientSideShare.value ?? 0, 0.6))}%`,
       label: t('homeStats.clientShareLabel'),
       fallback: t('homeStats.clientShareFallback'),
       icon: ShieldIcon,

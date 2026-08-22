@@ -11,6 +11,7 @@ export interface HomepageStatsPayload {
   avgProcessingSeconds: HomepageStatMetric;
   clientSideShare: HomepageStatMetric;
   computedAt: string;
+  isDemo: boolean;
 }
 
 // Client-side call, always live (no-store) — the value itself is already
