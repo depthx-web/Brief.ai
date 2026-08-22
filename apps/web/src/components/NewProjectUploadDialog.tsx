@@ -17,7 +17,7 @@ interface Props {
   files: File[];
   segment: Segment | null;
   // The account's configured default (Settings -> Privacy). Null/undefined
-  // = platform default (24h); 0 = "Never". Drives the intro copy below.
+  // = platform default (1h); 0 = "Never". Drives the intro copy below.
   defaultRetentionHours?: number | null;
   onCancel: () => void;
   onStart: (details: { name: string; category?: string; retentionDays?: number }) => void;
@@ -32,7 +32,7 @@ function defaultRetentionCopy(hours: number | null | undefined, t: (key: Diction
   if (hours === 0) return t('newProjectUpload.retentionNever');
   if (hours === 24 * 30) return t('newProjectUpload.retention30d');
   if (hours === 24 * 7) return t('newProjectUpload.retention7d');
-  return t('newProjectUpload.retention24h');
+  return t('newProjectUpload.retention1h');
 }
 
 export default function NewProjectUploadDialog({ open, files, segment, defaultRetentionHours, onCancel, onStart }: Props) {

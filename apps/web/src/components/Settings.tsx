@@ -413,7 +413,7 @@ function ChangePasswordSection() {
 }
 
 const RETENTION_OPTIONS: { value: number; labelKey: DictionaryKey; proOnly?: boolean }[] = [
-  { value: 24, labelKey: 'settings.retention24h' },
+  { value: 1, labelKey: 'settings.retention1h' },
   { value: 24 * 7, labelKey: 'settings.retention7d' },
   { value: 24 * 30, labelKey: 'settings.retention30d' },
   { value: 0, labelKey: 'settings.retentionNever', proOnly: true },
@@ -453,7 +453,7 @@ function DeleteAccountSection() {
     }
   }
 
-  const currentRetention = user?.defaultRetentionHours ?? 24;
+  const currentRetention = user?.defaultRetentionHours ?? 1;
   const isPaid = user?.plan === 'PAID';
 
   return (

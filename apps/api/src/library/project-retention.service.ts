@@ -5,10 +5,10 @@ import { StorageService } from '../storage/storage.service';
 
 // Enforces the retention promise made in the upload dialog (Batch 3,
 // Section 2.1; per-file fix in Batch 5, Part 8): each file in a project
-// carries its own clock — default 24h, extendable to 7 or 30 days — so one
+// carries its own clock — default 1h, extendable to 7 or 30 days — so one
 // old file expiring doesn't take the rest of a long-running project with
-// it. Checked every 15 minutes rather than daily, since a 24h default
-// window makes a once-a-day sweep too coarse.
+// it. Checked every 15 minutes rather than daily, since a 1h default
+// window makes a once-a-day sweep far too coarse.
 @Injectable()
 export class ProjectRetentionService {
   private readonly logger = new Logger(ProjectRetentionService.name);

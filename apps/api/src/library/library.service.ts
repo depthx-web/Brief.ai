@@ -35,13 +35,13 @@ export class LibraryService {
     // when it belongs to a project — Unsorted uploads never auto-delete.
     // When the caller doesn't pass an explicit retentionDays, fall back to
     // the user's configured default (Settings -> Privacy), which itself
-    // falls back to the platform default of 24h if unset. 0 means "Never".
+    // falls back to the platform default of 1h if unset. 0 means "Never".
     let retentionHours: number | null;
     if (retentionDays !== undefined) {
       retentionHours = retentionDays * 24;
     } else {
       const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { defaultRetentionHours: true } });
-      retentionHours = user?.defaultRetentionHours === 0 ? null : (user?.defaultRetentionHours ?? 24);
+      retentionHours = user?.defaultRetentionHours === 0 ? null : (user?.defaultRetentionHours ?? 1);
     }
     const expiresAt = projectId && retentionHours !== null ? new Date(Date.now() + retentionHours * 60 * 60 * 1000) : null;
 
@@ -303,7 +303,7 @@ export class LibraryService {
         expiresAt = doc.expiresAt;
       } else {
         const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { defaultRetentionHours: true } });
-        const retentionHours = user?.defaultRetentionHours === 0 ? null : (user?.defaultRetentionHours ?? 24);
+        const retentionHours = user?.defaultRetentionHours === 0 ? null : (user?.defaultRetentionHours ?? 1);
         expiresAt = retentionHours !== null ? new Date(Date.now() + retentionHours * 60 * 60 * 1000) : null;
       }
     }

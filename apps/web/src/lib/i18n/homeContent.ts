@@ -140,8 +140,8 @@ const en: HomeContent = {
         a: 'No. Merge, split, rotate, and compress are free forever with no account and no card required. You only pay once you want AI-powered analysis, chat, or comparisons.',
       },
       {
-        q: 'What happens to my files after 24 hours?',
-        a: 'Files saved to a Library project are automatically and permanently deleted after 24 hours, unless you extend that project’s retention to 7 or 30 days from its options menu.',
+        q: 'What happens to my files after 1 hour?',
+        a: 'Files saved to a Library project are automatically and permanently deleted after 1 hour, unless you extend that project’s retention to 7 or 30 days from its options menu.',
       },
       {
         q: 'Which plan is right for me?',
@@ -234,8 +234,8 @@ const de: HomeContent = {
         a: 'Nein. Zusammenführen, Teilen, Drehen und Komprimieren sind für immer kostenlos, ohne Konto und ohne Karte. Sie zahlen erst, wenn Sie KI-gestützte Analyse, Chat oder Vergleiche nutzen möchten.',
       },
       {
-        q: 'Was passiert mit meinen Dateien nach 24 Stunden?',
-        a: 'In einem Bibliotheksprojekt gespeicherte Dateien werden nach 24 Stunden automatisch und dauerhaft gelöscht, sofern Sie die Aufbewahrung dieses Projekts nicht über das Optionsmenü auf 7 oder 30 Tage verlängern.',
+        q: 'Was passiert mit meinen Dateien nach 1 Stunde?',
+        a: 'In einem Bibliotheksprojekt gespeicherte Dateien werden nach 1 Stunde automatisch und dauerhaft gelöscht, sofern Sie die Aufbewahrung dieses Projekts nicht über das Optionsmenü auf 7 oder 30 Tage verlängern.',
       },
       {
         q: 'Welcher Plan passt zu mir?',
@@ -328,8 +328,8 @@ const fr: HomeContent = {
         a: 'Non. Fusionner, diviser, faire pivoter et compresser sont gratuits pour toujours, sans compte ni carte. Vous ne payez que lorsque vous souhaitez une analyse IA, un chat ou des comparaisons.',
       },
       {
-        q: 'Que deviennent mes fichiers après 24 heures ?',
-        a: 'Les fichiers enregistrés dans un projet de la bibliothèque sont automatiquement et définitivement supprimés après 24 heures, sauf si vous prolongez la conservation de ce projet à 7 ou 30 jours depuis son menu d’options.',
+        q: 'Que deviennent mes fichiers après 1 heure ?',
+        a: 'Les fichiers enregistrés dans un projet de la bibliothèque sont automatiquement et définitivement supprimés après 1 heure, sauf si vous prolongez la conservation de ce projet à 7 ou 30 jours depuis son menu d’options.',
       },
       {
         q: 'Quel forfait me convient ?',
@@ -422,8 +422,8 @@ const es: HomeContent = {
         a: 'No. Combinar, dividir, rotar y comprimir son gratis para siempre, sin cuenta ni tarjeta. Solo pagas cuando quieras análisis con IA, chat o comparaciones.',
       },
       {
-        q: '¿Qué pasa con mis archivos después de 24 horas?',
-        a: 'Los archivos guardados en un proyecto de la biblioteca se eliminan automática y permanentemente después de 24 horas, a menos que extiendas la retención de ese proyecto a 7 o 30 días desde su menú de opciones.',
+        q: '¿Qué pasa con mis archivos después de 1 hora?',
+        a: 'Los archivos guardados en un proyecto de la biblioteca se eliminan automática y permanentemente después de 1 hora, a menos que extiendas la retención de ese proyecto a 7 o 30 días desde su menú de opciones.',
       },
       {
         q: '¿Qué plan es el adecuado para mí?',
@@ -516,8 +516,8 @@ const it: HomeContent = {
         a: 'No. Unire, dividere, ruotare e comprimere sono gratuiti per sempre, senza account né carta. Paghi solo quando vuoi analisi con IA, chat o confronti.',
       },
       {
-        q: 'Cosa succede ai miei file dopo 24 ore?',
-        a: 'I file salvati in un progetto della libreria vengono eliminati automaticamente e definitivamente dopo 24 ore, a meno che tu non estenda la conservazione di quel progetto a 7 o 30 giorni dal suo menu opzioni.',
+        q: 'Cosa succede ai miei file dopo 1 ora?',
+        a: 'I file salvati in un progetto della libreria vengono eliminati automaticamente e definitivamente dopo 1 ora, a meno che tu non estenda la conservazione di quel progetto a 7 o 30 giorni dal suo menu opzioni.',
       },
       {
         q: 'Quale piano fa per me?',
@@ -610,8 +610,8 @@ const ar: HomeContent = {
         a: 'لا. الدمج والتقسيم والتدوير والضغط مجانية إلى الأبد دون حساب أو بطاقة. تدفع فقط عندما تريد تحليلًا بالذكاء الاصطناعي أو محادثة أو مقارنات.',
       },
       {
-        q: 'ماذا يحدث لملفاتي بعد 24 ساعة؟',
-        a: 'تُحذف الملفات المحفوظة في مشروع بالمكتبة تلقائيًا ونهائيًا بعد 24 ساعة، ما لم تُمدّد فترة الاحتفاظ بذلك المشروع إلى 7 أو 30 يومًا من قائمة خياراته.',
+        q: 'ماذا يحدث لملفاتي بعد ساعة واحدة؟',
+        a: 'تُحذف الملفات المحفوظة في مشروع بالمكتبة تلقائيًا ونهائيًا بعد ساعة واحدة، ما لم تُمدّد فترة الاحتفاظ بذلك المشروع إلى 7 أو 30 يومًا من قائمة خياراته.',
       },
       {
         q: 'ما الخطة المناسبة لي؟',

@@ -20,7 +20,7 @@ export const COUNTDOWN_BADGE_CLASS: Record<CountdownUrgency, string> = {
 
 // Drives the Library project/file countdown badge — plain gray with plenty
 // of time left, ambering, then reading redline as the retention window
-// (24h by default, 7d/30d if extended) nears zero. null means the
+// (1h by default, 7d/30d if extended) nears zero. null means the
 // file/project carries no expiry at all (e.g. an empty project, or an
 // Unsorted document with no project).
 function formatCountdown(expiresAt: string | Date | null, t: (key: DictionaryKey) => string): Countdown {

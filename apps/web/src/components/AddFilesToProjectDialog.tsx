@@ -19,7 +19,7 @@ interface Props {
   projectId: string;
   category: string | null;
   // The account's configured default (Settings -> Privacy). Null/undefined
-  // = platform default (24h); 0 = "Never". Drives the intro copy below.
+  // = platform default (1h); 0 = "Never". Drives the intro copy below.
   defaultRetentionHours?: number | null;
   onClose: () => void;
   onUploaded: () => void;
@@ -29,7 +29,7 @@ function defaultRetentionCopy(hours: number | null | undefined, t: (key: Diction
   if (hours === 0) return t('addFiles.retentionNever');
   if (hours === 24 * 30) return t('addFiles.retention30d');
   if (hours === 24 * 7) return t('addFiles.retention7d');
-  return t('addFiles.retention24h');
+  return t('addFiles.retention1h');
 }
 
 // Adding files to an existing project skips the "What is this file?" step

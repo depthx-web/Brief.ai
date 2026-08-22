@@ -55,7 +55,7 @@ const DEFAULT_SECTIONS: LegalSection[] = [
     body: (
       <>
         <p>
-          Files uploaded to a Library project are kept for 24 hours by default, then permanently
+          Files uploaded to a Library project are kept for 1 hour by default, then permanently
           deleted, unless you extend that project's retention to 7 or 30 days from the project's
           options menu. Once a project expires, its files are removed from our storage — there is no
           recovery period.

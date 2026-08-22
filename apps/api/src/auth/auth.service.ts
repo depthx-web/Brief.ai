@@ -28,7 +28,7 @@ export interface SafeUser {
   segment: Segment | null;
   plan: Plan;
   billingCycle: BillingCycle | null;
-  // Null = platform default (24h). 0 = "Never" (paid plans only).
+  // Null = platform default (1h). 0 = "Never" (paid plans only).
   defaultRetentionHours: number | null;
   emailVerified: boolean;
 }

@@ -23,8 +23,8 @@ const APP_URL = process.env.APP_URL ?? 'http://localhost:3000';
 const API_PUBLIC_URL = process.env.API_PUBLIC_URL ?? 'http://localhost:3001';
 
 const VALID_SEGMENTS: Segment[] = ['LAWYER', 'ACCOUNTANT', 'RESEARCHER'];
-// 24h / 7 days / 30 days / Never — the only options Settings exposes.
-const VALID_RETENTION_HOURS = [0, 24, 24 * 7, 24 * 30];
+// 1h / 7 days / 30 days / Never — the only options Settings exposes.
+const VALID_RETENTION_HOURS = [0, 1, 24 * 7, 24 * 30];
 
 interface SignupBody {
   email?: string;
