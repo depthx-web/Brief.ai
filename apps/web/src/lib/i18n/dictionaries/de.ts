@@ -434,6 +434,8 @@ const de: Record<DictionaryKey, string> = {
   'fileMenu.fileRenamed': 'Datei umbenannt',
   'fileMenu.couldNotRename': 'Diese Datei konnte nicht umbenannt werden.',
   'fileMenu.renameFileTitle': 'Datei umbenennen',
+  'fileMenu.confirmDeleteTitle': 'Diese Datei löschen?',
+  'fileMenu.confirmDeleteBody': '„{name}“ wird dauerhaft gelöscht. Dies kann nicht rückgängig gemacht werden.',
 
   'projectMenu.compareContracts': 'Verträge vergleichen',
   'projectMenu.couldNotLoadFiles': 'Die Projektdateien konnten nicht geladen werden.',

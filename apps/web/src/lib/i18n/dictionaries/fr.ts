@@ -434,6 +434,8 @@ const fr: Record<DictionaryKey, string> = {
   'fileMenu.fileRenamed': 'Fichier renommé',
   'fileMenu.couldNotRename': 'Impossible de renommer ce fichier.',
   'fileMenu.renameFileTitle': 'Renommer le fichier',
+  'fileMenu.confirmDeleteTitle': 'Supprimer ce fichier ?',
+  'fileMenu.confirmDeleteBody': 'Cela supprime définitivement « {name} ». Cette action est irréversible.',
 
   'projectMenu.compareContracts': 'Comparer des contrats',
   'projectMenu.couldNotLoadFiles': 'Impossible de charger les fichiers du projet.',

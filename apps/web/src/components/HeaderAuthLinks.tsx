@@ -11,7 +11,7 @@ export default function HeaderAuthLinks() {
 
   if (!user) {
     return (
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3 sm:gap-4">
         <a href="/login" className="text-sm font-medium text-navy hover:text-emerald transition-colors">
           {t('nav.logIn')}
         </a>
@@ -23,11 +23,11 @@ export default function HeaderAuthLinks() {
   }
 
   return (
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-3 sm:gap-4">
       <a href="/library" className="text-sm font-medium text-navy hover:text-emerald transition-colors">
         {t('sidebar.myLibrary')}
       </a>
-      <span className="text-sm text-gray-400">{user.email}</span>
+      <span className="hidden text-sm text-gray-400 sm:inline">{user.email}</span>
       <button onClick={logout} className="text-sm font-medium text-navy hover:text-emerald transition-colors">
         {t('sidebar.logout')}
       </button>

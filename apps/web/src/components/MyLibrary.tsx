@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import * as Dialog from '@radix-ui/react-dialog';
 import { useAuth } from '@/lib/AuthContext';
 import { isTauri } from '@/lib/platform';
 import { extractPdfText } from '@/lib/extractPdfText';
@@ -38,6 +39,7 @@ export default function MyLibrary() {
   const [error, setError] = useState<string | null>(null);
   const [pendingFiles, setPendingFiles] = useState<File[] | null>(null);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [confirmDeleteDoc, setConfirmDeleteDoc] = useState<LibrarySearchResult | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -113,6 +115,8 @@ export default function MyLibrary() {
       showSuccess(t('library.fileDeleted'));
     } catch (err) {
       showError(err instanceof Error ? err.message : t('library.couldNotDelete'));
+    } finally {
+      setConfirmDeleteDoc(null);
     }
   }
 
@@ -231,7 +235,7 @@ export default function MyLibrary() {
                   doc={doc}
                   onOpen={() => router.push(`/workspace?doc=${doc.id}`)}
                   onDownload={() => handleDownload(doc.id, doc.filename)}
-                  onDelete={() => handleDelete(doc.id)}
+                  onDelete={() => setConfirmDeleteDoc(doc)}
                 />
               ))}
             </div>
@@ -292,6 +296,29 @@ export default function MyLibrary() {
         onStart={handleStartUpload}
       />
       <ChangePlanModal open={upgradeModalOpen} onClose={() => setUpgradeModalOpen(false)} />
+
+      <Dialog.Root open={confirmDeleteDoc !== null} onOpenChange={(next) => !next && setConfirmDeleteDoc(null)}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="overlay-dim fixed inset-0 z-50" />
+          <Dialog.Content className="animate-modal-in fixed left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-level-4">
+            <Dialog.Title className="font-serif text-lg font-semibold text-redline">{t('fileMenu.confirmDeleteTitle')}</Dialog.Title>
+            <Dialog.Description className="mt-2 text-sm text-ink-soft">
+              {confirmDeleteDoc && t('fileMenu.confirmDeleteBody').replace('{name}', confirmDeleteDoc.filename)}
+            </Dialog.Description>
+            <div className="mt-6 flex justify-end gap-3">
+              <Dialog.Close asChild>
+                <button className="text-sm font-medium text-ink-soft hover:text-ink">{t('settings.cancel')}</button>
+              </Dialog.Close>
+              <button
+                onClick={() => confirmDeleteDoc && handleDelete(confirmDeleteDoc.id)}
+                className="rounded-lg bg-redline px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-700"
+              >
+                {t('projectMenu.deletePermanently')}
+              </button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </div>
   );
 }

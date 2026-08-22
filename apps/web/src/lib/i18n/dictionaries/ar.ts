@@ -434,6 +434,8 @@ const ar: Record<DictionaryKey, string> = {
   'fileMenu.fileRenamed': 'تمت إعادة تسمية الملف',
   'fileMenu.couldNotRename': 'تعذّر إعادة تسمية هذا الملف.',
   'fileMenu.renameFileTitle': 'إعادة تسمية الملف',
+  'fileMenu.confirmDeleteTitle': 'حذف هذا الملف؟',
+  'fileMenu.confirmDeleteBody': 'سيؤدي هذا إلى حذف "{name}" نهائيًا. لا يمكن التراجع عن هذا الإجراء.',
 
   'projectMenu.compareContracts': 'مقارنة العقود',
   'projectMenu.couldNotLoadFiles': 'تعذّر تحميل ملفات المشروع.',

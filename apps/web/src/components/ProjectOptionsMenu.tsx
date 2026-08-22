@@ -42,6 +42,7 @@ export default function ProjectOptionsMenu({ project, onExtended, onDeleted, onU
   const [filesSubOpen, setFilesSubOpen] = useState(false);
   const [files, setFiles] = useState<LibraryDocumentSummary[] | null>(null);
   const [confirmExtendDays, setConfirmExtendDays] = useState<7 | 30 | null>(null);
+  const [confirmDeleteFile, setConfirmDeleteFile] = useState<LibraryDocumentSummary | null>(null);
 
   const locked = BILLING_ENFORCED && user?.plan !== 'PAID';
   const segmentActionKey = user?.segment ? SEGMENT_PROJECT_ACTION_KEY[user.segment] : null;
@@ -78,6 +79,8 @@ export default function ProjectOptionsMenu({ project, onExtended, onDeleted, onU
       showSuccess(t('library.fileDeleted'));
     } catch (err) {
       showError(err instanceof Error ? err.message : t('fileMenu.couldNotDelete'));
+    } finally {
+      setConfirmDeleteFile(null);
     }
   }
 
@@ -208,7 +211,7 @@ export default function ProjectOptionsMenu({ project, onExtended, onDeleted, onU
                         key={f.id}
                         onSelect={(e) => {
                           e.preventDefault();
-                          handleDeleteFile(f.id);
+                          setConfirmDeleteFile(f);
                         }}
                         className="cursor-pointer select-none truncate rounded-md px-2.5 py-2 text-[12px] text-redline outline-none transition-colors data-[highlighted]:bg-red-50"
                       >
@@ -279,6 +282,29 @@ export default function ProjectOptionsMenu({ project, onExtended, onDeleted, onU
         onCancel={() => setConfirmExtendDays(null)}
         onConfirm={handleExtend}
       />
+
+      <Dialog.Root open={confirmDeleteFile !== null} onOpenChange={(next) => !next && setConfirmDeleteFile(null)}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="overlay-dim fixed inset-0 z-50" />
+          <Dialog.Content className="animate-modal-in fixed left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-2xl bg-white p-6 shadow-level-4">
+            <Dialog.Title className="font-serif text-lg font-semibold text-redline">{t('fileMenu.confirmDeleteTitle')}</Dialog.Title>
+            <Dialog.Description className="mt-2 text-sm text-ink-soft">
+              {confirmDeleteFile && t('fileMenu.confirmDeleteBody').replace('{name}', confirmDeleteFile.filename)}
+            </Dialog.Description>
+            <div className="mt-6 flex justify-end gap-3">
+              <Dialog.Close asChild>
+                <button className="text-sm font-medium text-ink-soft hover:text-ink">{t('settings.cancel')}</button>
+              </Dialog.Close>
+              <button
+                onClick={() => confirmDeleteFile && handleDeleteFile(confirmDeleteFile.id)}
+                className="rounded-lg bg-redline px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-700"
+              >
+                {t('projectMenu.deletePermanently')}
+              </button>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
     </>
   );
 }

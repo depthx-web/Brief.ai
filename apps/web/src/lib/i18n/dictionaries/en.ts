@@ -456,6 +456,8 @@ const en = {
   'fileMenu.fileRenamed': 'File renamed',
   'fileMenu.couldNotRename': 'Could not rename this file.',
   'fileMenu.renameFileTitle': 'Rename file',
+  'fileMenu.confirmDeleteTitle': 'Delete this file?',
+  'fileMenu.confirmDeleteBody': 'This permanently deletes "{name}". This cannot be undone.',
 
   // Project options menu
   'projectMenu.compareContracts': 'Compare contracts',
